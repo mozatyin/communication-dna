@@ -69,7 +69,10 @@ class StyleMatcher:
     """Guide conversations toward deeper expression while matching communication style."""
 
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514"):
-        self._client = anthropic.Anthropic(api_key=api_key)
+        kwargs: dict = {"api_key": api_key}
+        if api_key.startswith("sk-or-"):
+            kwargs["base_url"] = "https://openrouter.ai/api"
+        self._client = anthropic.Anthropic(**kwargs)
         self._model = model
 
     def respond(

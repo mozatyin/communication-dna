@@ -48,7 +48,10 @@ class Detector:
     """Detect communication style features from conversation text using Claude."""
 
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514"):
-        self._client = anthropic.Anthropic(api_key=api_key)
+        kwargs: dict = {"api_key": api_key}
+        if api_key.startswith("sk-or-"):
+            kwargs["base_url"] = "https://openrouter.ai/api"
+        self._client = anthropic.Anthropic(**kwargs)
         self._model = model
 
     def analyze(
@@ -71,7 +74,7 @@ class Detector:
 
         response = self._client.messages.create(
             model=self._model,
-            max_tokens=4096,
+            max_tokens=16384,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
