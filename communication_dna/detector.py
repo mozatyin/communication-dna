@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 import anthropic
 
@@ -80,10 +81,7 @@ class Detector:
         )
 
         raw = response.content[0].text
-        # Strip potential markdown fences
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
-        parsed = json.loads(raw)
+        parsed = _parse_json_response(raw)
 
         features: list[Feature] = []
         for item in parsed:
@@ -112,6 +110,43 @@ class Detector:
             ),
             features=features,
         )
+
+
+def _parse_json_response(raw: str) -> list[dict]:
+    """Parse JSON from LLM response, handling common issues."""
+    # Strip markdown fences
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+
+    # Try truncating to last complete object in the array
+    last_brace = raw.rfind("}")
+    if last_brace != -1:
+        truncated = raw[: last_brace + 1].rstrip().rstrip(",") + "\n]"
+        # Ensure it starts with [
+        start = raw.find("[")
+        if start != -1:
+            truncated = raw[start : last_brace + 1].rstrip().rstrip(",") + "\n]"
+        try:
+            return json.loads(truncated)
+        except json.JSONDecodeError:
+            pass
+
+    # Last resort: extract individual objects with regex
+    objects = []
+    for m in re.finditer(r'\{[^{}]*\}', raw):
+        try:
+            objects.append(json.loads(m.group()))
+        except json.JSONDecodeError:
+            continue
+    if objects:
+        return objects
+
+    raise ValueError(f"Could not parse JSON from LLM response: {raw[:200]}...")
 
 
 def _clamp(v: float) -> float:
