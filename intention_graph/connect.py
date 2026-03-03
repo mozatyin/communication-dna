@@ -190,25 +190,42 @@ class Connect:
 def _parse_nodes_response(raw: str) -> dict:
     """Parse LLM response for node extraction."""
     raw = _strip_markdown_fences(raw)
-    try:
-        data = json.loads(raw)
-        if isinstance(data, dict) and "nodes" in data:
-            return data
-    except json.JSONDecodeError:
-        pass
 
-    # Fallback: find outermost JSON object
-    start = raw.find("{")
-    last_brace = raw.rfind("}")
-    if start != -1 and last_brace != -1:
+    # Try direct parse
+    for candidate in [raw, _extract_outermost_json(raw)]:
+        if not candidate:
+            continue
         try:
-            data = json.loads(raw[start:last_brace + 1])
+            data = json.loads(candidate)
+            if isinstance(data, dict) and "nodes" in data:
+                return data
+        except json.JSONDecodeError:
+            continue
+
+    # Fallback: try to repair truncated JSON (max_tokens hit)
+    repaired = _repair_truncated_json(raw)
+    if repaired:
+        try:
+            data = json.loads(repaired)
             if isinstance(data, dict) and "nodes" in data:
                 return data
         except json.JSONDecodeError:
             pass
 
-    raise ValueError(f"Could not parse nodes response: {raw[:200]}...")
+    # Last resort: extract individual node objects via regex
+    nodes = []
+    for m in re.finditer(r'\{[^{}]*"id"\s*:\s*"int_\d+"[^{}]*\}', raw):
+        try:
+            obj = json.loads(m.group())
+            if "text" in obj:
+                nodes.append(obj)
+        except json.JSONDecodeError:
+            continue
+    if nodes:
+        return {"nodes": nodes, "domain": "general"}
+
+    # Return empty rather than crash
+    return {"nodes": [], "domain": "general"}
 
 
 def _parse_transitions_response(raw: str) -> list[dict]:
@@ -235,7 +252,34 @@ def _parse_transitions_response(raw: str) -> list[dict]:
     if objects:
         return objects
 
-    raise ValueError(f"Could not parse transitions response: {raw[:200]}...")
+    return []  # Return empty rather than crash
+
+
+def _extract_outermost_json(raw: str) -> str | None:
+    """Extract the outermost JSON object from raw text."""
+    start = raw.find("{")
+    last = raw.rfind("}")
+    if start != -1 and last != -1 and last > start:
+        return raw[start:last + 1]
+    return None
+
+
+def _repair_truncated_json(raw: str) -> str | None:
+    """Try to repair JSON truncated by max_tokens."""
+    start = raw.find("{")
+    if start == -1:
+        return None
+    fragment = raw[start:]
+    # Count unclosed braces/brackets and close them
+    opens = fragment.count("{") - fragment.count("}")
+    open_brackets = fragment.count("[") - fragment.count("]")
+    if opens <= 0 and open_brackets <= 0:
+        return None
+    # Strip trailing incomplete key-value pair
+    fragment = re.sub(r',\s*"[^"]*"\s*:\s*$', '', fragment)
+    fragment = re.sub(r',\s*$', '', fragment)
+    fragment += "]" * max(0, open_brackets) + "}" * max(0, opens)
+    return fragment
 
 
 def _strip_markdown_fences(raw: str) -> str:
