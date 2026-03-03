@@ -15,6 +15,7 @@ class GraphMetrics:
     node_precision: float = 0.0
     node_f1: float = 0.0
     edge_f1: float = 0.0
+    edge_f1_relaxed: float = 0.0  # ignoring relation type
     probability_mae: float = 0.0
     end_goal_correct: bool = False
     matched_nodes: int = 0
@@ -27,6 +28,7 @@ class GraphMetrics:
             "node_precision": round(self.node_precision, 3),
             "node_f1": round(self.node_f1, 3),
             "edge_f1": round(self.edge_f1, 3),
+            "edge_f1_relaxed": round(self.edge_f1_relaxed, 3),
             "probability_mae": round(self.probability_mae, 3),
             "end_goal_correct": self.end_goal_correct,
             "matched_nodes": self.matched_nodes,
@@ -50,7 +52,7 @@ def compare_graphs(predicted: IntentionGraph, truth: IntentionGraph) -> GraphMet
         else 0.0
     )
 
-    edge_f1, prob_mae = _compare_edges(predicted, truth, node_matches)
+    edge_f1, prob_mae, edge_f1_relaxed = _compare_edges(predicted, truth, node_matches)
 
     end_goal_correct = False
     if truth.end_goal and predicted.end_goal:
@@ -67,6 +69,7 @@ def compare_graphs(predicted: IntentionGraph, truth: IntentionGraph) -> GraphMet
         node_precision=node_precision,
         node_f1=node_f1,
         edge_f1=edge_f1,
+        edge_f1_relaxed=edge_f1_relaxed,
         probability_mae=prob_mae,
         end_goal_correct=end_goal_correct,
         matched_nodes=matched,
@@ -104,9 +107,10 @@ def _compare_edges(
     predicted: IntentionGraph,
     truth: IntentionGraph,
     node_matches: dict[str, str],
-) -> tuple[float, float]:
-    """Compare edges and return (edge_f1, probability_mae)."""
+) -> tuple[float, float, float]:
+    """Compare edges and return (edge_f1, probability_mae, edge_f1_relaxed)."""
     pred_edges = set()
+    pred_edges_relaxed = set()
     pred_probs: dict[tuple, float] = {}
     for t in predicted.transitions:
         mapped_from = node_matches.get(t.from_id)
@@ -114,22 +118,36 @@ def _compare_edges(
         if mapped_from and mapped_to:
             key = (mapped_from, mapped_to, t.relation)
             pred_edges.add(key)
+            pred_edges_relaxed.add((mapped_from, mapped_to))
             pred_probs[key] = t.base_probability
 
     truth_edges = set()
+    truth_edges_relaxed = set()
     truth_probs: dict[tuple, float] = {}
     for t in truth.transitions:
         key = (t.from_id, t.to_id, t.relation)
         truth_edges.add(key)
+        truth_edges_relaxed.add((t.from_id, t.to_id))
         truth_probs[key] = t.base_probability
 
     if not truth_edges and not pred_edges:
-        return 1.0, 0.0
+        return 1.0, 0.0, 1.0
 
+    # Strict F1 (includes relation type)
     tp = len(pred_edges & truth_edges)
     precision = tp / len(pred_edges) if pred_edges else 0.0
     recall = tp / len(truth_edges) if truth_edges else 0.0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+
+    # Relaxed F1 (ignores relation type)
+    tp_relaxed = len(pred_edges_relaxed & truth_edges_relaxed)
+    prec_relaxed = tp_relaxed / len(pred_edges_relaxed) if pred_edges_relaxed else 0.0
+    rec_relaxed = tp_relaxed / len(truth_edges_relaxed) if truth_edges_relaxed else 0.0
+    f1_relaxed = (
+        2 * prec_relaxed * rec_relaxed / (prec_relaxed + rec_relaxed)
+        if (prec_relaxed + rec_relaxed) > 0
+        else 0.0
+    )
 
     matched_edges = pred_edges & truth_edges
     if matched_edges:
@@ -139,17 +157,37 @@ def _compare_edges(
     else:
         mae = 0.0
 
-    return f1, mae
+    return f1, mae, f1_relaxed
 
 
 def _text_similarity(a: str, b: str) -> float:
-    """Compute text similarity using character-level + word-level Jaccard."""
+    """Compute text similarity using character-level + fuzzy word matching."""
     if not a or not b:
         return 0.0
+    a_lower, b_lower = a.lower(), b.lower()
     # Character-level similarity
-    char_sim = SequenceMatcher(None, a.lower(), b.lower()).ratio()
-    # Word-level Jaccard (handles paraphrases better)
-    words_a = set(a.lower().split())
-    words_b = set(b.lower().split())
-    jaccard = len(words_a & words_b) / len(words_a | words_b) if (words_a | words_b) else 0.0
-    return max(char_sim, jaccard)
+    char_sim = SequenceMatcher(None, a_lower, b_lower).ratio()
+    # Fuzzy word matching: words match if they share a 4+ char prefix
+    # (handles deliver/delivered/delivery, restaurant/restaurants, etc.)
+    words_a = set(a_lower.split())
+    words_b = set(b_lower.split())
+    # Remove stop words for better signal
+    stop = {"a", "an", "the", "to", "of", "in", "on", "at", "for", "and", "or", "is", "it", "my", "i", "with"}
+    content_a = words_a - stop
+    content_b = words_b - stop
+    if not content_a or not content_b:
+        return char_sim
+    # Count fuzzy matches (prefix-based)
+    matched = 0
+    used_b: set[str] = set()
+    for wa in content_a:
+        for wb in content_b:
+            if wb in used_b:
+                continue
+            if wa == wb or (len(wa) >= 4 and len(wb) >= 4 and
+                           (wa[:4] == wb[:4])):
+                matched += 1
+                used_b.add(wb)
+                break
+    fuzzy_sim = matched / max(len(content_a), len(content_b))
+    return max(char_sim, fuzzy_sim)

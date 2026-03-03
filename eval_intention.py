@@ -115,7 +115,7 @@ PROMPTS = [
 ]
 
 
-def run_eval(api_key: str):
+def run_eval(api_key: str, version: str = "latest"):
     speaker = GraphSpeaker(api_key=api_key)
     detector = IntentionDetector(api_key=api_key)
 
@@ -150,8 +150,17 @@ def run_eval(api_key: str):
 
         print(f"\n  Nodes: {metrics.matched_nodes}/{metrics.total_truth_nodes} matched "
               f"(P={metrics.node_precision:.2f} R={metrics.node_recall:.2f} F1={metrics.node_f1:.2f})")
-        print(f"  Edges: F1={metrics.edge_f1:.2f}, Prob MAE={metrics.probability_mae:.3f}")
+        print(f"  Edges: F1={metrics.edge_f1:.2f} (relaxed={metrics.edge_f1_relaxed:.2f}), Prob MAE={metrics.probability_mae:.3f}")
         print(f"  End Goal: {'CORRECT' if metrics.end_goal_correct else 'WRONG'}")
+
+        # Diagnostic: show predicted graph
+        print(f"\n  Predicted nodes ({len(predicted.nodes)}):")
+        for n in predicted.nodes:
+            print(f"    [{n.id}] {n.text} (sp={n.specificity:.1f})")
+        print(f"  Predicted edges ({len(predicted.transitions)}):")
+        for t in predicted.transitions:
+            print(f"    {t.from_id} --[{t.relation}]--> {t.to_id}")
+        print(f"  Predicted end goal: {predicted.end_goal}")
 
         results[graph_name] = metrics.to_dict()
 
@@ -161,24 +170,29 @@ def run_eval(api_key: str):
     print(f"{'='*60}")
     avg_node_f1 = statistics.mean(m.node_f1 for m in all_metrics)
     avg_edge_f1 = statistics.mean(m.edge_f1 for m in all_metrics)
+    avg_edge_f1_relaxed = statistics.mean(m.edge_f1_relaxed for m in all_metrics)
     avg_recall = statistics.mean(m.node_recall for m in all_metrics)
     end_goal_acc = sum(1 for m in all_metrics if m.end_goal_correct) / len(all_metrics)
 
     print(f"  Avg Node F1: {avg_node_f1:.3f}")
     print(f"  Avg Node Recall: {avg_recall:.3f}")
-    print(f"  Avg Edge F1: {avg_edge_f1:.3f}")
+    print(f"  Avg Edge F1: {avg_edge_f1:.3f} (relaxed={avg_edge_f1_relaxed:.3f})")
     print(f"  End Goal Accuracy: {end_goal_acc:.1%}")
 
     results["_overall"] = {
         "avg_node_f1": round(avg_node_f1, 3),
         "avg_node_recall": round(avg_recall, 3),
         "avg_edge_f1": round(avg_edge_f1, 3),
+        "avg_edge_f1_relaxed": round(avg_edge_f1_relaxed, 3),
         "end_goal_accuracy": round(end_goal_acc, 3),
     }
 
-    output_path = Path("eval_intention_results_v0.1.json")
+    version_tag = version or "latest"
+    output_path = Path(f"eval_intention_results_{version_tag}.json")
     output_path.write_text(json.dumps(results, indent=2))
     print(f"\n  Results saved to {output_path}")
+
+    return results
 
 
 if __name__ == "__main__":
@@ -186,4 +200,5 @@ if __name__ == "__main__":
     if not api_key:
         print("Set ANTHROPIC_API_KEY env var to run evaluation.")
         sys.exit(1)
-    run_eval(api_key)
+    version = sys.argv[1] if len(sys.argv) > 1 else "latest"
+    run_eval(api_key, version=version)

@@ -1,7 +1,7 @@
 """Stage 1 — Connect: Extract intention nodes and infer transitions from dialogue.
 
-v0.2: Joint extraction (nodes + edges in single LLM call) with evidence-grounded
-reasoning, few-shot calibration examples, and dedicated end goal identification.
+v0.4: Joint extraction with branching detection, decision-tree relation classification,
+and contrastive few-shot examples for improved edge accuracy.
 """
 
 from __future__ import annotations
@@ -45,20 +45,55 @@ c) FRAMING TEST: What did the speaker present as their main topic? \
    Often stated in the first few utterances as "I want to..." or "My goal is..."
 d) ABSTRACTION TEST: The end goal is usually the MOST ABSTRACT intention (lowest specificity).
 
-STEP 3 - MAP RELATIONSHIPS (while dialogue context is fresh):
-For each pair of intentions, check if the dialogue reveals a connection. Look for:
-- "first... then..." / "after that..." → next_step (sequential)
-- "part of that is..." / "one thing I need to do is..." → decomposes_to (parent→child)
-- "or I could..." / "another option..." → alternative (mutually exclusive)
-- "I can't ... until ..." / "that requires..." / "I need to ... first" → enables (prerequisite)
-- "it might become..." / "eventually..." → evolves_to (transformation)
+STEP 3 - IDENTIFY GRAPH TOPOLOGY:
+Before mapping edges, determine the overall structure:
+
+a) SEQUENTIAL: Speaker describes steps in order ("first X, then Y, then Z") → chain: X → Y → Z
+b) FAN-OUT/BRANCHING: Speaker presents alternatives or parallel paths from one goal \
+("I could either X or Y" / "there are two things I need to do") → star: Goal → X, Goal → Y
+c) MIXED: Some sequential paths with branching points
+
+KEY RULE: If the speaker presents options at the SAME LEVEL OF ABSTRACTION \
+serving the SAME PARENT GOAL, these are alternatives branching FROM THE PARENT, \
+not sequential steps between each other.
+Example: "I want to fix things. I could talk to her, or give her space."
+→ WRONG: talk → give_space (sequential chain)
+→ RIGHT: fix_things → talk (alternative), fix_things → give_space (alternative)
+
+STEP 4 - CLASSIFY EACH EDGE using this decision tree:
+
+For each pair (A, B) where the dialogue reveals a connection:
+
+Q1: Are A and B MUTUALLY EXCLUSIVE options serving the same goal?
+    (Speaker says "either/or", "one option is... another is...", "I'm torn between...")
+    → "alternative" — edge goes BETWEEN the two options OR from parent to each option
+
+Q2: Is A a PREREQUISITE that must happen before B can start?
+    (Speaker says "I need A first", "I can't B until A", "that requires A")
+    → "enables" (direction: prerequisite A → dependent B)
+
+Q3: Is B a SUB-TASK or concrete component of the broader goal A?
+    (B is a specific step within A's scope; A is more abstract than B)
+    → "decomposes_to" (direction: abstract parent A → concrete child B)
+
+Q4: Does A naturally lead to B in temporal sequence WITHOUT dependency?
+    (Speaker says "after A, I'll do B" where B could happen without A)
+    → "next_step"
+
+Q5: Does A transform into B over time?
+    (Speaker says "it might become...", "eventually...")
+    → "evolves_to"
+
+If none fit clearly → do NOT create this edge.
 
 CRITICAL: Only create an edge if you can point to textual evidence. \
 Prefer fewer high-confidence edges over many speculative ones.
 
-STEP 4 - VERIFY:
+STEP 5 - VERIFY:
 - The end goal should be the most abstract, overarching intention
 - Check edge directions: "A enables B" means A → B
+- For "decomposes_to": parent must be MORE ABSTRACT (lower specificity) than child
+- "alternative" edges should connect options at similar abstraction levels
 - No self-loops. No impossible cycles (A enables B, B enables A)
 
 Return ONLY valid JSON:
@@ -109,7 +144,7 @@ _FEW_SHOT_EXAMPLES = """\
 
 ## Calibration Examples
 
-### Example A — Simple decomposition (food ordering)
+### Example A — Decomposition chain (food ordering)
 
 Dialogue:
 Speaker: I'm craving sushi tonight. I think I'll order delivery.
@@ -117,14 +152,14 @@ Advisor: Any restaurant in mind?
 Speaker: Not yet, I need to check what's available on DoorDash first.
 
 Correct extraction:
+- Topology: SEQUENTIAL chain (goal → order → find restaurant)
 - Nodes: (1) "eat sushi tonight" [sp=0.5], (2) "order sushi delivery" [sp=0.6], \
 (3) "find sushi restaurant on DoorDash" [sp=0.7]
 - Edges: (1)-[decomposes_to]->(2): eating decomposes into ordering; \
 (2)-[decomposes_to]->(3): ordering requires finding a restaurant
 - End goal: int_001 "eat sushi tonight" — most abstract, everything else serves this
-- NOT an edge: (1)->(3) directly — no textual evidence for a direct link
 
-### Example B — Branching plan with alternatives
+### Example B — Branching with alternatives
 
 Dialogue:
 Speaker: I've been thinking about getting into data science. I already took that Python course.
@@ -133,20 +168,65 @@ Speaker: I'm torn — I could either do a bootcamp or try to get an analyst role
 If I go bootcamp I'd need to save up money first.
 
 Correct extraction:
+- Topology: MIXED — branching alternatives with a prerequisite
 - Nodes: (1) "transition into data science" [sp=0.4], (2) "completed Python course" [status=completed, sp=0.8], \
 (3) "attend data science bootcamp" [sp=0.6], (4) "get entry-level analyst role" [sp=0.5], \
 (5) "save money for bootcamp" [sp=0.5]
 - Edges: (3)-[alternative]->(4): "either...or" = mutually exclusive; \
 (5)-[enables]->(3): "need to save up money first" = prerequisite; \
 (2)-[enables]->(1): completed course enables career transition
-- End goal: int_001 "transition into data science" — the overarching goal all others serve
-- Note: "alternative" edge goes between THE TWO OPTIONS, not from goal to options
+- End goal: int_001 "transition into data science"
+
+### Example C — Fan-out alternatives (relationship repair)
+
+Dialogue:
+Speaker: Things have been tense with my partner since that argument. I want to make things right.
+Advisor: What are you thinking?
+Speaker: I'm not sure. Part of me thinks I should sit down and talk honestly about feelings. \
+But another part thinks we need space first. And if talking goes well, \
+maybe we could plan something special together.
+
+Correct extraction:
+- Topology: FAN-OUT from root, with sequential follow-up
+- Nodes: (1) "repair relationship after argument" [sp=0.4], \
+(2) "have honest conversation about feelings" [sp=0.6], \
+(3) "give each other space first" [sp=0.5], \
+(4) "plan something meaningful together" [sp=0.6]
+- Edges: (1)-[decomposes_to]->(2): "part of me thinks I should..." = approach A from root; \
+(1)-[decomposes_to]->(3): "another part thinks..." = approach B from root; \
+(2)-[next_step]->(4): "if talking goes well, plan something" = temporal follow-up
+- End goal: int_001 "repair relationship"
+- CRITICAL: (2) and (3) both branch FROM (1). They are NOT sequential. \
+"Part of me... another part" = branching signal.
+
+### Contrastive Examples — WRONG vs RIGHT
+
+Wrong: save_money --[next_step]--> apply_bootcamp
+Right: save_money --[enables]--> apply_bootcamp
+Why: "I need to save up first" + "then I CAN apply" = prerequisite (enables), not mere sequence. \
+Use "enables" when B DEPENDS on A. Use "next_step" only for temporal order WITHOUT dependency.
+
+Wrong: talk_to_partner --[enables]--> give_space (treating two options as a chain)
+Right: repair_relationship --[decomposes_to]--> talk_to_partner, \
+repair_relationship --[decomposes_to]--> give_space
+Why: "I could X or Y" means both options branch from the parent goal. \
+Options at the same abstraction level serving the same goal = fan-out, not chain.
+
+Wrong: buy_laptop --[decomposes_to]--> compare_options --[decomposes_to]--> check_reviews
+Right: buy_laptop --[decomposes_to]--> compare_options, compare_options --[next_step]--> check_reviews
+Why: Comparing and reviewing are at similar specificity — reviews follow comparison \
+as a sequential step, not a further decomposition. "decomposes_to" requires parent→child \
+(abstract→concrete) relationship.
 
 ### Common Mistakes:
-- Creating edges between every pair of nodes — only add edges with textual evidence
-- Confusing edge direction: "A enables B" means A→B, not B→A
-- Missing the end goal by picking a sub-task instead of the overarching objective
-- Over-generating nodes by extracting advisor's suggestions as speaker intentions
+- OVER-GENERATING NODES: Only extract intentions the speaker explicitly states or strongly implies. \
+Aim for 3-6 nodes for a typical conversation, not 7+.
+- LINEARIZING BRANCHES: When a speaker presents options ("either X or Y", "part of me... another part..."), \
+these are fan-out alternatives, NOT sequential steps. Connect them to the parent goal.
+- CONFUSING enables vs next_step: "enables" = B depends on A (prerequisite). \
+"next_step" = A happens before B but B doesn't require A.
+- CONFUSING decomposes_to vs next_step: "decomposes_to" = parent→child (abstract→concrete). \
+"next_step" = temporal sequence between peers at similar abstraction.
 """
 
 
@@ -258,6 +338,7 @@ class Connect:
         response = self._client.messages.create(
             model=self._model,
             max_tokens=4096,
+            temperature=0.0,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
