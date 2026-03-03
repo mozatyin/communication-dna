@@ -143,7 +143,13 @@ def _compare_edges(
 
 
 def _text_similarity(a: str, b: str) -> float:
-    """Compute text similarity between two strings (0.0-1.0)."""
+    """Compute text similarity using character-level + word-level Jaccard."""
     if not a or not b:
         return 0.0
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+    # Character-level similarity
+    char_sim = SequenceMatcher(None, a.lower(), b.lower()).ratio()
+    # Word-level Jaccard (handles paraphrases better)
+    words_a = set(a.lower().split())
+    words_b = set(b.lower().split())
+    jaccard = len(words_a & words_b) / len(words_a | words_b) if (words_a | words_b) else 0.0
+    return max(char_sim, jaccard)
