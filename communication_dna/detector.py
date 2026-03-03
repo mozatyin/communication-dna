@@ -65,17 +65,29 @@ Guidelines:
 CALIBRATION GUIDELINES:
 - Be precise. Use the anchor descriptions to calibrate your scores.
 - A score of 0.25 should match the 0.25 anchor, 0.50 the 0.50 anchor, etc.
+- COUNT BEFORE SCORING: For countable features, literally count instances before assigning a score.
 - Common scoring errors to avoid:
   * Technical jargon alone does NOT mean high formality. Formality depends on sentence \
 structure (contractions? passive voice?), register, and vocabulary formality. A text can be \
 highly technical (jargon=0.9) but only moderately formal (formality=0.6) if it uses contractions \
 and conversational structure.
-  * Hedging words ('maybe', 'I think') should be counted literally. 3-4 hedges across a long \
-text is moderate (~0.30), not high. Reserve 0.70+ for texts where MOST statements are hedged.
+  * HEDGING vs FILLERS: Hedging = epistemic uncertainty ('maybe', 'perhaps', 'probably', \
+'I think', 'it seems', 'might be'). Casual fillers ('like', 'you know', 'I mean', 'I guess', \
+'kinda') are NOT hedging — they are colloquialism markers. Count ONLY true hedge words. \
+3-4 hedges across a long text is moderate (~0.30), not high. Reserve 0.70+ for texts where \
+MOST statements are hedged with uncertainty markers.
   * Emotion words need literal counting. If a text mentions feelings/emotions in 2-3 sentences \
 out of 10, that is moderate (~0.50), not high. Reserve 0.80+ for texts saturated with emotion words.
   * Sentence length should be estimated by counting actual words. 10-15 words average is low-moderate \
 (~0.30), 15-20 is moderate (~0.50), 20-25 is moderately high (~0.65).
+  * ELLIPSIS: Count all instances of '...' and syntactically incomplete/trailing sentences. \
+0=0.00, 1-2=0.15-0.30, 3-5=0.40-0.60, 6-8=0.65-0.80, 9+=0.85+.
+  * METACOMMENTARY: Count comments about HOW the speaker is communicating ('I\'m not explaining \
+this well', 'does that make sense?', 'sorry I\'m rambling'). 0=0.00, 1=0.20-0.30, \
+2=0.40-0.55, 3+=0.65+. Hedging ('I think') is NOT metacommentary.
+  * VULNERABILITY: Sharing a worry/concern = moderate (0.40-0.60). Deep emotional exposure \
+(fears, shame, trauma, crying) = high (0.75+). Do not inflate vulnerability just because \
+the topic is personal.
   * Mid-range scores (0.35-0.65) are valid and often correct. Do not default to extremes.
 """
 
@@ -88,7 +100,8 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         "## Scoring Calibration Examples\n\n"
         "Example A — very casual, short sentences:\n"
         '"yo so like the thing is kinda messed up lol gonna try to fix it maybe"\n'
-        "→ formality=0.05, colloquialism=0.95, sentence_length=0.15, sentence_complexity=0.10\n\n"
+        "→ formality=0.05, colloquialism=0.95, sentence_length=0.15, sentence_complexity=0.10\n"
+        "→ hedging_frequency=0.15 (only 'maybe' is a true hedge; 'like' and 'kinda' are casual fillers, NOT hedges)\n\n"
         "Example B — formal academic, long sentences:\n"
         '"The proposed methodology demonstrates significant advantages in computational efficiency, '
         'particularly when one considers the scalability constraints inherent in distributed systems."\n'
@@ -97,7 +110,20 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         '"So basically you need to shard the database index — it\'s just a B-tree lookup, '
         'nothing fancy. The bottleneck is gonna be your I/O throughput."\n'
         "→ formality=0.35, jargon_density=0.80, colloquialism=0.65, sentence_length=0.40\n"
-        "Note: high jargon does NOT automatically mean high formality.\n"
+        "Note: high jargon does NOT automatically mean high formality.\n\n"
+        "Example D — casual text with LOW hedging despite filler words:\n"
+        '"Like, dude, I totally nailed that presentation, you know? I mean, it was honestly '
+        'pretty awesome and everyone loved it. I guess that makes sense though."\n'
+        "→ hedging_frequency=0.15, colloquialism=0.90\n"
+        "CRITICAL: 'like', 'you know', 'I mean' are CASUAL FILLERS, not hedges. "
+        "Only count epistemic uncertainty markers as hedging: 'maybe', 'perhaps', 'probably', "
+        "'I think', 'it seems', 'might', 'could be'. A confident statement with filler words = LOW hedging.\n\n"
+        "Example E — ellipsis counting:\n"
+        '"So I was thinking... maybe we could try... I don\'t know... it\'s just that '
+        'the whole thing feels... off somehow"\n'
+        "→ ellipsis_frequency=0.75 (4 instances of '...')\n"
+        "Count '...' and trailing-off sentences literally: "
+        "0=0.0, 1-2=0.15-0.30, 3-5=0.40-0.60, 6-8=0.65-0.80, 9+=0.85+\n"
     ),
     "DIS,PRA": (
         "## Scoring Calibration Examples\n\n"
@@ -132,21 +158,43 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         "→ feedback_signal_frequency=0.80\n"
         "Note: feedback_signal_frequency measures backchannel markers (yeah, right, I see, mm-hmm, "
         "exactly, totally, got it, for sure). Count them literally across the text. "
-        "3-4 across a long text is moderate (~0.40-0.50), 6-8 is high (~0.70).\n"
+        "3-4 across a long text is moderate (~0.40-0.50), 6-8 is high (~0.70).\n\n"
+        "Example E — moderate vulnerability (sharing a concern, NOT deep exposure):\n"
+        '"I\'ve been a bit stressed about the project deadline honestly. It\'s keeping me up some nights. '
+        'But I think we\'ll figure it out."\n'
+        "→ vulnerability_willingness=0.50, disclosure_depth=0.45\n"
+        "IMPORTANT: Sharing a worry or concern = 0.40-0.60 vulnerability. "
+        "Reserve 0.75+ for deep emotional exposure (fears, trauma, shame, crying). "
+        "Simply mentioning stress or worry is MODERATE, not high.\n\n"
+        "Example F — high vulnerability (deep emotional exposure):\n"
+        '"I need to be honest... I\'ve been really struggling with depression lately. Some days I can\'t '
+        'get out of bed. I feel like I\'m failing everyone around me and I don\'t know how to ask for help."\n'
+        "→ vulnerability_willingness=0.85, disclosure_depth=0.80, emotion_word_density=0.75\n"
+        "Note: disclosure_depth follows the same pattern — mentioning a topic = 0.40-0.55, "
+        "sharing personal details/feelings about it = 0.60-0.75, deep intimate exposure = 0.80+.\n"
     ),
     "IDN,MET,TMP": (
         "## Scoring Calibration Examples\n\n"
         "Example A — high self-correction and metacommentary:\n"
         '"Well, actually no, let me rephrase that — I\'m not explaining this well. '
-        'What I mean is... okay so basically I keep going back and forth on this."\n'
-        "→ self_correction_frequency=0.85, metacommentary=0.80\n\n"
-        "Example B — moderate metacommentary (~0.50):\n"
-        '"I\'ve been thinking about this, and honestly I\'m not sure I\'m the best person to weigh in. '
-        'But from what I can tell, the project seems solid overall."\n'
-        "→ metacommentary=0.50 (one brief self-aware comment in an otherwise normal text)\n"
-        "Note: a single 'I\'m not sure I\'m explaining this well' in a long text is LOW (~0.25-0.35). "
-        "Reserve 0.70+ for texts with MULTIPLE meta-comments (3+) about how they\'re communicating.\n\n"
-        "Example C — moderate definition tendency:\n"
+        'What I mean is... okay so basically I keep going back and forth on this. '
+        'Sorry, I\'m rambling. Does that even make sense?"\n'
+        "→ self_correction_frequency=0.85, metacommentary=0.80\n"
+        "Note: This has 3+ meta-comments ('not explaining well', 'I\'m rambling', 'does that make sense') "
+        "= HIGH metacommentary (0.75+).\n\n"
+        "Example B — LOW metacommentary (~0.25):\n"
+        '"I think the project is going well overall. The team has been productive and we\'re on track '
+        'for the deadline. Not sure I\'m the best judge of the design choices though."\n'
+        "→ metacommentary=0.25\n"
+        "Note: ONE brief self-aware aside ('not sure I\'m the best judge') in an otherwise normal text "
+        "= LOW (~0.20-0.30). This is NOT moderate.\n\n"
+        "Example C — MODERATE metacommentary (~0.50):\n"
+        '"I\'ve been thinking about this a lot. Honestly I\'m not sure I\'m explaining my reasoning well, '
+        'but basically the architecture needs work. Let me try to put it differently — the coupling is too tight."\n'
+        "→ metacommentary=0.50\n"
+        "Note: TWO meta-comments ('not sure I\'m explaining well', 'let me try to put it differently') "
+        "= MODERATE (~0.45-0.55). Count the instances.\n\n"
+        "Example D — moderate definition tendency:\n"
         '"A load balancer — that\'s basically a traffic cop for your servers — distributes requests evenly."\n'
         "→ definition_tendency=0.60\n"
         "Note: providing ONE definition in a text is moderate (~0.50-0.65), not high. "
