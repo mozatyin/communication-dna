@@ -1,6 +1,6 @@
 [project]
 name = "communication-dna"
-version = "0.1.0"
+version = "1.0.0"
 description = "Human communication style feature vector system"
 requires-python = ">=3.12"
 dependencies = [

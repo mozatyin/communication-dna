@@ -87,7 +87,7 @@ class SampleSummary(BaseModel):
 class CommunicationDNA(BaseModel):
     """Complete communication style profile for one person."""
     id: str
-    version: str = "0.1"
+    version: str = "1.0"
     created: Optional[datetime] = None
     updated: Optional[datetime] = None
 

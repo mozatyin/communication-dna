@@ -4,7 +4,9 @@ import os
 import json
 import statistics
 import sys
+from pathlib import Path
 
+from communication_dna.catalog import ALL_DIMENSIONS
 from communication_dna.models import CommunicationDNA, Feature, SampleSummary
 from communication_dna.speaker import Speaker
 from communication_dna.detector import Detector
@@ -130,20 +132,59 @@ PROFILES = {
     ]),
 }
 
+# ── 10 prompts (expanded from 4) ────────────────────────────────────────────
+
 PROMPTS = [
+    # Original 4
     "Explain your thoughts on remote work vs. office work",
     "Describe how you handle disagreements with coworkers",
     "Talk about a mistake you made and what you learned",
     "Give your opinion on whether AI will replace most jobs",
+    # New 6: targeted prompts
+    "Tell a funny story about something that happened to you recently",         # humor_frequency
+    "Walk me through how a database index works",                               # jargon_density, definition_tendency
+    "React: your best friend just got their dream job after years of trying",   # empathy, emotion
+    "Quick message to a friend about dinner plans tonight",                     # emoji, ellipsis, short sentences
+    "Explain why you disagree with a popular opinion",                          # directness, argumentation
+    "Describe something you're genuinely worried about right now",              # vulnerability, disclosure, hedging
 ]
 
 
-def run_eval(api_key: str):
+def _detect_with_averaging(
+    detector: Detector,
+    conversation: str,
+    profile_name: str,
+    n_samples: int = 2,
+) -> dict[str, float]:
+    """Run detection n_samples times and average the results."""
+    accumulated: dict[str, list[float]] = {}
+
+    for i in range(n_samples):
+        detected = detector.analyze(
+            text=conversation,
+            speaker_id=f"eval_{profile_name}_s{i}",
+            speaker_label="Speaker",
+        )
+        for f in detected.features:
+            key = f"{f.dimension}:{f.name}"
+            accumulated.setdefault(key, []).append(f.value)
+
+    return {key: statistics.mean(vals) for key, vals in accumulated.items()}
+
+
+def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2):
     speaker = Speaker(api_key=api_key)
     detector = Detector(api_key=api_key)
 
     all_errors: list[float] = []
+    dim_errors: dict[str, list[float]] = {}  # per-dimension error tracking
     results: dict[str, dict] = {}
+
+    # Load baseline if provided
+    baseline: dict | None = None
+    if baseline_path and Path(baseline_path).exists():
+        baseline = json.loads(Path(baseline_path).read_text())
+        print(f"  Loaded baseline from {baseline_path}")
 
     for profile_name, profile in PROFILES.items():
         print(f"\n{'='*60}")
@@ -160,19 +201,10 @@ def run_eval(api_key: str):
         word_count = len(conversation.split())
         print(f"done ({word_count} words)")
 
-        # Detect
-        print("  Detecting features...", end=" ", flush=True)
-        detected = detector.analyze(
-            text=conversation,
-            speaker_id=f"eval_{profile_name}",
-            speaker_label="Speaker",
-        )
+        # Detect with multi-sample averaging
+        print(f"  Detecting features ({n_samples} samples)...", end=" ", flush=True)
+        detected_map = _detect_with_averaging(detector, conversation, profile_name, n_samples)
         print("done")
-
-        # Build lookup of detected features
-        detected_map: dict[str, float] = {}
-        for f in detected.features:
-            detected_map[f"{f.dimension}:{f.name}"] = f.value
 
         # Compare
         profile_errors: list[float] = []
@@ -191,22 +223,37 @@ def run_eval(api_key: str):
             profile_errors.append(error)
             all_errors.append(error)
 
+            # Track per-dimension errors
+            dim = key.split(":")[0]
+            dim_errors.setdefault(dim, []).append(error)
+
             status = "OK" if error <= 0.25 else "MISS" if error <= 0.4 else "BAD"
+
+            # Compute delta from baseline if available
+            delta_str = ""
+            if baseline and profile_name in baseline:
+                bl_features = baseline[profile_name].get("features", [])
+                bl_match = next((f for f in bl_features if f["feature"] == key), None)
+                if bl_match:
+                    delta = error - bl_match["error"]
+                    delta_str = f"  Δ{delta:+.2f}"
+
             feature_results.append({
                 "feature": key,
                 "original": original_val,
-                "detected": detected_val,
-                "error": error,
+                "detected": round(detected_val, 3),
+                "error": round(error, 3),
                 "status": status,
+                "delta": delta_str,
             })
 
         # Sort by error descending
         feature_results.sort(key=lambda x: -x["error"])
 
-        print(f"\n  {'Feature':<35} {'Orig':>6} {'Det':>6} {'Err':>6}  Status")
-        print(f"  {'-'*35} {'-'*6} {'-'*6} {'-'*6}  {'-'*6}")
+        print(f"\n  {'Feature':<35} {'Orig':>6} {'Det':>6} {'Err':>6}  Status{' Δv0.1' if baseline else ''}")
+        print(f"  {'-'*35} {'-'*6} {'-'*6} {'-'*6}  {'-'*6}{'------' if baseline else ''}")
         for r in feature_results:
-            print(f"  {r['feature']:<35} {r['original']:>6.2f} {r['detected']:>6.2f} {r['error']:>6.2f}  {r['status']}")
+            print(f"  {r['feature']:<35} {r['original']:>6.2f} {r['detected']:>6.2f} {r['error']:>6.3f}  {r['status']}{r['delta']}")
 
         mae = statistics.mean(profile_errors) if profile_errors else float("nan")
         within_025 = sum(1 for e in profile_errors if e <= 0.25)
@@ -222,6 +269,17 @@ def run_eval(api_key: str):
             "total": total,
             "features": feature_results,
         }
+
+    # ── Per-dimension MAE report ───────────────────────────────────────────
+    print(f"\n{'='*60}")
+    print(f"  PER-DIMENSION MAE")
+    print(f"{'='*60}")
+    print(f"\n  {'Dimension':<35} {'MAE':>6} {'Count':>6}")
+    print(f"  {'-'*35} {'-'*6} {'-'*6}")
+    for dim_code in sorted(dim_errors.keys()):
+        errors = dim_errors[dim_code]
+        dim_label = f"{dim_code} ({ALL_DIMENSIONS.get(dim_code, '?')})"
+        print(f"  {dim_label:<35} {statistics.mean(errors):>6.3f} {len(errors):>6}")
 
     # ── Overall summary ───────────────────────────────────────────────────
     print(f"\n{'='*60}")
@@ -241,6 +299,28 @@ def run_eval(api_key: str):
     print(f"  Features within 0.25: {overall_025}/{total_features} ({100*overall_025/total_features:.1f}%)")
     print(f"  Features within 0.40: {overall_04}/{total_features} ({100*overall_04/total_features:.1f}%)")
 
+    # ── Baseline comparison ───────────────────────────────────────────────
+    if baseline:
+        bl_mae = baseline.get("_overall", {}).get("mae")
+        if bl_mae is not None:
+            print(f"\n  v0.1 baseline MAE: {bl_mae:.3f} → v0.2 MAE: {overall_mae:.3f} (Δ{overall_mae - bl_mae:+.3f})")
+
+    # ── Save results for future comparison ────────────────────────────────
+    version_tag = "v1.0"  # Update per release
+    output_path = Path(f"eval_results_{version_tag}.json")
+    save_data = dict(results)
+    save_data["_overall"] = {
+        "mae": overall_mae,
+        "within_025": overall_025,
+        "within_04": overall_04,
+        "total": total_features,
+    }
+    save_data["_dim_mae"] = {
+        dim: statistics.mean(errs) for dim, errs in dim_errors.items()
+    }
+    output_path.write_text(json.dumps(save_data, indent=2, default=str))
+    print(f"\n  Results saved to {output_path}")
+
     return results
 
 
@@ -249,4 +329,7 @@ if __name__ == "__main__":
     if not api_key:
         print("Set ANTHROPIC_API_KEY env var to run evaluation.")
         sys.exit(1)
-    run_eval(api_key)
+
+    baseline_path = sys.argv[1] if len(sys.argv) > 1 else None
+    n_samples = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+    run_eval(api_key, baseline_path=baseline_path, n_samples=n_samples)

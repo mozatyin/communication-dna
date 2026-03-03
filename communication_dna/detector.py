@@ -16,33 +16,193 @@ from communication_dna.models import (
 )
 
 
+# ── Batch definitions: group features by related dimensions ──────────────────
+
+DIMENSION_BATCHES: list[list[str]] = [
+    ["LEX", "SYN"],           # Batch 1: word choice + sentence structure (9 features)
+    ["DIS", "PRA"],           # Batch 2: discourse + pragmatics (9 features)
+    ["AFF", "INT", "DSC"],    # Batch 3: emotion + interaction + disclosure (11 features)
+    ["IDN", "MET", "TMP"],    # Batch 4: identity + metalingual + temporal (9 features)
+    ["ERR", "CSW", "PTX"],    # Batch 5: errors + code-switching + para-textual (9 features)
+]
+
+
 _SYSTEM_PROMPT = """\
-You are a communication style analyst. Given a conversation transcript and a target speaker, \
-analyze that speaker's communication style across all provided feature dimensions.
+You are a communication style analyst. Given a conversation transcript, a target speaker, \
+and a set of feature dimensions to analyze, you must:
 
-For each feature, return:
-- value: float [0.0, 1.0] based on the anchors provided
-- intensity: float [0.0, 1.0] how prominent this feature is in their speech
-- confidence: float [0.0, 1.0] your confidence in the assessment
-- usage_probability: float [0.0, 1.0] how likely this feature appears in their speech
-- stability: "stable" | "context_dependent" | "volatile"
-- evidence: one short quote from the text supporting your assessment
+1. First, for EACH feature, list specific text observations (quotes, patterns, counts) \
+that inform your assessment.
+2. Then, provide a numeric score based on the anchor descriptions.
 
-Return ONLY valid JSON — an array of feature objects. No markdown, no explanation.
+Return ONLY valid JSON with this structure:
+{
+  "reasoning": [
+    {"feature": "<name>", "observations": ["observation 1", "observation 2", ...]}
+  ],
+  "scores": [
+    {
+      "dimension": "<DIM>",
+      "name": "<feature_name>",
+      "value": <float 0.0-1.0>,
+      "intensity": <float 0.0-1.0>,
+      "confidence": <float 0.0-1.0>,
+      "usage_probability": <float 0.0-1.0>,
+      "stability": "stable" | "context_dependent" | "volatile",
+      "evidence_quote": "<short quote>"
+    }
+  ]
+}
+
+Guidelines:
+- value: your assessment on the 0.0-1.0 scale, using the provided anchors as calibration points
+- intensity: how prominent/noticeable this feature is in the speaker's text
+- confidence: how certain you are (lower if insufficient evidence)
+- usage_probability: how consistently this feature appears across the text
+- stability: whether the feature is consistent or varies by context
+- evidence_quote: a short direct quote from the text supporting your score
+
+CALIBRATION GUIDELINES:
+- Be precise. Use the anchor descriptions to calibrate your scores.
+- A score of 0.25 should match the 0.25 anchor, 0.50 the 0.50 anchor, etc.
+- Common scoring errors to avoid:
+  * Technical jargon alone does NOT mean high formality. Formality depends on sentence \
+structure (contractions? passive voice?), register, and vocabulary formality. A text can be \
+highly technical (jargon=0.9) but only moderately formal (formality=0.6) if it uses contractions \
+and conversational structure.
+  * Hedging words ('maybe', 'I think') should be counted literally. 3-4 hedges across a long \
+text is moderate (~0.30), not high. Reserve 0.70+ for texts where MOST statements are hedged.
+  * Emotion words need literal counting. If a text mentions feelings/emotions in 2-3 sentences \
+out of 10, that is moderate (~0.50), not high. Reserve 0.80+ for texts saturated with emotion words.
+  * Sentence length should be estimated by counting actual words. 10-15 words average is low-moderate \
+(~0.30), 15-20 is moderate (~0.50), 20-25 is moderately high (~0.65).
+  * Mid-range scores (0.35-0.65) are valid and often correct. Do not default to extremes.
 """
 
 
+# ── Few-shot calibration examples per batch ─────────────────────────────────
+# Short text snippets with known scores to ground the detector's scoring.
+
+_BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
+    "LEX,SYN": (
+        "## Scoring Calibration Examples\n\n"
+        "Example A — very casual, short sentences:\n"
+        '"yo so like the thing is kinda messed up lol gonna try to fix it maybe"\n'
+        "→ formality=0.05, colloquialism=0.95, sentence_length=0.15, sentence_complexity=0.10\n\n"
+        "Example B — formal academic, long sentences:\n"
+        '"The proposed methodology demonstrates significant advantages in computational efficiency, '
+        'particularly when one considers the scalability constraints inherent in distributed systems."\n'
+        "→ formality=0.95, vocabulary_richness=0.90, sentence_length=0.80, sentence_complexity=0.85\n\n"
+        "Example C — technical but casual structure:\n"
+        '"So basically you need to shard the database index — it\'s just a B-tree lookup, '
+        'nothing fancy. The bottleneck is gonna be your I/O throughput."\n'
+        "→ formality=0.35, jargon_density=0.80, colloquialism=0.65, sentence_length=0.40\n"
+        "Note: high jargon does NOT automatically mean high formality.\n"
+    ),
+    "DIS,PRA": (
+        "## Scoring Calibration Examples\n\n"
+        "Example A — very direct, no humor:\n"
+        '"The deadline is Friday. Send the report by 3pm. No exceptions."\n'
+        "→ directness=0.95, humor_frequency=0.00, politeness_strategy=0.10\n\n"
+        "Example B — indirect, polite, hedged:\n"
+        '"I was wondering if maybe we could perhaps look into adjusting the timeline? '
+        'No pressure at all, just a thought!"\n'
+        "→ directness=0.10, politeness_strategy=0.90, humor_frequency=0.05\n\n"
+        "Example C — moderate directness with light humor:\n"
+        '"I think we should go with option B — it\'s simpler and honestly the other one '
+        'gave me a headache just reading it. But hey, I\'m open to other ideas."\n'
+        "→ directness=0.60, humor_frequency=0.40, politeness_strategy=0.50\n"
+    ),
+    "AFF,INT,DSC": (
+        "## Scoring Calibration Examples\n\n"
+        "Example A — emotionally saturated, high empathy:\n"
+        '"Oh my heart just breaks for you, I\'m so sorry you\'re going through this. '
+        'I totally understand that feeling of being completely overwhelmed and scared."\n'
+        "→ emotion_word_density=0.90, empathy_expression=0.95, vulnerability_willingness=0.70\n\n"
+        "Example B — factual with minimal emotion:\n"
+        '"The results indicate a 15% decrease in throughput. We should investigate the cause."\n'
+        "→ emotion_word_density=0.05, empathy_expression=0.05, question_frequency=0.10\n\n"
+        "Example C — moderate emotion, some questions:\n"
+        '"That\'s interesting, and I appreciate you sharing. How did that make you feel? '
+        'I think there\'s something worth exploring there."\n'
+        "→ emotion_word_density=0.45, empathy_expression=0.55, question_frequency=0.60\n\n"
+        "Example D — high feedback signals (backchannels):\n"
+        '"Right, I see what you mean. Yeah, that totally makes sense. Exactly — and I think '
+        'the way you handled it was spot on. Mm-hmm, I get that."\n'
+        "→ feedback_signal_frequency=0.80\n"
+        "Note: feedback_signal_frequency measures backchannel markers (yeah, right, I see, mm-hmm, "
+        "exactly, totally, got it, for sure). Count them literally across the text. "
+        "3-4 across a long text is moderate (~0.40-0.50), 6-8 is high (~0.70).\n"
+    ),
+    "IDN,MET,TMP": (
+        "## Scoring Calibration Examples\n\n"
+        "Example A — high self-correction and metacommentary:\n"
+        '"Well, actually no, let me rephrase that — I\'m not explaining this well. '
+        'What I mean is... okay so basically I keep going back and forth on this."\n'
+        "→ self_correction_frequency=0.85, metacommentary=0.80\n\n"
+        "Example B — moderate metacommentary (~0.50):\n"
+        '"I\'ve been thinking about this, and honestly I\'m not sure I\'m the best person to weigh in. '
+        'But from what I can tell, the project seems solid overall."\n'
+        "→ metacommentary=0.50 (one brief self-aware comment in an otherwise normal text)\n"
+        "Note: a single 'I\'m not sure I\'m explaining this well' in a long text is LOW (~0.25-0.35). "
+        "Reserve 0.70+ for texts with MULTIPLE meta-comments (3+) about how they\'re communicating.\n\n"
+        "Example C — moderate definition tendency:\n"
+        '"A load balancer — that\'s basically a traffic cop for your servers — distributes requests evenly."\n'
+        "→ definition_tendency=0.60\n"
+        "Note: providing ONE definition in a text is moderate (~0.50-0.65), not high. "
+        "Reserve 0.80+ for texts that define MOST technical terms they use.\n"
+    ),
+    "ERR,CSW,PTX": (
+        "## Scoring Calibration Examples\n\n"
+        "Example A — heavy emoji and expressive punctuation:\n"
+        '"OMG that is SO amazing!!! 🎉🎉🎉 I literally can\'t even!!! 😍"\n'
+        "→ emoji_usage=0.95, expressive_punctuation=0.95, grammar_deviation=0.40\n\n"
+        "Example B — no emoji, clean punctuation:\n"
+        '"The analysis reveals three key findings, each of which merits further investigation."\n'
+        "→ emoji_usage=0.00, expressive_punctuation=0.00, grammar_deviation=0.00\n\n"
+        "Example C — moderate emoji (2-3 in a paragraph):\n"
+        '"Had a great time at the meetup today 😊 Really enjoyed the talk on distributed systems. '
+        'The food was decent too 👍"\n'
+        "→ emoji_usage=0.40, expressive_punctuation=0.10\n"
+    ),
+}
+
+
+def _get_calibration_examples(batch_dims: list[str]) -> str:
+    """Get few-shot calibration examples for a batch."""
+    key = ",".join(batch_dims)
+    return _BATCH_CALIBRATION_EXAMPLES.get(key, "")
+
+
 def _build_feature_prompt(features: list[dict]) -> str:
+    """Build a prompt section describing features to analyze, with all anchor levels."""
     lines = ["Analyze these features:\n"]
     for f in features:
+        anchors = f["value_anchors"]
+        anchor_lines = []
+        for key in ["0.0", "0.25", "0.50", "0.75", "1.0"]:
+            if key in anchors:
+                anchor_lines.append(f"    {key} = {anchors[key]}")
+
         lines.append(
             f"- dimension: {f['dimension']}, name: {f['name']}\n"
             f"  description: {f['description']}\n"
             f"  detection_hint: {f['detection_hint']}\n"
-            f"  value 0.0 = {f['value_anchors']['0.0']}\n"
-            f"  value 1.0 = {f['value_anchors']['1.0']}\n"
+            f"  anchors:\n" + "\n".join(anchor_lines)
         )
+
+        # Include correlation hints if available
+        if "correlation_hints" in f:
+            lines.append(f"  correlations: {f['correlation_hints']}")
+
+        lines.append("")  # blank line between features
+
     return "\n".join(lines)
+
+
+def _get_features_for_batch(batch_dims: list[str]) -> list[dict]:
+    """Get catalog features for a batch of dimensions."""
+    return [f for f in FEATURE_CATALOG if f["dimension"] in batch_dims]
 
 
 class Detector:
@@ -62,41 +222,64 @@ class Detector:
         speaker_label: str,
         context: str = "general",
     ) -> CommunicationDNA:
-        """Analyze a conversation and return a CommunicationDNA profile for the target speaker."""
+        """Analyze a conversation and return a CommunicationDNA profile for the target speaker.
 
-        feature_prompt = _build_feature_prompt(FEATURE_CATALOG)
-        user_message = (
-            f"## Conversation Transcript\n\n{text}\n\n"
-            f"## Target Speaker\n\nAnalyze speaker labeled '{speaker_label}'.\n\n"
-            f"{feature_prompt}\n\n"
-            f"Return a JSON array of objects, each with keys: "
-            f"dimension, name, value, intensity, confidence, usage_probability, stability, evidence_quote"
-        )
+        Internally runs 5 batched LLM calls (one per dimension group) with chain-of-thought
+        reasoning, then merges all features into a single profile.
+        """
 
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=16384,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
-        )
+        all_features: list[Feature] = []
 
-        raw = response.content[0].text
-        parsed = _parse_json_response(raw)
+        for batch_dims in DIMENSION_BATCHES:
+            batch_features = _get_features_for_batch(batch_dims)
+            if not batch_features:
+                continue
 
-        features: list[Feature] = []
-        for item in parsed:
-            features.append(
-                Feature(
-                    dimension=item["dimension"],
-                    name=item["name"],
-                    value=_clamp(item["value"]),
-                    intensity=_clamp(item["intensity"]),
-                    confidence=_clamp(item["confidence"]),
-                    usage_probability=_clamp(item["usage_probability"]),
-                    stability=item.get("stability", "stable"),
-                    evidence=[Evidence(text=item.get("evidence_quote", ""), source="input_text")],
-                )
+            dim_labels = ", ".join(
+                f"{d} ({ALL_DIMENSIONS.get(d, d)})" for d in batch_dims
             )
+            feature_prompt = _build_feature_prompt(batch_features)
+
+            # Include few-shot calibration examples for this batch
+            calibration = _get_calibration_examples(batch_dims)
+            calibration_section = f"\n{calibration}\n" if calibration else ""
+
+            user_message = (
+                f"## Conversation Transcript\n\n{text}\n\n"
+                f"## Target Speaker\n\nAnalyze speaker labeled '{speaker_label}'.\n\n"
+                f"## Dimensions to Analyze: {dim_labels}\n\n"
+                f"{feature_prompt}\n\n"
+                f"{calibration_section}"
+                f"Return JSON with 'reasoning' and 'scores' arrays as specified. "
+                f"Analyze ONLY the {len(batch_features)} features listed above."
+            )
+
+            response = self._client.messages.create(
+                model=self._model,
+                max_tokens=8192,
+                system=_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_message}],
+            )
+
+            raw = response.content[0].text
+            parsed = _parse_batch_response(raw)
+
+            for item in parsed:
+                all_features.append(
+                    Feature(
+                        dimension=item["dimension"],
+                        name=item["name"],
+                        value=_clamp(item["value"]),
+                        intensity=_clamp(item["intensity"]),
+                        confidence=_clamp(item["confidence"]),
+                        usage_probability=_clamp(item["usage_probability"]),
+                        stability=item.get("stability", "stable"),
+                        evidence=[Evidence(text=item.get("evidence_quote", ""), source="input_text")],
+                    )
+                )
+
+        # Post-process: validate consistency across batches
+        all_features = _validate_consistency(all_features)
 
         token_count = len(text.split())
         return CommunicationDNA(
@@ -106,47 +289,137 @@ class Detector:
                 conversation_count=1,
                 date_range=["unknown", "unknown"],
                 contexts=[context],
-                confidence_overall=sum(f.confidence for f in features) / max(len(features), 1),
+                confidence_overall=sum(f.confidence for f in all_features) / max(len(all_features), 1),
             ),
-            features=features,
+            features=all_features,
         )
 
 
-def _parse_json_response(raw: str) -> list[dict]:
-    """Parse JSON from LLM response, handling common issues."""
+def _parse_batch_response(raw: str) -> list[dict]:
+    """Parse a batch response that contains reasoning + scores."""
     # Strip markdown fences
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
 
+    # Try parsing as the expected {reasoning, scores} structure
     try:
-        return json.loads(raw)
+        data = json.loads(raw)
+        if isinstance(data, dict) and "scores" in data:
+            return data["scores"]
+        if isinstance(data, list):
+            return data
     except json.JSONDecodeError:
         pass
 
-    # Try truncating to last complete object in the array
+    # Try truncating to last complete object
     last_brace = raw.rfind("}")
     if last_brace != -1:
-        truncated = raw[: last_brace + 1].rstrip().rstrip(",") + "\n]"
-        # Ensure it starts with [
+        # Find the outermost structure
+        start = raw.find("{")
+        if start != -1:
+            try:
+                data = json.loads(raw[start: last_brace + 1])
+                if isinstance(data, dict) and "scores" in data:
+                    return data["scores"]
+            except json.JSONDecodeError:
+                pass
+
+        # Try as array
         start = raw.find("[")
         if start != -1:
-            truncated = raw[start : last_brace + 1].rstrip().rstrip(",") + "\n]"
-        try:
-            return json.loads(truncated)
-        except json.JSONDecodeError:
-            pass
+            truncated = raw[start: last_brace + 1].rstrip().rstrip(",") + "\n]"
+            try:
+                return json.loads(truncated)
+            except json.JSONDecodeError:
+                pass
 
     # Last resort: extract individual objects with regex
     objects = []
     for m in re.finditer(r'\{[^{}]*\}', raw):
         try:
-            objects.append(json.loads(m.group()))
+            obj = json.loads(m.group())
+            # Only include objects that look like score entries
+            if "dimension" in obj and "name" in obj and "value" in obj:
+                objects.append(obj)
         except json.JSONDecodeError:
             continue
     if objects:
         return objects
 
     raise ValueError(f"Could not parse JSON from LLM response: {raw[:200]}...")
+
+
+def _validate_consistency(features: list[Feature]) -> list[Feature]:
+    """Check cross-feature correlations and resolve contradictions.
+
+    Rules:
+    - formality + colloquialism <= 1.3
+    - directness + hedging_frequency <= 1.3
+    - ellipsis_frequency > 0.7 => sentence_length < 0.5
+    When violated, reduce the lower-confidence feature.
+    """
+    fmap: dict[str, Feature] = {f.name: f for f in features}
+
+    # Rule 1: formality + colloquialism <= 1.3
+    _apply_sum_constraint(fmap, "formality", "colloquialism", 1.3)
+
+    # Rule 2: directness + hedging_frequency <= 1.3
+    _apply_sum_constraint(fmap, "directness", "hedging_frequency", 1.3)
+
+    # Rule 3: high ellipsis => short sentences
+    if "ellipsis_frequency" in fmap and "sentence_length" in fmap:
+        ell = fmap["ellipsis_frequency"]
+        sl = fmap["sentence_length"]
+        if ell.value > 0.7 and sl.value >= 0.5:
+            # Reduce sentence_length if ellipsis confidence is higher
+            if ell.confidence >= sl.confidence:
+                new_val = min(sl.value, 0.45)
+                fmap["sentence_length"] = Feature(
+                    dimension=sl.dimension, name=sl.name, value=new_val,
+                    intensity=sl.intensity, confidence=sl.confidence * 0.9,
+                    usage_probability=sl.usage_probability, stability=sl.stability,
+                    evidence=sl.evidence,
+                )
+            else:
+                new_val = min(ell.value, 0.65)
+                fmap["ellipsis_frequency"] = Feature(
+                    dimension=ell.dimension, name=ell.name, value=new_val,
+                    intensity=ell.intensity, confidence=ell.confidence * 0.9,
+                    usage_probability=ell.usage_probability, stability=ell.stability,
+                    evidence=ell.evidence,
+                )
+
+    return list(fmap.values())
+
+
+def _apply_sum_constraint(
+    fmap: dict[str, Feature], name_a: str, name_b: str, max_sum: float
+) -> None:
+    """If two features sum exceeds max_sum, reduce the lower-confidence one."""
+    if name_a not in fmap or name_b not in fmap:
+        return
+    fa, fb = fmap[name_a], fmap[name_b]
+    total = fa.value + fb.value
+    if total <= max_sum:
+        return
+    excess = total - max_sum
+    # Reduce the feature with lower confidence
+    if fa.confidence < fb.confidence:
+        new_val = max(0.0, fa.value - excess)
+        fmap[name_a] = Feature(
+            dimension=fa.dimension, name=fa.name, value=new_val,
+            intensity=fa.intensity, confidence=fa.confidence * 0.9,
+            usage_probability=fa.usage_probability, stability=fa.stability,
+            evidence=fa.evidence,
+        )
+    else:
+        new_val = max(0.0, fb.value - excess)
+        fmap[name_b] = Feature(
+            dimension=fb.dimension, name=fb.name, value=new_val,
+            intensity=fb.intensity, confidence=fb.confidence * 0.9,
+            usage_probability=fb.usage_probability, stability=fb.stability,
+            evidence=fb.evidence,
+        )
 
 
 def _clamp(v: float) -> float:
