@@ -220,7 +220,9 @@ as a sequential step, not a further decomposition. "decomposes_to" requires pare
 
 ### Common Mistakes:
 - OVER-GENERATING NODES: Only extract intentions the speaker explicitly states or strongly implies. \
-Aim for 3-6 nodes for a typical conversation, not 7+.
+Aim for 3-5 nodes for a typical short conversation. Do NOT create nodes for minor details, \
+intermediate steps the speaker doesn't mention, or the advisor's suggestions. \
+Ask: "Did the speaker actually EXPRESS this intention?" If not, don't include it.
 - LINEARIZING BRANCHES: When a speaker presents options ("either X or Y", "part of me... another part..."), \
 these are fan-out alternatives, NOT sequential steps. Connect them to the parent goal.
 - CONFUSING enables vs next_step: "enables" = B depends on A (prerequisite). \
