@@ -147,80 +147,80 @@ _FEW_SHOT_EXAMPLES = """\
 
 ## Calibration Examples
 
-### Example A — Decomposition chain (food ordering)
+### Example A — Therapy: goal decomposition with prerequisites
 
 Dialogue:
-Speaker: I'm craving sushi tonight. I think I'll order delivery.
-Advisor: Any restaurant in mind?
-Speaker: Not yet, I need to check what's available on DoorDash first.
+Speaker: I've been really anxious at work lately. I want to get it under control.
+Therapist: What have you tried so far?
+Speaker: Not much honestly. I think I need to learn some breathing techniques for when it hits. \
+And I really need to set boundaries with my boss about the overtime — I can't keep going like this. \
+Once I sort things out with my boss, I might even think about whether this job is right for me.
 
 Correct extraction:
-- Topology: SEQUENTIAL chain (goal → order → find restaurant)
-- Nodes: (1) "eat sushi tonight" [sp=0.5], (2) "order sushi delivery" [sp=0.6], \
-(3) "find sushi restaurant on DoorDash" [sp=0.7]
-- Edges: (1)-[decomposes_to]->(2): eating decomposes into ordering; \
-(2)-[decomposes_to]->(3): ordering requires finding a restaurant
-- End goal: int_001 "eat sushi tonight" — most abstract, everything else serves this
+- Topology: FAN-OUT from root with sequential follow-up
+- Nodes: (1) "manage work anxiety" [sp=0.3], (2) "learn breathing techniques" [sp=0.7], \
+(3) "set boundaries with boss about overtime" [sp=0.7], \
+(4) "consider whether to change jobs" [sp=0.5]
+- Edges: (1)-[decomposes_to]->(2): breathing techniques are part of managing anxiety; \
+(1)-[decomposes_to]->(3): setting boundaries is part of managing anxiety; \
+(3)-[next_step]->(4): "once I sort things out... might think about whether..."
+- End goal: int_001 "manage work anxiety"
 
-### Example B — Branching with alternatives
+### Example B — PRD: feature decomposition with enables
 
 Dialogue:
-Speaker: I've been thinking about getting into data science. I already took that Python course.
-Advisor: What's next?
-Speaker: I'm torn — I could either do a bootcamp or try to get an analyst role first. \
-If I go bootcamp I'd need to save up money first.
+Speaker: We need to build an auth system for the app. Users should be able to log in with email \
+and also with Google OAuth. Once we have basic login working, we need to add role-based access \
+so admins get different permissions. After that, I'd like to add 2FA for admin accounts.
+PM: Got it. Is email login the first priority?
+Speaker: Yes, we can't do RBAC until basic auth is working.
 
 Correct extraction:
-- Topology: MIXED — branching alternatives with a prerequisite
-- Nodes: (1) "transition into data science" [sp=0.4], (2) "completed Python course" [status=completed, sp=0.8], \
-(3) "attend data science bootcamp" [sp=0.6], (4) "get entry-level analyst role" [sp=0.5], \
-(5) "save money for bootcamp" [sp=0.5]
-- Edges: (3)-[alternative]->(4): "either...or" = mutually exclusive; \
-(5)-[enables]->(3): "need to save up money first" = prerequisite; \
-(2)-[enables]->(1): completed course enables career transition
-- End goal: int_001 "transition into data science"
+- Topology: MIXED — decomposition from root, enables chain, then sequential
+- Nodes: (1) "build auth system" [sp=0.4], (2) "email/password login" [sp=0.7], \
+(3) "Google OAuth login" [sp=0.8], (4) "role-based access control" [sp=0.7], \
+(5) "two-factor auth for admins" [sp=0.8]
+- Edges: (1)-[decomposes_to]->(2): login is a component of auth system; \
+(1)-[decomposes_to]->(3): OAuth is a component of auth system; \
+(2)-[enables]->(4): "can't do RBAC until basic auth is working" = prerequisite; \
+(4)-[next_step]->(5): "after that, add 2FA" = temporal sequence
+- End goal: int_001 "build auth system"
 
-### Example C — Fan-out alternatives (relationship repair)
+### Example C — Therapy: alternatives (either/or coping strategies)
 
 Dialogue:
-Speaker: Things have been tense with my partner since that argument. I want to make things right.
-Advisor: What are you thinking?
-Speaker: I'm not sure. Part of me thinks I should sit down and talk honestly about feelings. \
-But another part thinks we need space first. And if talking goes well, \
-maybe we could plan something special together.
+Speaker: I've been struggling since my mom passed. I don't know how to process it.
+Therapist: What feels like it might help?
+Speaker: My sister suggested we talk about old memories together. Or I could join \
+a grief support group — I'm not sure which would be better. Either way, I need to \
+let myself actually feel the sadness first before I can get back to my normal routine.
 
 Correct extraction:
-- Topology: FAN-OUT from root, with sequential follow-up
-- Nodes: (1) "repair relationship after argument" [sp=0.4], \
-(2) "have honest conversation about feelings" [sp=0.6], \
-(3) "give each other space first" [sp=0.5], \
-(4) "plan something meaningful together" [sp=0.6]
-- Edges: (1)-[alternative]->(2): "part of me thinks I should..." = option A; \
-(1)-[alternative]->(3): "another part thinks..." = option B (mutually exclusive with (2)); \
-(2)-[next_step]->(4): "if talking goes well, plan something" = temporal follow-up
-- End goal: int_001 "repair relationship"
-- CRITICAL: (2) and (3) are ALTERNATIVES, not decompositions. "Part of me... another part" \
-signals mutually exclusive options. Use "alternative" when the speaker is choosing between \
-approaches. Use "decomposes_to" only when sub-tasks are ALL needed (not either/or).
+- Topology: MIXED — alternatives with enables
+- Nodes: (1) "process grief" [sp=0.3], (2) "talk to sister about shared memories" [sp=0.7], \
+(3) "join grief support group" [sp=0.7], (4) "allow myself to feel sadness" [sp=0.5], \
+(5) "return to normal daily routine" [sp=0.5]
+- Edges: (2)-[alternative]->(3): "or I could..." = mutually exclusive options; \
+(4)-[enables]->(5): "need to feel sadness first before I can get back" = prerequisite
+- End goal: int_001 "process grief"
+- CRITICAL: (2) and (3) are ALTERNATIVES (either/or), not decompositions (all needed).
 
 ### Contrastive Examples — WRONG vs RIGHT
 
-Wrong: save_money --[next_step]--> apply_bootcamp
-Right: save_money --[enables]--> apply_bootcamp
-Why: "I need to save up first" + "then I CAN apply" = prerequisite (enables), not mere sequence. \
+Wrong: feel_sadness --[next_step]--> return_to_routine
+Right: feel_sadness --[enables]--> return_to_routine
+Why: "I need to feel it first BEFORE I can get back" = prerequisite (enables). \
 Use "enables" when B DEPENDS on A. Use "next_step" only for temporal order WITHOUT dependency.
 
-Wrong: talk_to_partner --[enables]--> give_space (treating two options as a chain)
-Right: repair_relationship --[alternative]--> talk_to_partner, \
-repair_relationship --[alternative]--> give_space
-Why: "I could X or Y" means both are mutually exclusive options. \
-Use "alternative" for either/or choices, not "decomposes_to" (which implies ALL sub-tasks are needed).
+Wrong: talk_to_sister --[enables]--> join_group (treating two options as a chain)
+Right: talk_to_sister --[alternative]--> join_group
+Why: "X or I could Y" means mutually exclusive options. \
+Use "alternative" for either/or choices, not "decomposes_to" or "enables".
 
-Wrong: buy_laptop --[decomposes_to]--> compare_options --[decomposes_to]--> check_reviews
-Right: buy_laptop --[decomposes_to]--> compare_options, compare_options --[next_step]--> check_reviews
-Why: Comparing and reviewing are at similar specificity — reviews follow comparison \
-as a sequential step, not a further decomposition. "decomposes_to" requires parent→child \
-(abstract→concrete) relationship.
+Wrong: build_auth --[decomposes_to]--> email_login --[decomposes_to]--> rbac
+Right: build_auth --[decomposes_to]--> email_login, email_login --[enables]--> rbac
+Why: RBAC DEPENDS on email login being done first ("can't do RBAC until basic auth works"). \
+That's "enables", not another level of decomposition.
 
 ### Common Mistakes:
 - OVER-GENERATING NODES: Only extract intentions the speaker explicitly states or strongly implies. \

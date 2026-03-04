@@ -1,0 +1,81 @@
+{
+  "therapy_anxiety": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.1,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "therapy_grief": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.5,
+    "edge_f1_relaxed": 0.5,
+    "probability_mae": 0.1,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "therapy_self_esteem": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.75,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.033,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "prd_auth": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.125,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "prd_dashboard": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.075,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "prd_mobile_redesign": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.15,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "_overall": {
+    "avg_node_f1": 1.0,
+    "avg_node_recall": 1.0,
+    "avg_edge_f1": 0.875,
+    "avg_edge_f1_relaxed": 0.917,
+    "end_goal_accuracy": 1.0
+  }
+}

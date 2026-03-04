@@ -19,9 +19,11 @@ Rules:
 1. The speaker should express ALL the intentions listed, but naturally — not as a list
 2. Completed intentions should be mentioned as things already done
 3. The conversation should feel natural, not like an interrogation
-4. Include both the speaker and an advisor/friend as dialogue partner
-5. Format as "Speaker: ..." and "Advisor: ..." alternating turns
-6. Generate 8-15 turns total
+4. Adapt the dialogue partner role to the domain:
+   - therapy/counseling → "Speaker: ..." and "Therapist: ..."
+   - product/software → "Speaker: ..." and "PM: ..."
+   - other → "Speaker: ..." and "Advisor: ..."
+5. Generate 8-15 turns total
 
 CRITICAL — Express relationship types through specific language patterns:
 - "enables" (A enables B = A is prerequisite for B): \
