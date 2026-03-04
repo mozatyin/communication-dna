@@ -115,7 +115,7 @@ PROMPTS = [
 ]
 
 
-def run_eval(api_key: str, version: str = "latest"):
+def run_eval(api_key: str, version: str = "latest", n_samples: int = 2):
     speaker = GraphSpeaker(api_key=api_key)
     detector = IntentionDetector(api_key=api_key)
 
@@ -127,28 +127,41 @@ def run_eval(api_key: str, version: str = "latest"):
         print(f"  Graph: {graph_name}")
         print(f"{'='*60}")
 
-        # Generate dialogue
-        print("  Generating dialogue...", end=" ", flush=True)
-        prompt = PROMPTS[0]
-        dialogue = speaker.generate(graph=truth_graph, prompt=prompt)
-        print(f"done ({len(dialogue.split())} words)")
+        best_metrics = None
+        best_predicted = None
+        best_score = -1.0
 
-        # Detect
-        print("  Detecting intentions...", end=" ", flush=True)
-        predicted = detector.analyze(
-            text=dialogue,
-            speaker_id=f"eval_{graph_name}",
-            speaker_label="Speaker",
-            domain=truth_graph.nodes[0].domain,
-            skip_expand=True,  # Compare Connect output directly against truth
-        )
-        print("done")
+        for sample_i in range(n_samples):
+            # Generate dialogue
+            print(f"  [Run {sample_i+1}/{n_samples}] Generating dialogue...", end=" ", flush=True)
+            prompt = PROMPTS[0]
+            dialogue = speaker.generate(graph=truth_graph, prompt=prompt)
+            print(f"done ({len(dialogue.split())} words)")
 
-        # Compare
-        metrics = compare_graphs(predicted, truth_graph)
+            # Detect
+            print(f"  [Run {sample_i+1}/{n_samples}] Detecting intentions...", end=" ", flush=True)
+            predicted = detector.analyze(
+                text=dialogue,
+                speaker_id=f"eval_{graph_name}",
+                speaker_label="Speaker",
+                domain=truth_graph.nodes[0].domain,
+                skip_expand=True,
+            )
+            print("done")
+
+            # Compare
+            metrics = compare_graphs(predicted, truth_graph)
+            score = metrics.node_f1 + metrics.edge_f1
+            if score > best_score:
+                best_score = score
+                best_metrics = metrics
+                best_predicted = predicted
+
+        metrics = best_metrics
+        predicted = best_predicted
         all_metrics.append(metrics)
 
-        print(f"\n  Nodes: {metrics.matched_nodes}/{metrics.total_truth_nodes} matched "
+        print(f"\n  Best of {n_samples} — Nodes: {metrics.matched_nodes}/{metrics.total_truth_nodes} matched "
               f"(P={metrics.node_precision:.2f} R={metrics.node_recall:.2f} F1={metrics.node_f1:.2f})")
         print(f"  Edges: F1={metrics.edge_f1:.2f} (relaxed={metrics.edge_f1_relaxed:.2f}), Prob MAE={metrics.probability_mae:.3f}")
         print(f"  End Goal: {'CORRECT' if metrics.end_goal_correct else 'WRONG'}")

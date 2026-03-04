@@ -343,7 +343,7 @@ class Connect:
         )
         response = self._client.messages.create(
             model=self._model,
-            max_tokens=4096,
+            max_tokens=6000,
             temperature=0.0,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
