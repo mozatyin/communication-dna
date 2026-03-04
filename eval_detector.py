@@ -154,9 +154,9 @@ def _detect_with_averaging(
     detector: Detector,
     conversation: str,
     profile_name: str,
-    n_samples: int = 2,
-) -> dict[str, float]:
-    """Run detection n_samples times and average the results."""
+    n_samples: int = 3,
+) -> tuple[dict[str, float], dict[str, float]]:
+    """Run detection n_samples times and return (means, stds)."""
     accumulated: dict[str, list[float]] = {}
 
     for i in range(n_samples):
@@ -169,15 +169,53 @@ def _detect_with_averaging(
             key = f"{f.dimension}:{f.name}"
             accumulated.setdefault(key, []).append(f.value)
 
-    return {key: statistics.mean(vals) for key, vals in accumulated.items()}
+    means = {key: statistics.mean(vals) for key, vals in accumulated.items()}
+    stds = {
+        key: statistics.stdev(vals) if len(vals) >= 2 else 0.0
+        for key, vals in accumulated.items()
+    }
+    return means, stds
 
 
-def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2):
+def _spearman_correlation(x: list[float], y: list[float]) -> float:
+    """Compute Spearman rank correlation between two lists."""
+    n = len(x)
+    if n < 3:
+        return float("nan")
+
+    def _rank(values: list[float]) -> list[float]:
+        sorted_indices = sorted(range(n), key=lambda i: values[i])
+        ranks = [0.0] * n
+        for rank_val, idx in enumerate(sorted_indices):
+            ranks[idx] = float(rank_val + 1)
+        # Handle ties: average ranks
+        i = 0
+        while i < n:
+            j = i
+            while j < n and values[sorted_indices[j]] == values[sorted_indices[i]]:
+                j += 1
+            if j > i + 1:
+                avg_rank = sum(ranks[sorted_indices[k]] for k in range(i, j)) / (j - i)
+                for k in range(i, j):
+                    ranks[sorted_indices[k]] = avg_rank
+            i = j
+        return ranks
+
+    rx = _rank(x)
+    ry = _rank(y)
+
+    d_sq_sum = sum((rx[i] - ry[i]) ** 2 for i in range(n))
+    return 1 - (6 * d_sq_sum) / (n * (n ** 2 - 1))
+
+
+def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 3):
     speaker = Speaker(api_key=api_key)
     detector = Detector(api_key=api_key)
 
     all_errors: list[float] = []
     dim_errors: dict[str, list[float]] = {}  # per-dimension error tracking
+    all_originals: list[float] = []  # for overall Spearman
+    all_detected: list[float] = []
     results: dict[str, dict] = {}
 
     # Load baseline if provided
@@ -203,11 +241,13 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2)
 
         # Detect with multi-sample averaging
         print(f"  Detecting features ({n_samples} samples)...", end=" ", flush=True)
-        detected_map = _detect_with_averaging(detector, conversation, profile_name, n_samples)
+        detected_map, std_map = _detect_with_averaging(detector, conversation, profile_name, n_samples)
         print("done")
 
         # Compare
         profile_errors: list[float] = []
+        profile_originals: list[float] = []
+        profile_detected: list[float] = []
         feature_results: list[dict] = []
 
         original_map: dict[str, float] = {}
@@ -222,12 +262,18 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2)
             error = abs(original_val - detected_val)
             profile_errors.append(error)
             all_errors.append(error)
+            profile_originals.append(original_val)
+            profile_detected.append(detected_val)
+            all_originals.append(original_val)
+            all_detected.append(detected_val)
 
             # Track per-dimension errors
             dim = key.split(":")[0]
             dim_errors.setdefault(dim, []).append(error)
 
+            feature_std = std_map.get(key, 0.0)
             status = "OK" if error <= 0.25 else "MISS" if error <= 0.4 else "BAD"
+            unstable = feature_std > 0.15
 
             # Compute delta from baseline if available
             delta_str = ""
@@ -243,30 +289,43 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2)
                 "original": original_val,
                 "detected": round(detected_val, 3),
                 "error": round(error, 3),
+                "std": round(feature_std, 3),
                 "status": status,
+                "unstable": unstable,
                 "delta": delta_str,
             })
 
         # Sort by error descending
         feature_results.sort(key=lambda x: -x["error"])
 
-        print(f"\n  {'Feature':<35} {'Orig':>6} {'Det':>6} {'Err':>6}  Status{' Δv0.1' if baseline else ''}")
-        print(f"  {'-'*35} {'-'*6} {'-'*6} {'-'*6}  {'-'*6}{'------' if baseline else ''}")
+        # Spearman rank correlation for this profile
+        profile_spearman = _spearman_correlation(profile_originals, profile_detected)
+
+        std_col = "  σ" if n_samples >= 2 else ""
+        print(f"\n  {'Feature':<35} {'Orig':>6} {'Det':>6} {'Err':>6}{std_col:>6}  Status{' Δ' if baseline else ''}")
+        print(f"  {'-'*35} {'-'*6} {'-'*6} {'-'*6}{'-'*6 if std_col else ''}  {'-'*6}{'-'*6 if baseline else ''}")
         for r in feature_results:
-            print(f"  {r['feature']:<35} {r['original']:>6.2f} {r['detected']:>6.2f} {r['error']:>6.3f}  {r['status']}{r['delta']}")
+            std_str = f" {r['std']:>5.3f}" if std_col else ""
+            unstable_flag = "!" if r.get("unstable") else ""
+            print(f"  {r['feature']:<35} {r['original']:>6.2f} {r['detected']:>6.2f} {r['error']:>6.3f}{std_str}{unstable_flag}  {r['status']}{r['delta']}")
 
         mae = statistics.mean(profile_errors) if profile_errors else float("nan")
         within_025 = sum(1 for e in profile_errors if e <= 0.25)
         within_04 = sum(1 for e in profile_errors if e <= 0.4)
         total = len(profile_errors)
+        unstable_count = sum(1 for r in feature_results if r.get("unstable"))
 
-        print(f"\n  MAE: {mae:.3f} | Within 0.25: {within_025}/{total} | Within 0.40: {within_04}/{total}")
+        print(f"\n  MAE: {mae:.3f} | ≤0.25: {within_025}/{total} | ≤0.40: {within_04}/{total} | ρ={profile_spearman:.3f}", end="")
+        if unstable_count:
+            print(f" | {unstable_count} unstable", end="")
+        print()
 
         results[profile_name] = {
             "mae": mae,
             "within_025": within_025,
             "within_04": within_04,
             "total": total,
+            "spearman": round(profile_spearman, 4),
             "features": feature_results,
         }
 
@@ -285,17 +344,19 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2)
     print(f"\n{'='*60}")
     print(f"  OVERALL SUMMARY")
     print(f"{'='*60}")
-    print(f"\n  {'Profile':<20} {'MAE':>6} {'<=0.25':>8} {'<=0.40':>8} {'Total':>6}")
-    print(f"  {'-'*20} {'-'*6} {'-'*8} {'-'*8} {'-'*6}")
+    print(f"\n  {'Profile':<20} {'MAE':>6} {'<=0.25':>8} {'<=0.40':>8} {'ρ':>6} {'Total':>6}")
+    print(f"  {'-'*20} {'-'*6} {'-'*8} {'-'*8} {'-'*6} {'-'*6}")
     for name, r in results.items():
-        print(f"  {name:<20} {r['mae']:>6.3f} {r['within_025']:>8}/{r['total']:<4} {r['within_04']:>6}/{r['total']:<4}")
+        print(f"  {name:<20} {r['mae']:>6.3f} {r['within_025']:>8}/{r['total']:<4} {r['within_04']:>6}/{r['total']:<4} {r['spearman']:>6.3f}")
 
     overall_mae = statistics.mean(all_errors)
     overall_025 = sum(1 for e in all_errors if e <= 0.25)
     overall_04 = sum(1 for e in all_errors if e <= 0.4)
     total_features = len(all_errors)
+    overall_spearman = _spearman_correlation(all_originals, all_detected)
 
     print(f"\n  Overall MAE: {overall_mae:.3f}")
+    print(f"  Overall Spearman ρ: {overall_spearman:.3f}")
     print(f"  Features within 0.25: {overall_025}/{total_features} ({100*overall_025/total_features:.1f}%)")
     print(f"  Features within 0.40: {overall_04}/{total_features} ({100*overall_04/total_features:.1f}%)")
 
@@ -306,14 +367,16 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 2)
             print(f"\n  v0.1 baseline MAE: {bl_mae:.3f} → v0.2 MAE: {overall_mae:.3f} (Δ{overall_mae - bl_mae:+.3f})")
 
     # ── Save results for future comparison ────────────────────────────────
-    version_tag = "v1.3"  # Update per release
+    version_tag = "v1.4"  # Update per release
     output_path = Path(f"eval_results_{version_tag}.json")
     save_data = dict(results)
     save_data["_overall"] = {
         "mae": overall_mae,
+        "spearman": round(overall_spearman, 4),
         "within_025": overall_025,
         "within_04": overall_04,
         "total": total_features,
+        "n_samples": n_samples,
     }
     save_data["_dim_mae"] = {
         dim: statistics.mean(errs) for dim, errs in dim_errors.items()
@@ -331,5 +394,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     baseline_path = sys.argv[1] if len(sys.argv) > 1 else None
-    n_samples = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+    n_samples = int(sys.argv[2]) if len(sys.argv) > 2 else 3
     run_eval(api_key, baseline_path=baseline_path, n_samples=n_samples)
