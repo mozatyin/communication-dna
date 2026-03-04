@@ -77,9 +77,9 @@ GRAPHS = {
         ],
         transitions=[
             {"from": "int_002", "to": "int_005", "rel": "enables", "prob": 0.6},
-            {"from": "int_003", "to": "int_001", "rel": "enables", "prob": 0.5},
             {"from": "int_003", "to": "int_004", "rel": "alternative", "prob": 0.4},
-            {"from": "int_004", "to": "int_001", "rel": "enables", "prob": 0.5},
+            {"from": "int_001", "to": "int_003", "rel": "decomposes_to", "prob": 0.5},
+            {"from": "int_001", "to": "int_002", "rel": "decomposes_to", "prob": 0.6},
         ],
         end_goal="int_001",
     ),
