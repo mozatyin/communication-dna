@@ -123,7 +123,24 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         'the whole thing feels... off somehow"\n'
         "→ ellipsis_frequency=0.75 (4 instances of '...')\n"
         "Count '...' and trailing-off sentences literally: "
-        "0=0.0, 1-2=0.15-0.30, 3-5=0.40-0.60, 6-8=0.65-0.80, 9+=0.85+\n"
+        "0=0.0, 1-2=0.15-0.30, 3-5=0.40-0.60, 6-8=0.65-0.80, 9+=0.85+\n\n"
+        "Example F — TECHNICAL but MODERATE formality:\n"
+        '"So basically you shard the index across nodes — each partition handles its own B-tree lookups. '
+        'The bottleneck\'s gonna be I/O throughput, not CPU. Just throw more SSDs at it and call it a day."\n'
+        "→ formality=0.30, jargon_density=0.85, vocabulary_richness=0.75\n"
+        "CRITICAL: Technical jargon does NOT equal formality. Formality depends on: "
+        "(1) contractions present? → lower formality, (2) casual connectors ('so', 'just', 'basically')? → lower, "
+        "(3) imperative/conversational tone? → lower. A text with contractions + casual connectors + technical terms "
+        "= moderate formality (0.30-0.50) even with jargon_density 0.80+.\n\n"
+        "Example G — HIGH hedging but MODERATE colloquialism (~0.50):\n"
+        '"I think perhaps we should consider revising the approach... it seems to me that the current method '
+        'might not be adequate. Maybe we could try something different? I\'m not entirely sure, but it feels '
+        'like there could be a better way..."\n'
+        "→ hedging_frequency=0.90, colloquialism=0.45, formality=0.45\n"
+        "CRITICAL: Hedging with standard English ('perhaps', 'it seems', 'I think', 'might') is NOT colloquial. "
+        "Colloquialism requires: slang ('gonna', 'kinda', 'nah'), filler words ('like', 'you know'), "
+        "spoken-language patterns ('so basically'), informal contractions. "
+        "Formal/standard hedging = LOW colloquialism. Slangy hedging ('idk maybe like...') = HIGH colloquialism.\n"
     ),
     "DIS,PRA": (
         "## Scoring Calibration Examples\n\n"
@@ -146,7 +163,16 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         "CRITICAL: Formal/academic writing can still have moderate directness. "
         "'The evidence suggests X is inadequate' = assertive claim with formal register = directness ~0.40. "
         "Only score directness < 0.20 if the speaker NEVER makes clear assertions and ALWAYS uses 'perhaps', "
-        "'one might argue', 'it could be suggested'. Look for clear claims, not just formal register.\n"
+        "'one might argue', 'it could be suggested'. Look for clear claims, not just formal register.\n\n"
+        "Example E — NARRATIVE warmth, NOT humor (~0.20):\n"
+        '"So there was this one time my team and I were debugging a production outage at 3am. '
+        'The caffeine was flowing, everyone was stressed, and then we found it — a single missing semicolon. '
+        'We just stared at each other in disbelief. That moment taught me more about testing than any book."\n'
+        "→ humor_frequency=0.20, example_frequency=0.85\n"
+        "CRITICAL: Vivid storytelling, anecdotes, and engaging narrative are NOT humor. "
+        "Humor requires: jokes with punchlines, ironic observations, deliberate comedic timing, sarcasm, "
+        "or absurdist framing. A warm engaging story that makes you smile is LOW humor (~0.15-0.30). "
+        "Reserve 0.50+ for texts with actual jokes or deliberate comedic intent.\n"
     ),
     "AFF,INT,DSC": (
         "## Scoring Calibration Examples\n\n"
