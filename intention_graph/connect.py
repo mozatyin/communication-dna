@@ -143,11 +143,15 @@ Guidelines:
   ("definitely" → 0.8+, "maybe" → 0.3-0.5, "considering" → 0.4-0.6)
 """
 
-_FEW_SHOT_EXAMPLES = """\
+# ── Example Bank ──────────────────────────────────────────────────────────────
+# Each example is tagged with domains and structural patterns for dynamic selection.
 
-## Calibration Examples
-
-### Example A — Therapy: goal decomposition with prerequisites
+_EXAMPLE_BANK = {
+    "therapy_decompose": {
+        "domains": ["therapy", "daily", "career", "education"],
+        "patterns": ["decomposes_to", "next_step"],
+        "text": """\
+### Example — Therapy: goal decomposition with sequential follow-up
 
 Dialogue:
 Speaker: I've been really anxious at work lately. I want to get it under control.
@@ -161,12 +165,15 @@ Correct extraction:
 - Nodes: (1) "manage work anxiety" [sp=0.3], (2) "learn breathing techniques" [sp=0.7], \
 (3) "set boundaries with boss about overtime" [sp=0.7], \
 (4) "consider whether to change jobs" [sp=0.5]
-- Edges: (1)-[decomposes_to]->(2): breathing techniques are part of managing anxiety; \
-(1)-[decomposes_to]->(3): setting boundaries is part of managing anxiety; \
-(3)-[next_step]->(4): "once I sort things out... might think about whether..."
-- End goal: int_001 "manage work anxiety"
-
-### Example B — PRD: feature decomposition with enables
+- Edges: (1)-[decomposes_to]->(2), (1)-[decomposes_to]->(3), (3)-[next_step]->(4)
+- End goal: int_001 "manage work anxiety"\
+""",
+    },
+    "prd_enables": {
+        "domains": ["product", "project_management", "education"],
+        "patterns": ["decomposes_to", "enables", "next_step"],
+        "text": """\
+### Example — PRD: feature decomposition with enables chain
 
 Dialogue:
 Speaker: We need to build an auth system for the app. Users should be able to log in with email \
@@ -180,13 +187,16 @@ Correct extraction:
 - Nodes: (1) "build auth system" [sp=0.4], (2) "email/password login" [sp=0.7], \
 (3) "Google OAuth login" [sp=0.8], (4) "role-based access control" [sp=0.7], \
 (5) "two-factor auth for admins" [sp=0.8]
-- Edges: (1)-[decomposes_to]->(2): login is a component of auth system; \
-(1)-[decomposes_to]->(3): OAuth is a component of auth system; \
-(2)-[enables]->(4): "can't do RBAC until basic auth is working" = prerequisite; \
-(4)-[next_step]->(5): "after that, add 2FA" = temporal sequence
-- End goal: int_001 "build auth system"
-
-### Example C — Therapy: alternatives (either/or coping strategies)
+- Edges: (1)-[decomposes_to]->(2), (1)-[decomposes_to]->(3), \
+(2)-[enables]->(4), (4)-[next_step]->(5)
+- End goal: int_001 "build auth system"\
+""",
+    },
+    "therapy_alternatives": {
+        "domains": ["therapy", "daily", "customer_service", "negotiation", "medical"],
+        "patterns": ["alternative", "enables"],
+        "text": """\
+### Example — Therapy: alternatives (either/or options)
 
 Dialogue:
 Speaker: I've been struggling since my mom passed. I don't know how to process it.
@@ -197,14 +207,37 @@ let myself actually feel the sadness first before I can get back to my normal ro
 
 Correct extraction:
 - Topology: MIXED — alternatives with enables
-- Nodes: (1) "process grief" [sp=0.3], (2) "talk to sister about shared memories" [sp=0.7], \
+- Nodes: (1) "process grief" [sp=0.3], (2) "talk to sister about memories" [sp=0.7], \
 (3) "join grief support group" [sp=0.7], (4) "allow myself to feel sadness" [sp=0.5], \
-(5) "return to normal daily routine" [sp=0.5]
-- Edges: (2)-[alternative]->(3): "or I could..." = mutually exclusive options; \
-(4)-[enables]->(5): "need to feel sadness first before I can get back" = prerequisite
+(5) "return to normal routine" [sp=0.5]
+- Edges: (2)-[alternative]->(3), (4)-[enables]->(5)
 - End goal: int_001 "process grief"
-- CRITICAL: (2) and (3) are ALTERNATIVES (either/or), not decompositions (all needed).
+- CRITICAL: (2) and (3) are ALTERNATIVES (either/or), not decompositions.\
+""",
+    },
+    "negotiation_conditional": {
+        "domains": ["negotiation", "career", "customer_service", "legal"],
+        "patterns": ["enables", "alternative", "next_step"],
+        "text": """\
+### Example — Negotiation: conditional branches with alternatives
 
+Dialogue:
+Speaker: I need to negotiate my compensation. I've done the market research already. \
+I'm planning to ask for a 20% raise, but if they won't go that high on salary, \
+I'd push for more equity instead. Once we agree on numbers, I want it all in writing.
+
+Correct extraction:
+- Topology: MIXED — enables chain, alternatives, sequential
+- Nodes: (1) "negotiate better compensation" [sp=0.3], (2) "research market rates" [sp=0.7, completed], \
+(3) "ask for 20% salary increase" [sp=0.8], (4) "negotiate equity instead" [sp=0.7], \
+(5) "secure written commitment" [sp=0.7]
+- Edges: (2)-[enables]->(3), (3)-[alternative]->(4), (3)-[next_step]->(5)
+- End goal: int_001 "negotiate better compensation"\
+""",
+    },
+}
+
+_CONTRASTIVE_EXAMPLES = """\
 ### Contrastive Examples — WRONG vs RIGHT
 
 Wrong: feel_sadness --[next_step]--> return_to_routine
@@ -222,18 +255,46 @@ Right: build_auth --[decomposes_to]--> email_login, email_login --[enables]--> r
 Why: RBAC DEPENDS on email login being done first ("can't do RBAC until basic auth works"). \
 That's "enables", not another level of decomposition.
 
+Wrong: plan_vacation --[decomposes_to]--> Bali, plan_vacation --[decomposes_to]--> road_trip
+Right: plan_vacation --[alternative]--> Bali, plan_vacation --[alternative]--> road_trip
+Why: Bali and road trip are MUTUALLY EXCLUSIVE options. Use "alternative" when the speaker \
+will choose ONE, "decomposes_to" only when ALL sub-tasks are needed.
+"""
+
+_COMMON_MISTAKES = """\
 ### Common Mistakes:
 - OVER-GENERATING NODES: Only extract intentions the speaker explicitly states or strongly implies. \
 Aim for 3-5 nodes for a typical short conversation. Do NOT create nodes for minor details, \
-intermediate steps the speaker doesn't mention, or the advisor's suggestions. \
-Ask: "Did the speaker actually EXPRESS this intention?" If not, don't include it.
+intermediate steps the speaker doesn't mention, or the other participant's suggestions unless the speaker adopts them. \
+Ask: "Did the speaker actually EXPRESS this intention?" If not, don't include it. \
+Do NOT split one intention into sub-variations. Do NOT infer unstated logistics or process steps.
 - LINEARIZING BRANCHES: When a speaker presents options ("either X or Y", "part of me... another part..."), \
 these are fan-out alternatives, NOT sequential steps. Connect them to the parent goal.
 - CONFUSING enables vs next_step: "enables" = B depends on A (prerequisite). \
 "next_step" = A happens before B but B doesn't require A.
 - CONFUSING decomposes_to vs next_step: "decomposes_to" = parent→child (abstract→concrete). \
 "next_step" = temporal sequence between peers at similar abstraction.
+- CONFUSING decomposes_to vs alternative: If the speaker presents MUTUALLY EXCLUSIVE OPTIONS \
+branching from a parent goal ("I could either go to X or Y"), use "alternative" from parent to each option, \
+NOT "decomposes_to". "decomposes_to" means ALL sub-tasks are needed; \
+"alternative" means the speaker will choose ONE.
 """
+
+
+def _select_examples(domain: str) -> str:
+    """Select the 2-3 most relevant examples for the given domain."""
+    scored = []
+    for key, ex in _EXAMPLE_BANK.items():
+        score = 2 if domain in ex["domains"] else 0
+        scored.append((score, key, ex))
+    scored.sort(key=lambda x: -x[0])
+    selected = scored[:3]
+    parts = ["\n## Calibration Examples\n"]
+    for _, key, ex in selected:
+        parts.append(ex["text"])
+    parts.append(_CONTRASTIVE_EXAMPLES)
+    parts.append(_COMMON_MISTAKES)
+    return "\n\n".join(parts)
 
 
 class Connect:
@@ -335,11 +396,12 @@ class Connect:
     def _extract_graph(self, text: str, speaker_label: str, domain: str) -> dict:
         """Joint extraction: nodes + transitions + end goal in one LLM call."""
         domain_hint = f"\nDomain hint: {domain}" if domain else ""
+        examples = _select_examples(domain or "general")
         user_message = (
             f"## Conversation Transcript\n\n{text}\n\n"
             f"## Target Speaker\n\nExtract the complete intention graph for "
             f"speaker labeled '{speaker_label}'.{domain_hint}\n"
-            f"{_FEW_SHOT_EXAMPLES}"
+            f"{examples}"
         )
         response = self._client.messages.create(
             model=self._model,

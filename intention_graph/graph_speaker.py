@@ -22,6 +22,14 @@ Rules:
 4. Adapt the dialogue partner role to the domain:
    - therapy/counseling → "Speaker: ..." and "Therapist: ..."
    - product/software → "Speaker: ..." and "PM: ..."
+   - daily/daily_conversation → "Speaker: ..." and "Friend: ..."
+   - customer_service → "Speaker: ..." and "Agent: ..."
+   - negotiation → "Speaker: ..." and "Advisor: ..."
+   - career → "Speaker: ..." and "Coach: ..."
+   - education → "Speaker: ..." and "Advisor: ..."
+   - project_management → "Speaker: ..." and "Manager: ..."
+   - medical → "Speaker: ..." and "Doctor: ..."
+   - legal → "Speaker: ..." and "Attorney: ..."
    - other → "Speaker: ..." and "Advisor: ..."
 5. Generate 8-15 turns total
 
@@ -42,6 +50,18 @@ Use phrases like "[A] might eventually become [B]"
 
 The speaker MUST use these linguistic patterns so the relationship types are \
 clearly recoverable from the dialogue text.
+
+6. Adapt dialogue style to the domain:
+   - therapy: emotionally expressive, hesitant, self-reflective
+   - product: structured, data-driven, uses technical terms
+   - daily: casual, informal, uses slang and fillers
+   - customer_service: frustrated but polite, escalation-focused
+   - negotiation: strategic, conditional ("if you give me X, I can..."), BATNA references
+   - career: aspirational, self-assessment language, timeline-focused
+   - education: academic vocabulary, deadlines, methodology discussion
+   - project_management: sprint/milestone language, dependency-aware, risk-focused
+   - medical: symptom description, treatment history, concern about side effects
+   - legal: formal, evidence-focused, rights-aware, precedent references
 """
 
 

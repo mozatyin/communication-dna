@@ -1,0 +1,359 @@
+{
+  "therapy_anxiety": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.15,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "therapy_grief": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.175,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "therapy_self_esteem": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.5,
+    "edge_f1_relaxed": 0.75,
+    "probability_mae": 0.15,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "prd_auth": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.1,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "prd_dashboard": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.05,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "prd_mobile_redesign": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.075,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "daily_vacation_planning": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.033,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "daily_roommate_conflict": {
+    "node_recall": 1.0,
+    "node_precision": 0.833,
+    "node_f1": 0.909,
+    "edge_f1": 0.857,
+    "edge_f1_relaxed": 0.857,
+    "probability_mae": 0.0,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 6,
+    "total_truth_nodes": 5
+  },
+  "cs_complaint_resolution": {
+    "node_recall": 0.8,
+    "node_precision": 0.8,
+    "node_f1": 0.8,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.133,
+    "end_goal_correct": true,
+    "matched_nodes": 4,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "cs_feature_request": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.2,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "negotiation_salary": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.857,
+    "edge_f1_relaxed": 0.857,
+    "probability_mae": 0.133,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "negotiation_partnership": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.125,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "career_change": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.889,
+    "edge_f1_relaxed": 0.889,
+    "probability_mae": 0.15,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "career_skill_dev": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.889,
+    "edge_f1_relaxed": 0.889,
+    "probability_mae": 0.0,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "education_thesis": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.8,
+    "edge_f1_relaxed": 0.8,
+    "probability_mae": 0.075,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "education_study_plan": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.05,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "pm_product_launch": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.667,
+    "edge_f1_relaxed": 0.667,
+    "probability_mae": 0.1,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "pm_sprint_planning": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.8,
+    "edge_f1_relaxed": 0.8,
+    "probability_mae": 0.025,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "pm_migration": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.075,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "medical_treatment": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.075,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "medical_chronic": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.05,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "legal_dispute": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.0,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "legal_estate": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.1,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "_domains": {
+    "career": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 0.889,
+      "avg_edge_f1_relaxed": 0.889,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "customer_service": {
+      "avg_node_f1": 0.9,
+      "avg_edge_f1": 1.0,
+      "avg_edge_f1_relaxed": 1.0,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "daily": {
+      "avg_node_f1": 0.955,
+      "avg_edge_f1": 0.929,
+      "avg_edge_f1_relaxed": 0.929,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "education": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 0.9,
+      "avg_edge_f1_relaxed": 0.9,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "legal": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 1.0,
+      "avg_edge_f1_relaxed": 1.0,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "medical": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 1.0,
+      "avg_edge_f1_relaxed": 1.0,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "negotiation": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 0.929,
+      "avg_edge_f1_relaxed": 0.929,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 2
+    },
+    "product": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 1.0,
+      "avg_edge_f1_relaxed": 1.0,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 3
+    },
+    "project_management": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 0.822,
+      "avg_edge_f1_relaxed": 0.822,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 3
+    },
+    "therapy": {
+      "avg_node_f1": 1.0,
+      "avg_edge_f1": 0.833,
+      "avg_edge_f1_relaxed": 0.917,
+      "end_goal_accuracy": 1.0,
+      "n_graphs": 3
+    }
+  },
+  "_overall": {
+    "avg_node_f1": 0.987,
+    "avg_node_recall": 0.991,
+    "avg_edge_f1": 0.924,
+    "avg_edge_f1_relaxed": 0.935,
+    "end_goal_accuracy": 1.0,
+    "min_edge_f1": 0.5,
+    "max_edge_f1": 1.0
+  }
+}

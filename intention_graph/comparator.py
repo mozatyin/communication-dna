@@ -56,13 +56,19 @@ def compare_graphs(predicted: IntentionGraph, truth: IntentionGraph) -> GraphMet
 
     end_goal_correct = False
     if truth.end_goal and predicted.end_goal:
-        truth_goal_text = next(
-            (n.text for n in truth.nodes if n.id == truth.end_goal), ""
-        )
-        pred_goal_text = next(
-            (n.text for n in predicted.nodes if n.id == predicted.end_goal), ""
-        )
-        end_goal_correct = _text_similarity(pred_goal_text, truth_goal_text) > 0.5
+        # Primary: check if predicted end_goal maps to truth end_goal via node matching
+        mapped_pred_goal = node_matches.get(predicted.end_goal)
+        if mapped_pred_goal == truth.end_goal:
+            end_goal_correct = True
+        else:
+            # Fallback: text similarity for cases where node IDs differ
+            truth_goal_text = next(
+                (n.text for n in truth.nodes if n.id == truth.end_goal), ""
+            )
+            pred_goal_text = next(
+                (n.text for n in predicted.nodes if n.id == predicted.end_goal), ""
+            )
+            end_goal_correct = _text_similarity(pred_goal_text, truth_goal_text) > 0.5
 
     return GraphMetrics(
         node_recall=node_recall,
