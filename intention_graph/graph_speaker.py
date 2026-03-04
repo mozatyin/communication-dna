@@ -17,12 +17,29 @@ these intentions through dialogue.
 
 Rules:
 1. The speaker should express ALL the intentions listed, but naturally — not as a list
-2. Use the transition relationships to order the conversation flow
-3. Completed intentions should be mentioned as things already done
-4. The conversation should feel natural, not like an interrogation
-5. Include both the speaker and an advisor/friend as dialogue partner
-6. Format as "Speaker: ..." and "Advisor: ..." alternating turns
-7. Generate 8-15 turns total
+2. Completed intentions should be mentioned as things already done
+3. The conversation should feel natural, not like an interrogation
+4. Include both the speaker and an advisor/friend as dialogue partner
+5. Format as "Speaker: ..." and "Advisor: ..." alternating turns
+6. Generate 8-15 turns total
+
+CRITICAL — Express relationship types through specific language patterns:
+- "enables" (A enables B = A is prerequisite for B): \
+Use phrases like "I need to [A] first before I can [B]", \
+"I can't [B] until [A] is done", "[A] is required for [B]"
+- "alternative" (A and B are mutually exclusive options): \
+Use phrases like "I could either [A] or [B]", "I'm torn between [A] and [B]", \
+"one option is [A], another is [B]"
+- "decomposes_to" (A breaks down into B as sub-task): \
+Use phrases like "part of [A] is [B]", "one thing I need to do for [A] is [B]"
+- "next_step" (A leads to B in sequence): \
+Use phrases like "after [A], I'll [B]", "once [A] is done, then [B]", \
+"the next step after [A] is [B]"
+- "evolves_to" (A transforms into B): \
+Use phrases like "[A] might eventually become [B]"
+
+The speaker MUST use these linguistic patterns so the relationship types are \
+clearly recoverable from the dialogue text.
 """
 
 

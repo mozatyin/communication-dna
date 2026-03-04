@@ -1,7 +1,7 @@
 """Stage 1 — Connect: Extract intention nodes and infer transitions from dialogue.
 
-v0.4: Joint extraction with branching detection, decision-tree relation classification,
-and contrastive few-shot examples for improved edge accuracy.
+v0.6: Joint extraction with branching detection, decision-tree relation classification,
+and contrastive few-shot examples.
 """
 
 from __future__ import annotations
