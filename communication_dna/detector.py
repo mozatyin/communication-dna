@@ -326,8 +326,9 @@ class Detector:
                     )
                 )
 
-        # Post-process: validate consistency across batches
+        # Post-process: validate consistency across batches, then apply bias correction
         all_features = _validate_consistency(all_features)
+        all_features = _apply_bias_correction(all_features)
 
         token_count = len(text.split())
         return CommunicationDNA(
@@ -395,6 +396,36 @@ def _parse_batch_response(raw: str) -> list[dict]:
         return objects
 
     raise ValueError(f"Could not parse JSON from LLM response: {raw[:200]}...")
+
+
+# ── Post-detection bias correction ────────────────────────────────────────────
+# Empirically measured directional biases consistent across multiple profiles
+# and stable across v1.0→v1.2b eval runs. Applied conservatively (< measured bias).
+
+_DETECTOR_BIAS_CORRECTION: dict[str, float] = {
+    "sentence_complexity": -0.07,       # consistent +0.098 across 3 profiles
+    "metacommentary": -0.06,            # consistent +0.125 across 2 profiles (declining)
+    "emoji_usage": -0.04,               # consistent +0.067 across 2 non-trivial profiles
+    "expressive_punctuation": -0.03,    # consistent +0.058 across 2 profiles
+}
+
+
+def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
+    """Apply post-detection bias corrections for consistently biased features."""
+    corrected = []
+    for f in features:
+        offset = _DETECTOR_BIAS_CORRECTION.get(f.name, 0.0)
+        if offset != 0.0:
+            new_value = max(0.0, min(1.0, f.value + offset))
+            corrected.append(Feature(
+                dimension=f.dimension, name=f.name, value=new_value,
+                intensity=f.intensity, confidence=f.confidence,
+                usage_probability=f.usage_probability, stability=f.stability,
+                evidence=f.evidence,
+            ))
+        else:
+            corrected.append(f)
+    return corrected
 
 
 def _validate_consistency(features: list[Feature]) -> list[Feature]:
