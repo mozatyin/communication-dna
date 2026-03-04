@@ -18,6 +18,11 @@ search = [
     "duckduckgo-search>=7.0",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (require API calls, deselect with '-m \"not slow\"')",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

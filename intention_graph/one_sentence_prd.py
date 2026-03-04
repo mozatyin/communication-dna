@@ -15,6 +15,7 @@ v2 — Key improvements over v1:
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -48,7 +49,7 @@ _COMPLEXITY_PROFILES = {
         ),
     },
     "casual": {
-        "max_systems": 5,
+        "max_systems": 6,
         "skip_expand": False,
         "research_chars": 2000,
         "conversation_turns": "8-10",
@@ -59,7 +60,7 @@ _COMPLEXITY_PROFILES = {
         ),
     },
     "mid-core": {
-        "max_systems": 7,
+        "max_systems": 8,
         "skip_expand": False,
         "research_chars": 3000,
         "conversation_turns": "10-12",
@@ -124,8 +125,20 @@ class OneSentencePrd:
         self._clarify = Clarify(api_key=api_key, model=model)
         self._prd_generator = PrdGenerator(api_key=api_key, model=model)
 
-    def generate(self, sentence: str) -> dict[str, Any]:
+    def generate(
+        self,
+        sentence: str,
+        answer_fn: Callable[[list[dict[str, str]]], list[str]] | None = None,
+    ) -> dict[str, Any]:
         """Full pipeline: sentence → PRD.
+
+        Args:
+            sentence: One-sentence game description (e.g. "做一个Flappy Bird")
+            answer_fn: Optional callback for interactive mode. When Clarify
+                produces questions, this function is called with a list of
+                [{"question": str, "node_id": str, "branches": list}].
+                It should return a list of answer strings (one per question).
+                If None, questions are self-answered by LLM.
 
         Returns:
             {"prd_document": str, "prd_summary": str, "metadata": dict}
@@ -143,12 +156,18 @@ class OneSentencePrd:
         # Step 3: Run IG pipeline (complexity-aware)
         graph = self._run_ig_pipeline(game_info, research_text, profile)
 
-        # Step 4: Self-answer ambiguities (genre-aware)
+        # Step 4: Handle ambiguities (interactive or self-answer)
         self_answered: list[dict[str, str]] = []
+        user_answers: list[dict[str, str]] = []
         if graph.ambiguities:
-            graph, self_answered = self._self_answer(
-                graph, game_info, research_text
-            )
+            if answer_fn is not None:
+                graph, user_answers = self._interactive_answer(
+                    graph, answer_fn
+                )
+            else:
+                graph, self_answered = self._self_answer(
+                    graph, game_info, research_text
+                )
 
         # Step 5: Synthesize honest conversation
         conversation, facts = self._synthesize_conversation(
@@ -173,6 +192,8 @@ class OneSentencePrd:
             "web+llm" if research_text else "llm_only"
         )
         result["metadata"]["self_answered_questions"] = self_answered
+        result["metadata"]["user_answered_questions"] = user_answers
+        result["metadata"]["interactive_mode"] = answer_fn is not None
         result["metadata"]["input_sentence"] = sentence
         result["metadata"]["detected_game"] = game_info.game_name
         result["metadata"]["complexity"] = game_info.complexity
@@ -386,6 +407,62 @@ class OneSentencePrd:
 
         return graph, self_answered
 
+    def _interactive_answer(
+        self,
+        graph: IntentionGraph,
+        answer_fn: Callable[[list[dict[str, str]]], list[str]],
+    ) -> tuple[IntentionGraph, list[dict[str, str]]]:
+        """Present questions to user via callback, apply their answers."""
+        questions = [
+            {
+                "question": a.incisive_question,
+                "node_id": a.node_id,
+                "branches": a.branches,
+            }
+            for a in graph.ambiguities
+            if a.incisive_question
+        ]
+
+        if not questions:
+            return graph, []
+
+        # Call user-provided function
+        user_responses = answer_fn(questions)
+
+        answered = []
+        for q, response_text in zip(questions, user_responses):
+            answered.append({
+                "question": q["question"],
+                "answer": response_text,
+            })
+            # If user's answer matches a branch name, boost it
+            if q["branches"]:
+                # Try to find the best matching branch
+                best_branch = q["branches"][0]  # default to first
+                for branch_id in q["branches"]:
+                    # Find node text for this branch
+                    branch_node = next(
+                        (n for n in graph.nodes if n.id == branch_id), None
+                    )
+                    if branch_node and branch_node.text.lower() in response_text.lower():
+                        best_branch = branch_id
+                        break
+                graph = _boost_branch(graph, q["node_id"], best_branch)
+
+        # Clear resolved ambiguities
+        graph = IntentionGraph(
+            nodes=graph.nodes,
+            transitions=graph.transitions,
+            end_goal=graph.end_goal,
+            dna_profile_id=graph.dna_profile_id,
+            completed_path=graph.completed_path,
+            evolution_history=graph.evolution_history,
+            ambiguities=[],
+            summary=graph.summary,
+        )
+
+        return graph, answered
+
     # ── Step 5: Synthesize Conversation ──────────────────────────────────
 
     def _synthesize_conversation(
@@ -451,8 +528,13 @@ class OneSentencePrd:
                 f"- Generate {turns} turns\n"
                 f"- Maximum {max_systems} game systems discussed\n"
                 f"- User's first message MUST be: \"{info.game_name_original}\"\n"
-                f"- Only discuss systems from: {', '.join(info.core_systems)}\n"
                 f"- Write in {lang_instruction}\n\n"
+                f"## CHECKLIST: User MUST mention ALL of these systems\n"
+                + "".join(
+                    f"- [ ] {sys}\n" for sys in info.core_systems
+                )
+                + "\nEvery system above must appear in at least one User message. "
+                f"This prevents the PRD from marking core systems as [INFERRED].\n\n"
                 f"## Facts\n"
                 f"Extract {max_systems + 2}-{max_systems + 5} structured facts. "
                 f"Only include facts about systems the original game has.\n\n"
