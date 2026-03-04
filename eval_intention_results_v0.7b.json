@@ -1,0 +1,57 @@
+{
+  "career_change": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.571,
+    "edge_f1_relaxed": 0.857,
+    "probability_mae": 0.05,
+    "end_goal_correct": true,
+    "matched_nodes": 5,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 5
+  },
+  "food_delivery": {
+    "node_recall": 1.0,
+    "node_precision": 1.0,
+    "node_f1": 1.0,
+    "edge_f1": 0.5,
+    "edge_f1_relaxed": 0.5,
+    "probability_mae": 0.0,
+    "end_goal_correct": true,
+    "matched_nodes": 3,
+    "total_predicted_nodes": 3,
+    "total_truth_nodes": 3
+  },
+  "relationship": {
+    "node_recall": 1.0,
+    "node_precision": 0.8,
+    "node_f1": 0.889,
+    "edge_f1": 0.667,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.15,
+    "end_goal_correct": true,
+    "matched_nodes": 4,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 4
+  },
+  "laptop_purchase": {
+    "node_recall": 1.0,
+    "node_precision": 0.8,
+    "node_f1": 0.889,
+    "edge_f1": 1.0,
+    "edge_f1_relaxed": 1.0,
+    "probability_mae": 0.167,
+    "end_goal_correct": true,
+    "matched_nodes": 4,
+    "total_predicted_nodes": 5,
+    "total_truth_nodes": 4
+  },
+  "_overall": {
+    "avg_node_f1": 0.944,
+    "avg_node_recall": 1.0,
+    "avg_edge_f1": 0.685,
+    "avg_edge_f1_relaxed": 0.839,
+    "end_goal_accuracy": 1.0
+  }
+}

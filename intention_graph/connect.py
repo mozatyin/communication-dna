@@ -72,9 +72,12 @@ Q2: Is A a PREREQUISITE that must happen before B can start?
     (Speaker says "I need A first", "I can't B until A", "that requires A")
     → "enables" (direction: prerequisite A → dependent B)
 
-Q3: Is B a SUB-TASK or concrete component of the broader goal A?
-    (B is a specific step within A's scope; A is more abstract than B)
+Q3: Is B a SUB-TASK that is part of achieving goal A, AND the speaker needs ALL sub-tasks?
+    (B is a specific step within A's scope; A is more abstract than B; \
+    B is not an either/or option but a required component)
     → "decomposes_to" (direction: abstract parent A → concrete child B)
+    DISTINGUISH FROM "alternative": If speaker presents multiple approaches as \
+    either/or choices → use "alternative", not "decomposes_to".
 
 Q4: Does A naturally lead to B in temporal sequence WITHOUT dependency?
     (Speaker says "after A, I'll do B" where B could happen without A)
@@ -192,12 +195,13 @@ Correct extraction:
 (2) "have honest conversation about feelings" [sp=0.6], \
 (3) "give each other space first" [sp=0.5], \
 (4) "plan something meaningful together" [sp=0.6]
-- Edges: (1)-[decomposes_to]->(2): "part of me thinks I should..." = approach A from root; \
-(1)-[decomposes_to]->(3): "another part thinks..." = approach B from root; \
+- Edges: (1)-[alternative]->(2): "part of me thinks I should..." = option A; \
+(1)-[alternative]->(3): "another part thinks..." = option B (mutually exclusive with (2)); \
 (2)-[next_step]->(4): "if talking goes well, plan something" = temporal follow-up
 - End goal: int_001 "repair relationship"
-- CRITICAL: (2) and (3) both branch FROM (1). They are NOT sequential. \
-"Part of me... another part" = branching signal.
+- CRITICAL: (2) and (3) are ALTERNATIVES, not decompositions. "Part of me... another part" \
+signals mutually exclusive options. Use "alternative" when the speaker is choosing between \
+approaches. Use "decomposes_to" only when sub-tasks are ALL needed (not either/or).
 
 ### Contrastive Examples — WRONG vs RIGHT
 
@@ -207,10 +211,10 @@ Why: "I need to save up first" + "then I CAN apply" = prerequisite (enables), no
 Use "enables" when B DEPENDS on A. Use "next_step" only for temporal order WITHOUT dependency.
 
 Wrong: talk_to_partner --[enables]--> give_space (treating two options as a chain)
-Right: repair_relationship --[decomposes_to]--> talk_to_partner, \
-repair_relationship --[decomposes_to]--> give_space
-Why: "I could X or Y" means both options branch from the parent goal. \
-Options at the same abstraction level serving the same goal = fan-out, not chain.
+Right: repair_relationship --[alternative]--> talk_to_partner, \
+repair_relationship --[alternative]--> give_space
+Why: "I could X or Y" means both are mutually exclusive options. \
+Use "alternative" for either/or choices, not "decomposes_to" (which implies ALL sub-tasks are needed).
 
 Wrong: buy_laptop --[decomposes_to]--> compare_options --[decomposes_to]--> check_reviews
 Right: buy_laptop --[decomposes_to]--> compare_options, compare_options --[next_step]--> check_reviews
