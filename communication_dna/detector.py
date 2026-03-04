@@ -137,7 +137,16 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         "Example C — moderate directness with light humor:\n"
         '"I think we should go with option B — it\'s simpler and honestly the other one '
         'gave me a headache just reading it. But hey, I\'m open to other ideas."\n'
-        "→ directness=0.60, humor_frequency=0.40, politeness_strategy=0.50\n"
+        "→ directness=0.60, humor_frequency=0.40, politeness_strategy=0.50\n\n"
+        "Example D — FORMAL text with MODERATE directness (~0.40):\n"
+        '"The evidence suggests that this methodology is inadequate for the stated objectives. '
+        'While alternative frameworks have been proposed, the fundamental limitations remain. '
+        'It would be prudent to consider revising the experimental design."\n'
+        "→ directness=0.40, politeness_strategy=0.50\n"
+        "CRITICAL: Formal/academic writing can still have moderate directness. "
+        "'The evidence suggests X is inadequate' = assertive claim with formal register = directness ~0.40. "
+        "Only score directness < 0.20 if the speaker NEVER makes clear assertions and ALWAYS uses 'perhaps', "
+        "'one might argue', 'it could be suggested'. Look for clear claims, not just formal register.\n"
     ),
     "AFF,INT,DSC": (
         "## Scoring Calibration Examples\n\n"
@@ -405,6 +414,7 @@ def _parse_batch_response(raw: str) -> list[dict]:
 _DETECTOR_BIAS_CORRECTION: dict[str, float] = {
     "sentence_complexity": -0.07,       # consistent +0.098 across 3 profiles
     "metacommentary": -0.06,            # consistent +0.125 across 2 profiles (declining)
+    "definition_tendency": -0.10,       # consistent +0.15 across 4 eval runs (single profile)
     "emoji_usage": -0.04,               # consistent +0.067 across 2 non-trivial profiles
     "expressive_punctuation": -0.03,    # consistent +0.058 across 2 profiles
 }
@@ -432,9 +442,11 @@ def _validate_consistency(features: list[Feature]) -> list[Feature]:
     """Check cross-feature correlations and resolve contradictions.
 
     Rules:
-    - formality + colloquialism <= 1.3
-    - directness + hedging_frequency <= 1.3
-    - ellipsis_frequency > 0.7 => sentence_length < 0.5
+    1. formality + colloquialism <= 1.3
+    2. directness + hedging_frequency <= 1.2 (tightened from 1.3)
+    3. ellipsis_frequency > 0.7 => sentence_length < 0.5
+    4. vulnerability_willingness ↔ disclosure_depth gap <= 0.3
+    5. metacommentary ↔ self_correction positive correlation
     When violated, reduce the lower-confidence feature.
     """
     fmap: dict[str, Feature] = {f.name: f for f in features}
@@ -442,15 +454,14 @@ def _validate_consistency(features: list[Feature]) -> list[Feature]:
     # Rule 1: formality + colloquialism <= 1.3
     _apply_sum_constraint(fmap, "formality", "colloquialism", 1.3)
 
-    # Rule 2: directness + hedging_frequency <= 1.3
-    _apply_sum_constraint(fmap, "directness", "hedging_frequency", 1.3)
+    # Rule 2: directness + hedging_frequency <= 1.2
+    _apply_sum_constraint(fmap, "directness", "hedging_frequency", 1.2)
 
     # Rule 3: high ellipsis => short sentences
     if "ellipsis_frequency" in fmap and "sentence_length" in fmap:
         ell = fmap["ellipsis_frequency"]
         sl = fmap["sentence_length"]
         if ell.value > 0.7 and sl.value >= 0.5:
-            # Reduce sentence_length if ellipsis confidence is higher
             if ell.confidence >= sl.confidence:
                 new_val = min(sl.value, 0.45)
                 fmap["sentence_length"] = Feature(
@@ -467,6 +478,50 @@ def _validate_consistency(features: list[Feature]) -> list[Feature]:
                     usage_probability=ell.usage_probability, stability=ell.stability,
                     evidence=ell.evidence,
                 )
+
+    # Rule 4: vulnerability + disclosure should move together (gap <= 0.3)
+    if "vulnerability_willingness" in fmap and "disclosure_depth" in fmap:
+        vul = fmap["vulnerability_willingness"]
+        dis = fmap["disclosure_depth"]
+        gap = abs(vul.value - dis.value)
+        if gap > 0.3:
+            avg = (vul.value + dis.value) / 2
+            if vul.confidence < dis.confidence:
+                new_val = max(0.0, min(1.0, dis.value + (avg - dis.value) * 0.3))
+                fmap["vulnerability_willingness"] = Feature(
+                    dimension=vul.dimension, name=vul.name, value=new_val,
+                    intensity=vul.intensity, confidence=vul.confidence * 0.9,
+                    usage_probability=vul.usage_probability, stability=vul.stability,
+                    evidence=vul.evidence,
+                )
+            else:
+                new_val = max(0.0, min(1.0, vul.value + (avg - vul.value) * 0.3))
+                fmap["disclosure_depth"] = Feature(
+                    dimension=dis.dimension, name=dis.name, value=new_val,
+                    intensity=dis.intensity, confidence=dis.confidence * 0.9,
+                    usage_probability=dis.usage_probability, stability=dis.stability,
+                    evidence=dis.evidence,
+                )
+
+    # Rule 5: metacommentary and self_correction should positively correlate
+    # If one is high (>0.6) and the other very low (<0.15), bump the low one
+    if "metacommentary" in fmap and "self_correction_frequency" in fmap:
+        meta = fmap["metacommentary"]
+        sc = fmap["self_correction_frequency"]
+        if meta.value > 0.6 and sc.value < 0.15:
+            fmap["self_correction_frequency"] = Feature(
+                dimension=sc.dimension, name=sc.name, value=0.20,
+                intensity=sc.intensity, confidence=sc.confidence * 0.8,
+                usage_probability=sc.usage_probability, stability=sc.stability,
+                evidence=sc.evidence,
+            )
+        elif sc.value > 0.6 and meta.value < 0.15:
+            fmap["metacommentary"] = Feature(
+                dimension=meta.dimension, name=meta.name, value=0.20,
+                intensity=meta.intensity, confidence=meta.confidence * 0.8,
+                usage_probability=meta.usage_probability, stability=meta.stability,
+                evidence=meta.evidence,
+            )
 
     return list(fmap.values())
 

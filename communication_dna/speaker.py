@@ -353,6 +353,16 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
             "but keep sentence structure and connecting words casual/standard."
         )
 
+    # High formality + moderate directness → text sounds too indirect
+    if fmap.get("formality", 0) > 0.80 and 0.25 <= fmap.get("directness", 0.5) <= 0.55:
+        warnings.append(
+            "- CRITICAL WARNING: Formal text tends to sound very indirect. You MUST include clear, "
+            "assertive statements mixed with hedged ones. At least 40% of your sentences should make "
+            "direct claims: 'This approach is inadequate', 'The data demonstrate X', 'This conclusion "
+            "is unsupported'. Do NOT only use 'it could be argued', 'one might suggest', 'perhaps'. "
+            "Formal register does NOT mean avoiding direct assertions."
+        )
+
     return "\n".join(warnings)
 
 
