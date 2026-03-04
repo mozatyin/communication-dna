@@ -37,50 +37,103 @@ Your response MUST contain exactly two XML blocks:
 ## PRD Section Structure (MANDATORY — include ALL 4 sections)
 
 ## 1. 游戏总览
-- 游戏体验：What the game feels like to play (one-paragraph vision)
+- 游戏体验：What the game feels like to play — write as if you're pitching \
+  the fantasy to a player: "You are a...", "You will feel..."
 - 类型与视角：Genre, perspective, art style
-- 乐趣与吸引力：Why players would enjoy this
+- 乐趣与吸引力：Why players would enjoy this — name specific emotional hooks
 
 ## 2. 核心游戏循环
-- 玩家的即时操作：What the player DOES moment-to-moment
-- 胜利/失败/进程条件：Win/lose/progress conditions
-- 循环的演变、升级与持续吸引力：How the loop evolves over time
+- 玩家的即时操作：Describe a concrete 60-second gameplay moment in present tense. \
+  What does the player SEE on screen, what buttons do they press, what happens next?
+- 胜利/失败/进程条件：Win/lose/progress conditions with specific thresholds if mentioned
+- 循环的演变、升级与持续吸引力：How the player's experience changes from hour 1 to hour 100
 
 ## 3. 游戏系统
-For EACH system (3-8 systems typical):
+For EACH system (3-10 systems depending on game complexity):
 
 ### [System Name]
-**如何运作**: How players interact with this system
-**为何感觉良好**: Why this is fun / satisfying
-**设计考量**: Key design constraints or trade-offs
-**如何连接**: How this system connects to other systems
+**如何运作**: Describe from the PLAYER'S perspective — "You open the menu, \
+you pick a fruit, you see your character transform..." NOT "The system provides..."
+**为何感觉良好**: Name the specific emotion or sensation — anticipation, \
+surprise, mastery, pride. Include a concrete "moment" example.
+**设计考量**: Identify 1-2 key design QUESTIONS phrased with question marks \
+(e.g. "How rare should X be?" / "X应该多稀有？"), then provide a trade-off \
+analysis and a concrete recommendation with numbers. Format: \
+"Question? If A, then B; if C, then D. Recommendation: [specific suggestion]." \
+Every 设计考量 MUST contain at least one "?" or "？".
+**如何连接**: Describe how the player EXPERIENCES the connection — \
+"After finishing a raid, you notice your fruit ability now has a new glow effect" \
+NOT "Integrates with the raid system through reward mechanics". \
+BANNED phrases: "synergize", "synergizes", "synergy", "directly influences", \
+"feeds into", "gating X behind Y", "essential for progression", "ensures", \
+"complements", "reinforces".
 
-If a system was NOT explicitly mentioned by the user but is logically necessary, \
-add [INFERRED] after the system name, e.g. "### 经济系统 [INFERRED]"
+CRITICAL — [INFERRED] rule:
+- ONLY add [INFERRED] if the system was NEVER mentioned or described by the user \
+  in the conversation, not even indirectly.
+- If the user described it even briefly (e.g. "there are races like Shark, Angel"), \
+  that system is NOT inferred — do NOT tag it.
+- Before tagging [INFERRED], search the ENTIRE conversation for any mention of \
+  that topic. If the user said ANYTHING about it, it is NOT inferred.
+- [INFERRED] means "I the PRD writer added this system because it's logically \
+  necessary, but the user never discussed it."
+- Example: User says "theres a race system" → Race System is NOT [INFERRED]. \
+  User never mentions tutorials → Tutorial System IS [INFERRED].
 
 ## 4. 美术与音效风格
-- **视觉风格**: Art direction
+- **视觉风格**: Art direction — reference specific visual comparisons if possible
 - **色彩调性**: Color palette mood
-- **动画**: Key animations
-- **打击感与反馈**: Juice / game feel
+- **动画**: List key animations the player will notice most
+- **打击感与反馈**: Juice / game feel — describe what the player FEELS on each action
 - **UI 视觉语言**: UI style
-- **音效**: Sound effects direction
-- **音乐**: Music direction
-- **占位策略**: Placeholder asset strategy
+- **音效**: Sound effects — describe the actual sounds (onomatopoeia welcome)
+- **音乐**: Music direction — mood, instruments, how it shifts with gameplay
+- **占位策略**: Placeholder asset strategy for dev team
 
 ## Rules
 
-1. PLAYER EXPERIENCE ONLY — describe what the player sees, hears, feels, does. \
-   NO technical implementation details (no "use Unity", "store in database", etc.)
-2. Every bullet must be concrete and specific, not vague platitudes
-3. Write the ENTIRE PRD in the SAME LANGUAGE as the conversation. \
+1. PLAYER EXPERIENCE ONLY — write as if describing the game TO a player. \
+   Use "you" language: "you press", "you see", "you feel". \
+   NEVER use technical language like "integrates with", "scales with", \
+   "system provides", "triggers event", "links to", "feeds into", \
+   "making X essential for Y progression". \
+   NO implementation details (no "use Unity", "store in database", etc.)
+2. CONCRETE MOMENTS — for every system, include at least one specific gameplay \
+   scenario. Not "combat feels impactful" but "you land a charged sword slash \
+   on a boss, the screen freezes for a split second, damage numbers fly out, \
+   and the boss staggers backward."
+3. FAITHFUL TO USER — use the exact terms, names, and numbers the user gave. \
+   If the user said "13 islands" write "13 islands", not "multiple islands". \
+   If the user said "level 1-700" write those exact numbers. \
+   Do NOT invent proper names that the user never said: \
+   - NO invented fruit names (not "Flame-Flame Fruit" — say "a fire-type Natural fruit") \
+   - NO invented boss names (not "Darkbeard" — say "a powerful raid boss") \
+   - NO invented ability names (not "Fire Fist" or "Air Slash" — say \
+     "your fruit's ranged fire attack" or "a projectile sword technique") \
+   - NO invented island names (not "Orange Town" — say "a level 15-25 island") \
+   You MAY use descriptive phrases: "your fire fruit's area attack" is fine. \
+   You MAY reference categories the user gave: "Natural", "Beast", "Paramecia".
+4. Write the ENTIRE PRD in the SAME LANGUAGE as the conversation. \
    If the conversation is in Chinese, write Chinese. If English, write English.
-4. Prioritize the user's core intention (end_goal from the intention graph) — \
+5. Prioritize the user's core intention (end_goal from the intention graph) — \
    the PRD should serve that vision above all
-5. High-confidence intentions from the graph should be reflected prominently; \
+6. High-confidence intentions from the graph should be reflected prominently; \
    low-confidence ones can be noted but shouldn't dominate
-6. Section headers (## 1. through ## 4.) must use the Chinese titles shown above \
+7. Section headers (## 1. through ## 4.) must use the Chinese titles shown above \
    regardless of conversation language, for downstream compatibility
+8. Be GENEROUS with detail — a longer, more specific PRD is better than a \
+   concise but vague one. Aim for 6000-10000 characters minimum.
+9. AVOID REDUNDANCY — merge closely related mechanics into cohesive systems. \
+   For example: Fighting Styles should be part of the Combat system, not separate. \
+   Factions should be part of the PvP system. Currency/shops should be part of \
+   the Economy system. Aim for 5-8 well-developed systems rather than 10+ thin ones.
+10. INFER WISELY — if the game clearly needs systems the user didn't discuss \
+    (e.g. Tutorial, Onboarding, Sailing/Navigation for an ocean game), add them \
+    with [INFERRED] tag. A good PRD anticipates what's needed beyond what was said.
+11. SELF-CHECK before returning — scan your output for banned phrases \
+    (synergize, synergy, directly influences, feeds into, gating, ensures, \
+    complements, reinforces, integrates). Replace any found with \
+    player-experience language.
 """
 
 _MAX_CONVERSATION_CHARS = 50000
