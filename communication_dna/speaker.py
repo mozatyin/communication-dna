@@ -53,6 +53,10 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
         (0.0, 0.0), (0.15, 0.05), (0.30, 0.15), (0.50, 0.35),
         (0.70, 0.55), (0.85, 0.75), (0.95, 0.90), (1.0, 1.0),
     ],
+    "emotion_word_density": [
+        (0.0, 0.0), (0.25, 0.10), (0.40, 0.20), (0.50, 0.30),
+        (0.60, 0.42), (0.70, 0.55), (0.80, 0.65), (0.90, 0.80), (1.0, 1.0),
+    ],
 }
 
 
@@ -93,10 +97,10 @@ def _apply_calibration(feature_name: str, target_value: float, profile: Communic
 _STRUCTURAL_CONSTRAINTS: dict[str, list[tuple[tuple[float, float], str]]] = {
     "ellipsis_frequency": [
         ((0.0, 0.15), "Never use ellipsis (...) or trailing-off sentences."),
-        ((0.15, 0.35), "Use ellipsis at most once in the entire response."),
-        ((0.35, 0.55), "Use ellipsis 2-3 times. Leave 2-3 sentences trailing off or unfinished."),
-        ((0.55, 0.75), "Use ellipsis 4-6 times. Several sentences should trail off with '...' or be incomplete thoughts."),
-        ((0.75, 1.01), "Frequent ellipsis throughout. Many sentences trail off with '...' or remain unfinished."),
+        ((0.15, 0.35), "Use the '...' character at most once in the entire response. Write it as three dots explicitly."),
+        ((0.35, 0.55), "Use the '...' character exactly 2-3 times. Leave 2-3 sentences trailing off or unfinished."),
+        ((0.55, 0.75), "Use the '...' character exactly 4-6 times. Write them explicitly as three dots. Several sentences should trail off with '...' or be incomplete thoughts."),
+        ((0.75, 1.01), "Use '...' frequently throughout, at least 7 times. Many sentences trail off with '...' or remain unfinished."),
     ],
     "sentence_length": [
         ((0.0, 0.15), "Maximum 8 words per sentence. Use fragments freely. Terse and punchy."),
@@ -130,11 +134,11 @@ _STRUCTURAL_CONSTRAINTS: dict[str, list[tuple[tuple[float, float], str]]] = {
         ((0.75, 1.01), "Heavily colloquial. Reads like transcribed speech. Frequent slang throughout."),
     ],
     "hedging_frequency": [
-        ((0.0, 0.10), "No hedge words at all. Every statement definitive."),
-        ((0.10, 0.25), "At most 1 hedge word in the entire response."),
-        ((0.25, 0.40), "Use 2-3 hedge words total (maybe, I think, probably). Keep most statements definitive."),
-        ((0.40, 0.60), "Hedge about half of opinions. Mix definitive and tentative statements."),
-        ((0.60, 0.80), "Hedge most opinions with 'maybe', 'I think', 'probably', 'sort of'."),
+        ((0.0, 0.10), "No hedge words at all. Every statement definitive. Do NOT use 'like', 'I guess', 'kinda' either."),
+        ((0.10, 0.25), "At most 1 hedge word (maybe/probably/I think) in the entire response. Casual fillers ('like', 'I mean', 'you know') are NOT hedges — avoid them unless colloquialism demands it."),
+        ((0.25, 0.40), "Use exactly 2-3 hedge words total (maybe, I think, probably). Keep most statements definitive. IMPORTANT: 'like', 'I guess', 'I mean', 'kinda' are casual fillers, NOT hedges — do not count them as hedging."),
+        ((0.40, 0.60), "Hedge about half of opinions. Mix definitive and tentative statements. Use: 'maybe', 'I think', 'probably', 'it seems'. Avoid casual fillers as hedge substitutes."),
+        ((0.60, 0.80), "Hedge most opinions with 'maybe', 'I think', 'probably', 'sort of', 'it seems'."),
         ((0.80, 1.01), "Hedge nearly every statement. Rarely assert anything definitively."),
     ],
     "feedback_signal_frequency": [

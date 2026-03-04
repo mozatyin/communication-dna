@@ -1,0 +1,644 @@
+{
+  "casual_bro": {
+    "mae": 0.07708333333333332,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "features": [
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.15,
+        "detected": 0.3,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394-0.02"
+      },
+      {
+        "feature": "SYN:sentence_complexity",
+        "original": 0.1,
+        "detected": 0.25,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.05,
+        "detected": 0.15,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "SYN:ellipsis_frequency",
+        "original": 0.8,
+        "detected": 0.7,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.85,
+        "detected": 0.75,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394-0.03"
+      },
+      {
+        "feature": "LEX:colloquialism",
+        "original": 0.95,
+        "detected": 0.875,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.7,
+        "detected": 0.775,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "PTX:expressive_punctuation",
+        "original": 0.8,
+        "detected": 0.875,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.3,
+        "detected": 0.35,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.20"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.8,
+        "detected": 0.825,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "ERR:grammar_deviation",
+        "original": 0.7,
+        "detected": 0.725,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.6,
+        "detected": 0.6,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.07"
+      }
+    ]
+  },
+  "formal_academic": {
+    "mae": 0.06041666666666667,
+    "within_025": 11,
+    "within_04": 12,
+    "total": 12,
+    "features": [
+      {
+        "feature": "PRA:directness",
+        "original": 0.4,
+        "detected": 0.7,
+        "error": 0.3,
+        "status": "MISS",
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "LEX:jargon_density",
+        "original": 0.7,
+        "detected": 0.85,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "LEX:colloquialism",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394+0.01"
+      },
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.8,
+        "detected": 0.85,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.07"
+      },
+      {
+        "feature": "SYN:sentence_complexity",
+        "original": 0.85,
+        "detected": 0.9,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.03"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.95,
+        "detected": 0.975,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394-0.01"
+      },
+      {
+        "feature": "LEX:vocabulary_richness",
+        "original": 0.9,
+        "detected": 0.925,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394-0.01"
+      },
+      {
+        "feature": "SYN:passive_voice_preference",
+        "original": 0.7,
+        "detected": 0.725,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394-0.09"
+      },
+      {
+        "feature": "DIS:argumentation_style",
+        "original": 0.85,
+        "detected": 0.85,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.0,
+        "detected": 0.0,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "ERR:grammar_deviation",
+        "original": 0.0,
+        "detected": 0.0,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "warm_empathetic": {
+    "mae": 0.06666666666666667,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "features": [
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.7,
+        "detected": 0.85,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:emotional_polarity_balance",
+        "original": 0.75,
+        "detected": 0.625,
+        "error": 0.125,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "INT:question_frequency",
+        "original": 0.7,
+        "detected": 0.825,
+        "error": 0.125,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "PRA:politeness_strategy",
+        "original": 0.9,
+        "detected": 0.8,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.25,
+        "detected": 0.15,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:empathy_expression",
+        "original": 0.95,
+        "detected": 0.85,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "DSC:disclosure_depth",
+        "original": 0.7,
+        "detected": 0.75,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.02"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.4,
+        "detected": 0.45,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.35,
+        "detected": 0.35,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "INT:feedback_signal_frequency",
+        "original": 0.7,
+        "detected": 0.7,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.03"
+      },
+      {
+        "feature": "DSC:vulnerability_willingness",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.03"
+      }
+    ]
+  },
+  "blunt_technical": {
+    "mae": 0.060416666666666674,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "features": [
+      {
+        "feature": "LEX:formality",
+        "original": 0.6,
+        "detected": 0.85,
+        "error": 0.25,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "MET:definition_tendency",
+        "original": 0.7,
+        "detected": 0.85,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PRA:politeness_strategy",
+        "original": 0.1,
+        "detected": 0.025,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "LEX:vocabulary_richness",
+        "original": 0.8,
+        "detected": 0.85,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.02"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.1,
+        "detected": 0.05,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "AFF:empathy_expression",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "LEX:jargon_density",
+        "original": 0.9,
+        "detected": 0.925,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.05,
+        "detected": 0.075,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.4,
+        "detected": 0.4,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.95,
+        "detected": 0.95,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394-0.03"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.0,
+        "detected": 0.0,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "storyteller": {
+    "mae": 0.05208333333333334,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "features": [
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.5,
+        "detected": 0.625,
+        "error": 0.125,
+        "status": "OK",
+        "delta": "  \u0394-0.02"
+      },
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.6,
+        "detected": 0.675,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "SYN:sentence_complexity",
+        "original": 0.65,
+        "detected": 0.725,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.6,
+        "detected": 0.525,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "INT:turn_length",
+        "original": 0.85,
+        "detected": 0.925,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.4,
+        "detected": 0.35,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "DIS:repetition_for_emphasis",
+        "original": 0.7,
+        "detected": 0.65,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.03"
+      },
+      {
+        "feature": "LEX:vocabulary_richness",
+        "original": 0.75,
+        "detected": 0.725,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "DIS:example_frequency",
+        "original": 0.9,
+        "detected": 0.875,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "INT:response_elaboration",
+        "original": 0.9,
+        "detected": 0.875,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "MET:metacommentary",
+        "original": 0.5,
+        "detected": 0.525,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394-0.07"
+      },
+      {
+        "feature": "DIS:topic_transition_style",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "anxious_hedger": {
+    "mae": 0.09166666666666666,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "features": [
+      {
+        "feature": "AFF:emotional_volatility",
+        "original": 0.6,
+        "detected": 0.35,
+        "error": 0.25,
+        "status": "OK",
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "SYN:ellipsis_frequency",
+        "original": 0.6,
+        "detected": 0.75,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "MET:metacommentary",
+        "original": 0.65,
+        "detected": 0.8,
+        "error": 0.15,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:colloquialism",
+        "original": 0.5,
+        "detected": 0.625,
+        "error": 0.125,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.95,
+        "detected": 0.85,
+        "error": 0.1,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "PRA:politeness_strategy",
+        "original": 0.8,
+        "detected": 0.875,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "DSC:vulnerability_willingness",
+        "original": 0.7,
+        "detected": 0.775,
+        "error": 0.075,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.45,
+        "detected": 0.4,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.1,
+        "detected": 0.05,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "PTX:expressive_punctuation",
+        "original": 0.65,
+        "detected": 0.7,
+        "error": 0.05,
+        "status": "OK",
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.5,
+        "detected": 0.475,
+        "error": 0.025,
+        "status": "OK",
+        "delta": "  \u0394-0.02"
+      },
+      {
+        "feature": "MET:self_correction_frequency",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "status": "OK",
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "_overall": {
+    "mae": 0.06805555555555556,
+    "within_025": 71,
+    "within_04": 72,
+    "total": 72
+  },
+  "_dim_mae": {
+    "LEX": 0.07361111111111111,
+    "SYN": 0.08250000000000002,
+    "PRA": 0.08749999999999998,
+    "AFF": 0.07500000000000001,
+    "PTX": 0.04166666666666664,
+    "ERR": 0.012500000000000011,
+    "DIS": 0.01874999999999999,
+    "INT": 0.05625000000000002,
+    "DSC": 0.041666666666666706,
+    "MET": 0.08125000000000002
+  }
+}
