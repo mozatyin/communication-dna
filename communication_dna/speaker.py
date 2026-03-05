@@ -61,6 +61,14 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
         (0.0, 0.0), (0.10, 0.0), (0.20, 0.10), (0.30, 0.20),
         (0.50, 0.42), (0.70, 0.62), (0.85, 0.80), (1.0, 1.0),
     ],
+    "emotional_polarity_balance": [
+        (0.0, 0.0), (0.25, 0.15), (0.50, 0.40), (0.65, 0.60),
+        (0.75, 0.80), (0.85, 0.92), (1.0, 1.0),
+    ],
+    "empathy_expression": [
+        (0.0, 0.0), (0.50, 0.40), (0.70, 0.65), (0.85, 0.85),
+        (0.95, 0.98), (1.0, 1.0),
+    ],
 }
 
 
@@ -349,6 +357,15 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
                 "'one might consider'. NEVER use: 'like', 'I mean', 'kinda', 'idk', 'tbh', 'ngl'. "
                 "Do NOT write as if transcribing speech. Write as if composing a thoughtful personal letter."
             )
+
+    # Very high hedging + moderate colloquialism → colloquialism over-detection
+    if fmap.get("hedging_frequency", 0) > 0.85 and 0.35 <= fmap.get("colloquialism", 0.5) <= 0.60:
+        warnings.append(
+            "- CRITICAL: With very high hedging, your text MUST NOT sound slangy or spoken-aloud. "
+            "Use WRITTEN hedging: 'It seems', 'Perhaps', 'One might argue', 'I believe'. "
+            "NEVER use spoken hedging: 'like maybe', 'idk', 'I guess kinda'. "
+            "The colloquialism level is MODERATE — think 'thoughtful personal email', not 'text message'."
+        )
 
     # High jargon + moderate formality → over-formalization
     if fmap.get("jargon_density", 0) > 0.7 and fmap.get("formality", 0.5) < 0.65:
