@@ -1,0 +1,2924 @@
+{
+  "profile_0": {
+    "turns_10": {
+      "word_count": 1820,
+      "mae": 0.21196969696969697,
+      "within_025": 43,
+      "within_040": 58,
+      "total": 66,
+      "traits": [
+        {
+          "trait": "SOC:social_dominance",
+          "original": 0.77,
+          "detected": 0.15,
+          "error": 0.62,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:self_mythologizing",
+          "original": 0.72,
+          "detected": 0.15,
+          "error": 0.57,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:hot_cold_oscillation",
+          "original": 0.73,
+          "detected": 0.2,
+          "error": 0.53,
+          "status": "BAD"
+        },
+        {
+          "trait": "SOC:conflict_assertiveness",
+          "original": 0.67,
+          "detected": 0.15,
+          "error": 0.52,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:competence",
+          "original": 0.74,
+          "detected": 0.25,
+          "error": 0.49,
+          "status": "BAD"
+        },
+        {
+          "trait": "HUM:humor_affiliative",
+          "original": 0.24,
+          "detected": 0.7,
+          "error": 0.46,
+          "status": "BAD"
+        },
+        {
+          "trait": "HON:humility_hexaco",
+          "original": 0.35,
+          "detected": 0.8,
+          "error": 0.45,
+          "status": "BAD"
+        },
+        {
+          "trait": "SOC:charm_influence",
+          "original": 0.21,
+          "detected": 0.65,
+          "error": 0.44,
+          "status": "BAD"
+        },
+        {
+          "trait": "AGR:modesty",
+          "original": 0.47,
+          "detected": 0.8,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "NEU:impulsiveness",
+          "original": 0.53,
+          "detected": 0.2,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:narcissism",
+          "original": 0.58,
+          "detected": 0.25,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:psychopathy",
+          "original": 0.53,
+          "detected": 0.2,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "EXT:excitement_seeking",
+          "original": 0.47,
+          "detected": 0.15,
+          "error": 0.32,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:compliance",
+          "original": 0.43,
+          "detected": 0.75,
+          "error": 0.32,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:greed_avoidance",
+          "original": 0.44,
+          "detected": 0.75,
+          "error": 0.31,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:emotional_volatility",
+          "original": 0.66,
+          "detected": 0.35,
+          "error": 0.31,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:emotional_expressiveness",
+          "original": 0.45,
+          "detected": 0.75,
+          "error": 0.3,
+          "status": "MISS"
+        },
+        {
+          "trait": "SOC:attachment_avoidance",
+          "original": 0.55,
+          "detected": 0.25,
+          "error": 0.3,
+          "status": "MISS"
+        },
+        {
+          "trait": "OPN:aesthetics",
+          "original": 0.52,
+          "detected": 0.25,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "NEU:self_consciousness",
+          "original": 0.43,
+          "detected": 0.7,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "SOC:conflict_cooperativeness",
+          "original": 0.38,
+          "detected": 0.65,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "EXT:warmth",
+          "original": 0.44,
+          "detected": 0.7,
+          "error": 0.26,
+          "status": "MISS"
+        },
+        {
+          "trait": "HUM:humor_self_enhancing",
+          "original": 0.39,
+          "detected": 0.65,
+          "error": 0.26,
+          "status": "MISS"
+        },
+        {
+          "trait": "EXT:assertiveness",
+          "original": 0.6,
+          "detected": 0.35,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:tender_mindedness",
+          "original": 0.25,
+          "detected": 0.5,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:angry_hostility",
+          "original": 0.4,
+          "detected": 0.65,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:information_control",
+          "original": 0.45,
+          "detected": 0.2,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_anxiety",
+          "original": 0.44,
+          "detected": 0.2,
+          "error": 0.24,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:sadism",
+          "original": 0.58,
+          "detected": 0.35,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:actions",
+          "original": 0.36,
+          "detected": 0.15,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:activity_level",
+          "original": 0.66,
+          "detected": 0.45,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_affective",
+          "original": 0.49,
+          "detected": 0.7,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:fairness_justice",
+          "original": 0.4,
+          "detected": 0.6,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_defeating",
+          "original": 0.8,
+          "detected": 0.6,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:positive_emotions",
+          "original": 0.56,
+          "detected": 0.75,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:fairness",
+          "original": 0.38,
+          "detected": 0.55,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:anxiety",
+          "original": 0.39,
+          "detected": 0.55,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:depression",
+          "original": 0.41,
+          "detected": 0.25,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:sincerity",
+          "original": 0.69,
+          "detected": 0.85,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:need_for_cognition",
+          "original": 0.19,
+          "detected": 0.35,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:intuitive_vs_analytical",
+          "original": 0.41,
+          "detected": 0.25,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_regulation",
+          "original": 0.35,
+          "detected": 0.5,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:self_discipline",
+          "original": 0.32,
+          "detected": 0.45,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:straightforwardness",
+          "original": 0.63,
+          "detected": 0.75,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:vulnerability",
+          "original": 0.34,
+          "detected": 0.45,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:care_harm",
+          "original": 0.56,
+          "detected": 0.45,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:loyalty_group",
+          "original": 0.54,
+          "detected": 0.65,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:cognitive_flexibility",
+          "original": 0.45,
+          "detected": 0.55,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:feelings",
+          "original": 0.56,
+          "detected": 0.65,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:mirroring_ability",
+          "original": 0.79,
+          "detected": 0.7,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:trust",
+          "original": 0.58,
+          "detected": 0.5,
+          "error": 0.08,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:values_openness",
+          "original": 0.68,
+          "detected": 0.75,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:deliberation",
+          "original": 0.47,
+          "detected": 0.4,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:dutifulness",
+          "original": 0.41,
+          "detected": 0.35,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_granularity",
+          "original": 0.39,
+          "detected": 0.45,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_cognitive",
+          "original": 0.59,
+          "detected": 0.65,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:fantasy",
+          "original": 0.65,
+          "detected": 0.7,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:ideas",
+          "original": 0.75,
+          "detected": 0.7,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:order",
+          "original": 0.45,
+          "detected": 0.5,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:authority_respect",
+          "original": 0.3,
+          "detected": 0.25,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:achievement_striving",
+          "original": 0.17,
+          "detected": 0.2,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:gregariousness",
+          "original": 0.48,
+          "detected": 0.45,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:locus_of_control",
+          "original": 0.63,
+          "detected": 0.6,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_aggressive",
+          "original": 0.47,
+          "detected": 0.45,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:altruism",
+          "original": 0.44,
+          "detected": 0.45,
+          "error": 0.01,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:machiavellianism",
+          "original": 0.36,
+          "detected": 0.35,
+          "error": 0.01,
+          "status": "OK"
+        }
+      ],
+      "dim_mae": {
+        "OPN": 0.123,
+        "CON": 0.138,
+        "EXT": 0.21,
+        "AGR": 0.185,
+        "NEU": 0.213,
+        "HON": 0.273,
+        "DRK": 0.225,
+        "EMO": 0.182,
+        "SOC": 0.398,
+        "COG": 0.113,
+        "VAL": 0.117,
+        "STR": 0.36,
+        "HUM": 0.235
+      }
+    },
+    "turns_20": {
+      "word_count": 3504,
+      "mae": 0.19575757575757574,
+      "within_025": 46,
+      "within_040": 59,
+      "total": 66,
+      "traits": [
+        {
+          "trait": "SOC:social_dominance",
+          "original": 0.77,
+          "detected": 0.25,
+          "error": 0.52,
+          "status": "BAD"
+        },
+        {
+          "trait": "HUM:humor_affiliative",
+          "original": 0.24,
+          "detected": 0.75,
+          "error": 0.51,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:competence",
+          "original": 0.74,
+          "detected": 0.25,
+          "error": 0.49,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:hot_cold_oscillation",
+          "original": 0.73,
+          "detected": 0.25,
+          "error": 0.48,
+          "status": "BAD"
+        },
+        {
+          "trait": "SOC:charm_influence",
+          "original": 0.21,
+          "detected": 0.65,
+          "error": 0.44,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:self_mythologizing",
+          "original": 0.72,
+          "detected": 0.3,
+          "error": 0.42,
+          "status": "BAD"
+        },
+        {
+          "trait": "EMO:emotional_volatility",
+          "original": 0.66,
+          "detected": 0.25,
+          "error": 0.41,
+          "status": "BAD"
+        },
+        {
+          "trait": "SOC:attachment_avoidance",
+          "original": 0.55,
+          "detected": 0.15,
+          "error": 0.4,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:emotional_expressiveness",
+          "original": 0.45,
+          "detected": 0.8,
+          "error": 0.35,
+          "status": "MISS"
+        },
+        {
+          "trait": "NEU:impulsiveness",
+          "original": 0.53,
+          "detected": 0.2,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "SOC:conflict_cooperativeness",
+          "original": 0.38,
+          "detected": 0.7,
+          "error": 0.32,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:greed_avoidance",
+          "original": 0.44,
+          "detected": 0.75,
+          "error": 0.31,
+          "status": "MISS"
+        },
+        {
+          "trait": "HUM:humor_self_enhancing",
+          "original": 0.39,
+          "detected": 0.7,
+          "error": 0.31,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:humility_hexaco",
+          "original": 0.35,
+          "detected": 0.65,
+          "error": 0.3,
+          "status": "MISS"
+        },
+        {
+          "trait": "EXT:warmth",
+          "original": 0.44,
+          "detected": 0.72,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:modesty",
+          "original": 0.47,
+          "detected": 0.75,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:compliance",
+          "original": 0.43,
+          "detected": 0.7,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:tender_mindedness",
+          "original": 0.25,
+          "detected": 0.52,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:fairness",
+          "original": 0.38,
+          "detected": 0.65,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:empathy_affective",
+          "original": 0.49,
+          "detected": 0.75,
+          "error": 0.26,
+          "status": "MISS"
+        },
+        {
+          "trait": "VAL:fairness_justice",
+          "original": 0.4,
+          "detected": 0.65,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:information_control",
+          "original": 0.45,
+          "detected": 0.2,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_anxiety",
+          "original": 0.44,
+          "detected": 0.2,
+          "error": 0.24,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:self_discipline",
+          "original": 0.32,
+          "detected": 0.55,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:sadism",
+          "original": 0.58,
+          "detected": 0.35,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:excitement_seeking",
+          "original": 0.47,
+          "detected": 0.25,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:positive_emotions",
+          "original": 0.56,
+          "detected": 0.78,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:self_consciousness",
+          "original": 0.43,
+          "detected": 0.65,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_assertiveness",
+          "original": 0.67,
+          "detected": 0.45,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:actions",
+          "original": 0.36,
+          "detected": 0.15,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:dutifulness",
+          "original": 0.41,
+          "detected": 0.6,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:locus_of_control",
+          "original": 0.63,
+          "detected": 0.45,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:deliberation",
+          "original": 0.47,
+          "detected": 0.3,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:depression",
+          "original": 0.41,
+          "detected": 0.25,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:need_for_cognition",
+          "original": 0.19,
+          "detected": 0.35,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:loyalty_group",
+          "original": 0.54,
+          "detected": 0.7,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:angry_hostility",
+          "original": 0.4,
+          "detected": 0.55,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_regulation",
+          "original": 0.35,
+          "detected": 0.5,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:cognitive_flexibility",
+          "original": 0.45,
+          "detected": 0.6,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:authority_respect",
+          "original": 0.3,
+          "detected": 0.45,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_defeating",
+          "original": 0.8,
+          "detected": 0.65,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:feelings",
+          "original": 0.56,
+          "detected": 0.7,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:aesthetics",
+          "original": 0.52,
+          "detected": 0.65,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:straightforwardness",
+          "original": 0.63,
+          "detected": 0.75,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:sincerity",
+          "original": 0.69,
+          "detected": 0.8,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_cognitive",
+          "original": 0.59,
+          "detected": 0.7,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:intuitive_vs_analytical",
+          "original": 0.41,
+          "detected": 0.3,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:fantasy",
+          "original": 0.65,
+          "detected": 0.75,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:gregariousness",
+          "original": 0.48,
+          "detected": 0.58,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_granularity",
+          "original": 0.39,
+          "detected": 0.3,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:mirroring_ability",
+          "original": 0.79,
+          "detected": 0.7,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:psychopathy",
+          "original": 0.53,
+          "detected": 0.45,
+          "error": 0.08,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:narcissism",
+          "original": 0.58,
+          "detected": 0.65,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:anxiety",
+          "original": 0.39,
+          "detected": 0.45,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:care_harm",
+          "original": 0.56,
+          "detected": 0.5,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:assertiveness",
+          "original": 0.6,
+          "detected": 0.65,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:trust",
+          "original": 0.58,
+          "detected": 0.62,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:altruism",
+          "original": 0.44,
+          "detected": 0.48,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:machiavellianism",
+          "original": 0.36,
+          "detected": 0.4,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:achievement_striving",
+          "original": 0.17,
+          "detected": 0.2,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:values_openness",
+          "original": 0.68,
+          "detected": 0.7,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:activity_level",
+          "original": 0.66,
+          "detected": 0.68,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_aggressive",
+          "original": 0.47,
+          "detected": 0.45,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:vulnerability",
+          "original": 0.34,
+          "detected": 0.35,
+          "error": 0.01,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:ideas",
+          "original": 0.75,
+          "detected": 0.75,
+          "error": 0.0,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:order",
+          "original": 0.45,
+          "detected": 0.45,
+          "error": 0.0,
+          "status": "OK"
+        }
+      ],
+      "dim_mae": {
+        "OPN": 0.1,
+        "CON": 0.185,
+        "EXT": 0.148,
+        "AGR": 0.17,
+        "NEU": 0.155,
+        "HON": 0.247,
+        "DRK": 0.105,
+        "EMO": 0.228,
+        "SOC": 0.357,
+        "COG": 0.15,
+        "VAL": 0.155,
+        "STR": 0.31,
+        "HUM": 0.247
+      }
+    }
+  },
+  "profile_1": {
+    "turns_10": {
+      "word_count": 1780,
+      "mae": 0.18045454545454545,
+      "within_025": 49,
+      "within_040": 61,
+      "total": 66,
+      "traits": [
+        {
+          "trait": "COG:need_for_cognition",
+          "original": 0.15,
+          "detected": 0.7,
+          "error": 0.55,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:information_control",
+          "original": 0.73,
+          "detected": 0.2,
+          "error": 0.53,
+          "status": "BAD"
+        },
+        {
+          "trait": "COG:cognitive_flexibility",
+          "original": 0.22,
+          "detected": 0.65,
+          "error": 0.43,
+          "status": "BAD"
+        },
+        {
+          "trait": "OPN:feelings",
+          "original": 0.24,
+          "detected": 0.65,
+          "error": 0.41,
+          "status": "BAD"
+        },
+        {
+          "trait": "VAL:loyalty_group",
+          "original": 0.96,
+          "detected": 0.55,
+          "error": 0.41,
+          "status": "BAD"
+        },
+        {
+          "trait": "HON:fairness",
+          "original": 0.31,
+          "detected": 0.7,
+          "error": 0.39,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:empathy_cognitive",
+          "original": 0.33,
+          "detected": 0.7,
+          "error": 0.37,
+          "status": "MISS"
+        },
+        {
+          "trait": "HUM:humor_self_defeating",
+          "original": 0.43,
+          "detected": 0.8,
+          "error": 0.37,
+          "status": "MISS"
+        },
+        {
+          "trait": "VAL:care_harm",
+          "original": 0.25,
+          "detected": 0.6,
+          "error": 0.35,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:sincerity",
+          "original": 0.41,
+          "detected": 0.75,
+          "error": 0.34,
+          "status": "MISS"
+        },
+        {
+          "trait": "OPN:fantasy",
+          "original": 0.45,
+          "detected": 0.75,
+          "error": 0.3,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:emotional_volatility",
+          "original": 0.59,
+          "detected": 0.3,
+          "error": 0.29,
+          "status": "MISS"
+        },
+        {
+          "trait": "CON:competence",
+          "original": 0.53,
+          "detected": 0.25,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:psychopathy",
+          "original": 0.48,
+          "detected": 0.2,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "COG:locus_of_control",
+          "original": 0.42,
+          "detected": 0.7,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "CON:achievement_striving",
+          "original": 0.57,
+          "detected": 0.3,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "CON:self_discipline",
+          "original": 0.51,
+          "detected": 0.25,
+          "error": 0.26,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:modesty",
+          "original": 0.6,
+          "detected": 0.85,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:straightforwardness",
+          "original": 0.47,
+          "detected": 0.7,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:mirroring_ability",
+          "original": 0.87,
+          "detected": 0.65,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:activity_level",
+          "original": 0.51,
+          "detected": 0.3,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_aggressive",
+          "original": 0.39,
+          "detected": 0.6,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:actions",
+          "original": 0.36,
+          "detected": 0.55,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_anxiety",
+          "original": 0.16,
+          "detected": 0.35,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_cooperativeness",
+          "original": 0.69,
+          "detected": 0.5,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:authority_respect",
+          "original": 0.44,
+          "detected": 0.25,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_enhancing",
+          "original": 0.56,
+          "detected": 0.75,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:tender_mindedness",
+          "original": 0.78,
+          "detected": 0.6,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:angry_hostility",
+          "original": 0.63,
+          "detected": 0.45,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:machiavellianism",
+          "original": 0.63,
+          "detected": 0.45,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:social_dominance",
+          "original": 0.48,
+          "detected": 0.3,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:sadism",
+          "original": 0.48,
+          "detected": 0.65,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:excitement_seeking",
+          "original": 0.54,
+          "detected": 0.7,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:vulnerability",
+          "original": 0.56,
+          "detected": 0.4,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:charm_influence",
+          "original": 0.5,
+          "detected": 0.65,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:order",
+          "original": 0.59,
+          "detected": 0.45,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:greed_avoidance",
+          "original": 0.52,
+          "detected": 0.65,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:ideas",
+          "original": 0.58,
+          "detected": 0.7,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:narcissism",
+          "original": 0.37,
+          "detected": 0.25,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:fairness_justice",
+          "original": 0.59,
+          "detected": 0.7,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:values_openness",
+          "original": 0.55,
+          "detected": 0.65,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:altruism",
+          "original": 0.55,
+          "detected": 0.65,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_granularity",
+          "original": 0.65,
+          "detected": 0.55,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_expressiveness",
+          "original": 0.75,
+          "detected": 0.65,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:deliberation",
+          "original": 0.44,
+          "detected": 0.35,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:gregariousness",
+          "original": 0.54,
+          "detected": 0.45,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:assertiveness",
+          "original": 0.44,
+          "detected": 0.35,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:self_consciousness",
+          "original": 0.51,
+          "detected": 0.6,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_affective",
+          "original": 0.53,
+          "detected": 0.45,
+          "error": 0.08,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:warmth",
+          "original": 0.58,
+          "detected": 0.65,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:trust",
+          "original": 0.32,
+          "detected": 0.25,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:depression",
+          "original": 0.32,
+          "detected": 0.25,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_regulation",
+          "original": 0.43,
+          "detected": 0.5,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_affiliative",
+          "original": 0.63,
+          "detected": 0.7,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:dutifulness",
+          "original": 0.46,
+          "detected": 0.4,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:positive_emotions",
+          "original": 0.69,
+          "detected": 0.75,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:compliance",
+          "original": 0.59,
+          "detected": 0.65,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:intuitive_vs_analytical",
+          "original": 0.54,
+          "detected": 0.6,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:self_mythologizing",
+          "original": 0.26,
+          "detected": 0.2,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:impulsiveness",
+          "original": 0.6,
+          "detected": 0.65,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:aesthetics",
+          "original": 0.41,
+          "detected": 0.45,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:anxiety",
+          "original": 0.59,
+          "detected": 0.55,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_avoidance",
+          "original": 0.29,
+          "detected": 0.25,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_assertiveness",
+          "original": 0.49,
+          "detected": 0.45,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:hot_cold_oscillation",
+          "original": 0.22,
+          "detected": 0.25,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:humility_hexaco",
+          "original": 0.77,
+          "detected": 0.75,
+          "error": 0.02,
+          "status": "OK"
+        }
+      ],
+      "dim_mae": {
+        "OPN": 0.193,
+        "CON": 0.183,
+        "EXT": 0.113,
+        "AGR": 0.148,
+        "NEU": 0.098,
+        "HON": 0.22,
+        "DRK": 0.188,
+        "EMO": 0.168,
+        "SOC": 0.132,
+        "COG": 0.33,
+        "VAL": 0.265,
+        "STR": 0.21,
+        "HUM": 0.21
+      }
+    },
+    "turns_20": {
+      "word_count": 3668,
+      "mae": 0.1875757575757576,
+      "within_025": 48,
+      "within_040": 62,
+      "total": 66,
+      "traits": [
+        {
+          "trait": "STR:information_control",
+          "original": 0.73,
+          "detected": 0.15,
+          "error": 0.58,
+          "status": "BAD"
+        },
+        {
+          "trait": "COG:need_for_cognition",
+          "original": 0.15,
+          "detected": 0.72,
+          "error": 0.57,
+          "status": "BAD"
+        },
+        {
+          "trait": "COG:cognitive_flexibility",
+          "original": 0.22,
+          "detected": 0.68,
+          "error": 0.46,
+          "status": "BAD"
+        },
+        {
+          "trait": "OPN:feelings",
+          "original": 0.24,
+          "detected": 0.65,
+          "error": 0.41,
+          "status": "BAD"
+        },
+        {
+          "trait": "NEU:angry_hostility",
+          "original": 0.63,
+          "detected": 0.25,
+          "error": 0.38,
+          "status": "MISS"
+        },
+        {
+          "trait": "OPN:fantasy",
+          "original": 0.45,
+          "detected": 0.82,
+          "error": 0.37,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:empathy_cognitive",
+          "original": 0.33,
+          "detected": 0.7,
+          "error": 0.37,
+          "status": "MISS"
+        },
+        {
+          "trait": "VAL:care_harm",
+          "original": 0.25,
+          "detected": 0.62,
+          "error": 0.37,
+          "status": "MISS"
+        },
+        {
+          "trait": "OPN:actions",
+          "original": 0.36,
+          "detected": 0.72,
+          "error": 0.36,
+          "status": "MISS"
+        },
+        {
+          "trait": "CON:achievement_striving",
+          "original": 0.57,
+          "detected": 0.22,
+          "error": 0.35,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:sincerity",
+          "original": 0.41,
+          "detected": 0.75,
+          "error": 0.34,
+          "status": "MISS"
+        },
+        {
+          "trait": "HON:fairness",
+          "original": 0.31,
+          "detected": 0.65,
+          "error": 0.34,
+          "status": "MISS"
+        },
+        {
+          "trait": "CON:self_discipline",
+          "original": 0.51,
+          "detected": 0.18,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "VAL:loyalty_group",
+          "original": 0.96,
+          "detected": 0.65,
+          "error": 0.31,
+          "status": "MISS"
+        },
+        {
+          "trait": "CON:competence",
+          "original": 0.53,
+          "detected": 0.25,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:straightforwardness",
+          "original": 0.47,
+          "detected": 0.75,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "SOC:social_dominance",
+          "original": 0.48,
+          "detected": 0.2,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "NEU:vulnerability",
+          "original": 0.56,
+          "detected": 0.3,
+          "error": 0.26,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:trust",
+          "original": 0.32,
+          "detected": 0.55,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_defeating",
+          "original": 0.43,
+          "detected": 0.65,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:ideas",
+          "original": 0.58,
+          "detected": 0.78,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:modesty",
+          "original": 0.6,
+          "detected": 0.8,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_volatility",
+          "original": 0.59,
+          "detected": 0.4,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_anxiety",
+          "original": 0.16,
+          "detected": 0.35,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:authority_respect",
+          "original": 0.44,
+          "detected": 0.25,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_aggressive",
+          "original": 0.39,
+          "detected": 0.58,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:machiavellianism",
+          "original": 0.63,
+          "detected": 0.45,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:psychopathy",
+          "original": 0.48,
+          "detected": 0.3,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:aesthetics",
+          "original": 0.41,
+          "detected": 0.58,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:sadism",
+          "original": 0.48,
+          "detected": 0.65,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:mirroring_ability",
+          "original": 0.87,
+          "detected": 0.7,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:deliberation",
+          "original": 0.44,
+          "detected": 0.28,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:tender_mindedness",
+          "original": 0.78,
+          "detected": 0.62,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:locus_of_control",
+          "original": 0.42,
+          "detected": 0.58,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:intuitive_vs_analytical",
+          "original": 0.54,
+          "detected": 0.7,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:charm_influence",
+          "original": 0.5,
+          "detected": 0.65,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:warmth",
+          "original": 0.58,
+          "detected": 0.72,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:gregariousness",
+          "original": 0.54,
+          "detected": 0.68,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:assertiveness",
+          "original": 0.44,
+          "detected": 0.58,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:activity_level",
+          "original": 0.51,
+          "detected": 0.65,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:self_consciousness",
+          "original": 0.51,
+          "detected": 0.65,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:values_openness",
+          "original": 0.55,
+          "detected": 0.68,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:greed_avoidance",
+          "original": 0.52,
+          "detected": 0.65,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:depression",
+          "original": 0.32,
+          "detected": 0.2,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:narcissism",
+          "original": 0.37,
+          "detected": 0.25,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_enhancing",
+          "original": 0.56,
+          "detected": 0.68,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:impulsiveness",
+          "original": 0.6,
+          "detected": 0.7,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_expressiveness",
+          "original": 0.75,
+          "detected": 0.65,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:positive_emotions",
+          "original": 0.69,
+          "detected": 0.78,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:fairness_justice",
+          "original": 0.59,
+          "detected": 0.68,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:self_mythologizing",
+          "original": 0.26,
+          "detected": 0.35,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_affiliative",
+          "original": 0.63,
+          "detected": 0.72,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:excitement_seeking",
+          "original": 0.54,
+          "detected": 0.62,
+          "error": 0.08,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_affective",
+          "original": 0.53,
+          "detected": 0.45,
+          "error": 0.08,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_regulation",
+          "original": 0.43,
+          "detected": 0.5,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:compliance",
+          "original": 0.59,
+          "detected": 0.65,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:altruism",
+          "original": 0.55,
+          "detected": 0.6,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:dutifulness",
+          "original": 0.46,
+          "detected": 0.42,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_avoidance",
+          "original": 0.29,
+          "detected": 0.25,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_assertiveness",
+          "original": 0.49,
+          "detected": 0.45,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_cooperativeness",
+          "original": 0.69,
+          "detected": 0.65,
+          "error": 0.04,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:order",
+          "original": 0.59,
+          "detected": 0.62,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:hot_cold_oscillation",
+          "original": 0.22,
+          "detected": 0.25,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:humility_hexaco",
+          "original": 0.77,
+          "detected": 0.75,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:anxiety",
+          "original": 0.59,
+          "detected": 0.6,
+          "error": 0.01,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_granularity",
+          "original": 0.65,
+          "detected": 0.65,
+          "error": 0.0,
+          "status": "OK"
+        }
+      ],
+      "dim_mae": {
+        "OPN": 0.273,
+        "CON": 0.198,
+        "EXT": 0.122,
+        "AGR": 0.163,
+        "NEU": 0.168,
+        "HON": 0.208,
+        "DRK": 0.163,
+        "EMO": 0.135,
+        "SOC": 0.123,
+        "COG": 0.337,
+        "VAL": 0.24,
+        "STR": 0.217,
+        "HUM": 0.155
+      }
+    }
+  },
+  "profile_2": {
+    "turns_10": {
+      "word_count": 1643,
+      "mae": 0.1784848484848485,
+      "within_025": 52,
+      "within_040": 59,
+      "total": 66,
+      "traits": [
+        {
+          "trait": "HUM:humor_self_enhancing",
+          "original": 0.16,
+          "detected": 0.8,
+          "error": 0.64,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:self_discipline",
+          "original": 0.72,
+          "detected": 0.2,
+          "error": 0.52,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:mirroring_ability",
+          "original": 0.09,
+          "detected": 0.6,
+          "error": 0.51,
+          "status": "BAD"
+        },
+        {
+          "trait": "AGR:modesty",
+          "original": 0.38,
+          "detected": 0.85,
+          "error": 0.47,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:achievement_striving",
+          "original": 0.78,
+          "detected": 0.35,
+          "error": 0.43,
+          "status": "BAD"
+        },
+        {
+          "trait": "VAL:care_harm",
+          "original": 0.07,
+          "detected": 0.5,
+          "error": 0.43,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:competence",
+          "original": 0.67,
+          "detected": 0.25,
+          "error": 0.42,
+          "status": "BAD"
+        },
+        {
+          "trait": "SOC:charm_influence",
+          "original": 0.27,
+          "detected": 0.65,
+          "error": 0.38,
+          "status": "MISS"
+        },
+        {
+          "trait": "HUM:humor_aggressive",
+          "original": 0.42,
+          "detected": 0.05,
+          "error": 0.37,
+          "status": "MISS"
+        },
+        {
+          "trait": "OPN:values_openness",
+          "original": 0.79,
+          "detected": 0.45,
+          "error": 0.34,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:narcissism",
+          "original": 0.55,
+          "detected": 0.25,
+          "error": 0.3,
+          "status": "MISS"
+        },
+        {
+          "trait": "AGR:compliance",
+          "original": 0.42,
+          "detected": 0.7,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:psychopathy",
+          "original": 0.43,
+          "detected": 0.15,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:emotional_expressiveness",
+          "original": 0.42,
+          "detected": 0.7,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "STR:self_mythologizing",
+          "original": 0.6,
+          "detected": 0.35,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:impulsiveness",
+          "original": 0.44,
+          "detected": 0.2,
+          "error": 0.24,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:deliberation",
+          "original": 0.57,
+          "detected": 0.8,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:fairness",
+          "original": 0.28,
+          "detected": 0.5,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_avoidance",
+          "original": 0.47,
+          "detected": 0.25,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:authority_respect",
+          "original": 0.24,
+          "detected": 0.45,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:assertiveness",
+          "original": 0.55,
+          "detected": 0.35,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:locus_of_control",
+          "original": 0.55,
+          "detected": 0.75,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:fairness_justice",
+          "original": 0.64,
+          "detected": 0.45,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:hot_cold_oscillation",
+          "original": 0.44,
+          "detected": 0.25,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:angry_hostility",
+          "original": 0.43,
+          "detected": 0.25,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_defeating",
+          "original": 0.42,
+          "detected": 0.6,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:activity_level",
+          "original": 0.53,
+          "detected": 0.7,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:positive_emotions",
+          "original": 0.58,
+          "detected": 0.75,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:anxiety",
+          "original": 0.48,
+          "detected": 0.65,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:social_dominance",
+          "original": 0.47,
+          "detected": 0.3,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_affiliative",
+          "original": 0.58,
+          "detected": 0.75,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:information_control",
+          "original": 0.36,
+          "detected": 0.2,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:excitement_seeking",
+          "original": 0.3,
+          "detected": 0.45,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:ideas",
+          "original": 0.46,
+          "detected": 0.6,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:gregariousness",
+          "original": 0.51,
+          "detected": 0.65,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_cooperativeness",
+          "original": 0.41,
+          "detected": 0.55,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:aesthetics",
+          "original": 0.58,
+          "detected": 0.45,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:dutifulness",
+          "original": 0.53,
+          "detected": 0.4,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:tender_mindedness",
+          "original": 0.68,
+          "detected": 0.55,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:self_consciousness",
+          "original": 0.57,
+          "detected": 0.7,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:sadism",
+          "original": 0.43,
+          "detected": 0.3,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:warmth",
+          "original": 0.58,
+          "detected": 0.7,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:fantasy",
+          "original": 0.59,
+          "detected": 0.7,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_granularity",
+          "original": 0.29,
+          "detected": 0.4,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_volatility",
+          "original": 0.46,
+          "detected": 0.35,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:cognitive_flexibility",
+          "original": 0.66,
+          "detected": 0.55,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:depression",
+          "original": 0.45,
+          "detected": 0.35,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:machiavellianism",
+          "original": 0.3,
+          "detected": 0.2,
+          "error": 0.1,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:sincerity",
+          "original": 0.71,
+          "detected": 0.8,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:greed_avoidance",
+          "original": 0.63,
+          "detected": 0.55,
+          "error": 0.08,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:vulnerability",
+          "original": 0.52,
+          "detected": 0.45,
+          "error": 0.07,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:loyalty_group",
+          "original": 0.49,
+          "detected": 0.55,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_regulation",
+          "original": 0.55,
+          "detected": 0.5,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_cognitive",
+          "original": 0.6,
+          "detected": 0.65,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:intuitive_vs_analytical",
+          "original": 0.4,
+          "detected": 0.35,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:feelings",
+          "original": 0.62,
+          "detected": 0.65,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:actions",
+          "original": 0.58,
+          "detected": 0.55,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:straightforwardness",
+          "original": 0.77,
+          "detected": 0.8,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:order",
+          "original": 0.63,
+          "detected": 0.65,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:trust",
+          "original": 0.72,
+          "detected": 0.7,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:altruism",
+          "original": 0.57,
+          "detected": 0.55,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_anxiety",
+          "original": 0.37,
+          "detected": 0.35,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:need_for_cognition",
+          "original": 0.41,
+          "detected": 0.4,
+          "error": 0.01,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:humility_hexaco",
+          "original": 0.75,
+          "detected": 0.75,
+          "error": 0.0,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_affective",
+          "original": 0.6,
+          "detected": 0.6,
+          "error": 0.0,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_assertiveness",
+          "original": 0.45,
+          "detected": 0.45,
+          "error": 0.0,
+          "status": "OK"
+        }
+      ],
+      "dim_mae": {
+        "OPN": 0.13,
+        "CON": 0.292,
+        "EXT": 0.158,
+        "AGR": 0.158,
+        "NEU": 0.148,
+        "HON": 0.098,
+        "DRK": 0.203,
+        "EMO": 0.1,
+        "SOC": 0.155,
+        "COG": 0.092,
+        "VAL": 0.223,
+        "STR": 0.277,
+        "HUM": 0.34
+      }
+    },
+    "turns_20": {
+      "word_count": 3311,
+      "mae": 0.1831818181818182,
+      "within_025": 53,
+      "within_040": 60,
+      "total": 66,
+      "traits": [
+        {
+          "trait": "HUM:humor_self_enhancing",
+          "original": 0.16,
+          "detected": 0.75,
+          "error": 0.59,
+          "status": "BAD"
+        },
+        {
+          "trait": "STR:mirroring_ability",
+          "original": 0.09,
+          "detected": 0.65,
+          "error": 0.56,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:competence",
+          "original": 0.67,
+          "detected": 0.2,
+          "error": 0.47,
+          "status": "BAD"
+        },
+        {
+          "trait": "CON:self_discipline",
+          "original": 0.72,
+          "detected": 0.25,
+          "error": 0.47,
+          "status": "BAD"
+        },
+        {
+          "trait": "AGR:modesty",
+          "original": 0.38,
+          "detected": 0.85,
+          "error": 0.47,
+          "status": "BAD"
+        },
+        {
+          "trait": "SOC:charm_influence",
+          "original": 0.27,
+          "detected": 0.7,
+          "error": 0.43,
+          "status": "BAD"
+        },
+        {
+          "trait": "VAL:care_harm",
+          "original": 0.07,
+          "detected": 0.45,
+          "error": 0.38,
+          "status": "MISS"
+        },
+        {
+          "trait": "OPN:values_openness",
+          "original": 0.79,
+          "detected": 0.45,
+          "error": 0.34,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:psychopathy",
+          "original": 0.43,
+          "detected": 0.1,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "EMO:emotional_expressiveness",
+          "original": 0.42,
+          "detected": 0.75,
+          "error": 0.33,
+          "status": "MISS"
+        },
+        {
+          "trait": "DRK:narcissism",
+          "original": 0.55,
+          "detected": 0.25,
+          "error": 0.3,
+          "status": "MISS"
+        },
+        {
+          "trait": "NEU:angry_hostility",
+          "original": 0.43,
+          "detected": 0.15,
+          "error": 0.28,
+          "status": "MISS"
+        },
+        {
+          "trait": "HUM:humor_aggressive",
+          "original": 0.42,
+          "detected": 0.15,
+          "error": 0.27,
+          "status": "MISS"
+        },
+        {
+          "trait": "COG:locus_of_control",
+          "original": 0.55,
+          "detected": 0.8,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:self_mythologizing",
+          "original": 0.6,
+          "detected": 0.85,
+          "error": 0.25,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_cooperativeness",
+          "original": 0.41,
+          "detected": 0.65,
+          "error": 0.24,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:sadism",
+          "original": 0.43,
+          "detected": 0.2,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_self_defeating",
+          "original": 0.42,
+          "detected": 0.65,
+          "error": 0.23,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:positive_emotions",
+          "original": 0.58,
+          "detected": 0.8,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:anxiety",
+          "original": 0.48,
+          "detected": 0.7,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:fairness",
+          "original": 0.28,
+          "detected": 0.5,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_avoidance",
+          "original": 0.47,
+          "detected": 0.25,
+          "error": 0.22,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:authority_respect",
+          "original": 0.24,
+          "detected": 0.45,
+          "error": 0.21,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:excitement_seeking",
+          "original": 0.3,
+          "detected": 0.5,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:depression",
+          "original": 0.45,
+          "detected": 0.25,
+          "error": 0.2,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:fairness_justice",
+          "original": 0.64,
+          "detected": 0.45,
+          "error": 0.19,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:aesthetics",
+          "original": 0.58,
+          "detected": 0.4,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:achievement_striving",
+          "original": 0.78,
+          "detected": 0.6,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:deliberation",
+          "original": 0.57,
+          "detected": 0.75,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:compliance",
+          "original": 0.42,
+          "detected": 0.6,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:tender_mindedness",
+          "original": 0.68,
+          "detected": 0.5,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:self_consciousness",
+          "original": 0.57,
+          "detected": 0.75,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:vulnerability",
+          "original": 0.52,
+          "detected": 0.7,
+          "error": 0.18,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:warmth",
+          "original": 0.58,
+          "detected": 0.75,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:activity_level",
+          "original": 0.53,
+          "detected": 0.7,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:social_dominance",
+          "original": 0.47,
+          "detected": 0.3,
+          "error": 0.17,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:fantasy",
+          "original": 0.59,
+          "detected": 0.75,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_granularity",
+          "original": 0.29,
+          "detected": 0.45,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:information_control",
+          "original": 0.36,
+          "detected": 0.2,
+          "error": 0.16,
+          "status": "OK"
+        },
+        {
+          "trait": "DRK:machiavellianism",
+          "original": 0.3,
+          "detected": 0.15,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:intuitive_vs_analytical",
+          "original": 0.4,
+          "detected": 0.25,
+          "error": 0.15,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:ideas",
+          "original": 0.46,
+          "detected": 0.6,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:gregariousness",
+          "original": 0.51,
+          "detected": 0.65,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:sincerity",
+          "original": 0.71,
+          "detected": 0.85,
+          "error": 0.14,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:actions",
+          "original": 0.58,
+          "detected": 0.45,
+          "error": 0.13,
+          "status": "OK"
+        },
+        {
+          "trait": "HUM:humor_affiliative",
+          "original": 0.58,
+          "detected": 0.7,
+          "error": 0.12,
+          "status": "OK"
+        },
+        {
+          "trait": "NEU:impulsiveness",
+          "original": 0.44,
+          "detected": 0.55,
+          "error": 0.11,
+          "status": "OK"
+        },
+        {
+          "trait": "VAL:loyalty_group",
+          "original": 0.49,
+          "detected": 0.4,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "STR:hot_cold_oscillation",
+          "original": 0.44,
+          "detected": 0.35,
+          "error": 0.09,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_volatility",
+          "original": 0.46,
+          "detected": 0.4,
+          "error": 0.06,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:humility_hexaco",
+          "original": 0.75,
+          "detected": 0.8,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:emotional_regulation",
+          "original": 0.55,
+          "detected": 0.5,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_cognitive",
+          "original": 0.6,
+          "detected": 0.65,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "EMO:empathy_affective",
+          "original": 0.6,
+          "detected": 0.65,
+          "error": 0.05,
+          "status": "OK"
+        },
+        {
+          "trait": "OPN:feelings",
+          "original": 0.62,
+          "detected": 0.65,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:order",
+          "original": 0.63,
+          "detected": 0.6,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:straightforwardness",
+          "original": 0.77,
+          "detected": 0.8,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "HON:greed_avoidance",
+          "original": 0.63,
+          "detected": 0.6,
+          "error": 0.03,
+          "status": "OK"
+        },
+        {
+          "trait": "CON:dutifulness",
+          "original": 0.53,
+          "detected": 0.55,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:trust",
+          "original": 0.72,
+          "detected": 0.7,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "AGR:altruism",
+          "original": 0.57,
+          "detected": 0.55,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:attachment_anxiety",
+          "original": 0.37,
+          "detected": 0.35,
+          "error": 0.02,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:need_for_cognition",
+          "original": 0.41,
+          "detected": 0.4,
+          "error": 0.01,
+          "status": "OK"
+        },
+        {
+          "trait": "COG:cognitive_flexibility",
+          "original": 0.66,
+          "detected": 0.65,
+          "error": 0.01,
+          "status": "OK"
+        },
+        {
+          "trait": "EXT:assertiveness",
+          "original": 0.55,
+          "detected": 0.55,
+          "error": 0.0,
+          "status": "OK"
+        },
+        {
+          "trait": "SOC:conflict_assertiveness",
+          "original": 0.45,
+          "detected": 0.45,
+          "error": 0.0,
+          "status": "OK"
+        }
+      ],
+      "dim_mae": {
+        "OPN": 0.163,
+        "CON": 0.225,
+        "EXT": 0.15,
+        "AGR": 0.15,
+        "NEU": 0.195,
+        "HON": 0.11,
+        "DRK": 0.253,
+        "EMO": 0.117,
+        "SOC": 0.18,
+        "COG": 0.105,
+        "VAL": 0.217,
+        "STR": 0.265,
+        "HUM": 0.302
+      }
+    }
+  }
+}
