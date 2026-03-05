@@ -29,6 +29,8 @@
 | V1.6 | 0.197 | 66.2% | 92.9% | 3 | Bayesian shrinkage (worse — removed) |
 | V1.7 | 0.190 | 70.9% | 92.7% | 5 | 5 profiles for stable estimate (no code changes from V1.1+fixes) |
 | V1.8 | 0.184 | 72.7% | 91.8% | 5 | Humor suppression for low-humor profiles |
+| **V2.0-2.2** | **0.196** | **69.7%** | **92.4%** | 3 | Deep Listening + ThinkSlow + Gap-Aware Incisive Q |
+| V2.0-2.2@10t | **0.176** | **74.2%** | **94.9%** | 3 | Same system, measured at 10 turns (beats V1.8!) |
 
 ## Per-Dimension MAE (20 turns)
 
@@ -49,6 +51,24 @@ Note: V0.1-V0.8 used 3 profiles; V1.7+ used 5 profiles. Numbers not directly com
 | HON | 0.188 | — | — | 0.205 |
 | NEU | 0.173 | — | 0.127 | 0.126 |
 | STR | 0.264 | — | — | 0.237 |
+
+**V2.0-2.2 Per-Dimension MAE (20 turns, 3 profiles):**
+
+| Dimension | V1.8(5p) | V2.2(3p) | Change |
+|-----------|----------|----------|--------|
+| DRK | 0.168 | **0.141** | -16% |
+| EXT | 0.154 | **0.142** | -8% |
+| EMO | 0.181 | **0.146** | -19% |
+| VAL | 0.190 | **0.165** | -13% |
+| OPN | 0.167 | 0.168 | ~ |
+| AGR | 0.188 | **0.178** | -5% |
+| CON | 0.192 | **0.186** | -3% |
+| HUM | 0.245 | **0.198** | -19% |
+| NEU | 0.126 | 0.213 | +69% |
+| HON | 0.205 | 0.234 | +14% |
+| COG | 0.212 | 0.249 | +17% |
+| SOC | 0.173 | 0.270 | +56% |
+| STR | 0.237 | 0.287 | +21% |
 
 ## Key Findings
 
@@ -180,3 +200,32 @@ Note: V0.1-V0.8 used 3 profiles; V1.7+ used 5 profiles. Numbers not directly com
 - Speaker: Stronger low-modesty anti-pattern (threshold 0.35→0.45, more aggressive language)
 - Speaker: Added low-straightforwardness anti-pattern (<0.45)
 - Speaker: Raised high-modesty threshold to >0.65 with stronger instruction
+
+### V2.0-2.2 — Deep Listening + ThinkSlow + Gap-Aware Incisive Questions
+
+**Fundamental approach change**: Instead of optimizing prompts (diminishing returns), changed HOW we collect personality signal.
+
+**V2.0 — Deep Listening Conversation Strategy**
+- Chatter: Rewrote `_build_chatter_system()` with Nancy Kline's 10 Component Thinking Environment
+- Chatter: 3 phases: turns 1-7 rapport, 8-14 deepening, 15+ incisive questions
+- Chatter: Reduced max_tokens from 256 to 150 (shorter prompts = more speaker output)
+- Core principles: Full Attention, Ease, Equality, Appreciation, Encouragement, Feelings, Information, Diversity, Place
+
+**V2.1 — Think Slow Periodic Extraction**
+- New module: `super_brain/think_slow.py`
+- ThinkSlowResult model: partial_profile, confidence_map, low_confidence_traits, observations
+- Periodic extraction every 5 turns with gap-aware focus (passes low-confidence traits to next round)
+- Conservative confidence calibration (0.2-0.5 typical for 5-turn casual chat)
+
+**V2.2 — Gap-Aware Incisive Questions**
+- New module: `super_brain/trait_topic_map.py` — 47 traits → 2-3 natural conversation topics each
+- `_build_chatter_system` now accepts `low_confidence_traits` parameter
+- Incisive Questions phase (turn 15+) targets low-confidence traits from ThinkSlow
+- ThinkSlow flags ALL unestimated traits as low-confidence (not just low-confidence estimated ones)
+
+**Key findings**:
+1. **10-turn detection beats V1.8** (MAE 0.176 vs 0.184) — Deep Listening generates better signal faster
+2. **20-turn detection regresses** (MAE 0.196) — Detector's "CASUAL CONVERSATION" calibration fights deeper conversation style
+3. **DRK, EMO, HUM all improved significantly** at 20 turns (-16%, -19%, -19%)
+4. **NEU, SOC, STR regressed** — Detector's conservative baselines suppress legitimate deeper conversation signals
+5. **Next step**: Detector context awareness needs updating for Deep Listening conversation style, or use ThinkSlow results directly instead of one-shot batch detection
