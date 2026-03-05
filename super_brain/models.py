@@ -51,3 +51,15 @@ class PersonalityDNA(BaseModel):
     sample_summary: SampleSummary
     traits: list[Trait] = Field(default_factory=list)
     trait_relations: list[TraitRelation] = Field(default_factory=list)
+
+
+class ThinkSlowResult(BaseModel):
+    """Result of periodic Think Slow extraction (V2.1).
+
+    Produced every 5 conversation turns. Contains a partial personality
+    estimate with per-trait confidence scores, enabling gap-aware conversation.
+    """
+    partial_profile: PersonalityDNA
+    confidence_map: dict[str, float] = Field(default_factory=dict)
+    low_confidence_traits: list[str] = Field(default_factory=list)
+    observations: list[str] = Field(default_factory=list)
