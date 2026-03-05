@@ -167,3 +167,40 @@ def test_simulate_conversation_with_think_slow():
         # Should have 2 ThinkSlow results (at turn 5 and turn 10)
         assert len(ts_results) == 2
         assert all(hasattr(r, "confidence_map") for r in ts_results)
+
+
+def test_think_slow_generates_incisive_questions():
+    """V2.3: ThinkSlow.extract() should generate incisive questions from trait gaps."""
+    from unittest.mock import MagicMock, patch
+    import json
+
+    mock_response_data = {
+        "observations": ["Speaker is brief and avoids personal topics"],
+        "trait_estimates": [
+            {"dimension": "EXT", "name": "warmth", "value": 0.40, "confidence": 0.6},
+            {"dimension": "AGR", "name": "trust", "value": 0.50, "confidence": 0.3},
+        ],
+    }
+
+    with patch("super_brain.think_slow.anthropic.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_cls.return_value = mock_client
+        mock_resp = MagicMock()
+        mock_resp.content = [MagicMock(text=json.dumps(mock_response_data))]
+        mock_client.messages.create.return_value = mock_resp
+
+        from super_brain.think_slow import ThinkSlow
+        ts = ThinkSlow(api_key="test-key")
+
+        conversation = [
+            {"role": "chatter", "text": "How's your day?"},
+            {"role": "speaker", "text": "Fine. Just work."},
+        ]
+
+        result = ts.extract(conversation, focus_traits=None, previous=None)
+
+        # Should have incisive questions generated from low-confidence traits
+        assert len(result.incisive_questions) > 0
+        # Questions should target trait gaps
+        targets = {q.target for q in result.incisive_questions}
+        assert len(targets) > 0

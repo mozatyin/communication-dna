@@ -14,7 +14,9 @@ import anthropic
 from super_brain.catalog import TRAIT_CATALOG, ALL_DIMENSIONS
 from super_brain.models import (
     PersonalityDNA, Trait, SampleSummary, ThinkSlowResult, Evidence,
+    IncisiveQuestion,
 )
+from super_brain.trait_topic_map import get_topics_for_traits
 
 
 _THINK_SLOW_SYSTEM = """\
@@ -79,6 +81,42 @@ def _build_focus_section(focus_traits: list[str] | None) -> str:
         "Pay special attention to any signal (even weak) for:\n"
         + "\n".join(trait_info)
     )
+
+
+def _generate_incisive_questions(
+    low_confidence_traits: list[str],
+    confidence_map: dict[str, float],
+    max_questions: int = 10,
+) -> list[IncisiveQuestion]:
+    """Generate incisive questions from trait gaps.
+
+    Sorts traits by confidence (lowest first; unestimated traits get 0.0),
+    maps them to natural conversation topics, and returns up to max_questions
+    IncisiveQuestion objects.
+    """
+    # Sort by confidence ascending (unestimated traits get 0.0)
+    sorted_traits = sorted(
+        low_confidence_traits,
+        key=lambda t: confidence_map.get(t, 0.0),
+    )
+
+    questions: list[IncisiveQuestion] = []
+    for trait_name in sorted_traits:
+        if len(questions) >= max_questions:
+            break
+        topics = get_topics_for_traits([trait_name], max_per_trait=1)
+        conf = confidence_map.get(trait_name, 0.0)
+        for topic in topics:
+            if len(questions) >= max_questions:
+                break
+            questions.append(IncisiveQuestion(
+                question=topic,
+                target=trait_name,
+                priority=1.0 - conf,
+                source="trait_gap",
+            ))
+
+    return questions
 
 
 class ThinkSlow:
@@ -168,11 +206,17 @@ class ThinkSlow:
         # Unestimated traits are the MOST uncertain — add them all
         low_conf.extend(sorted(unestimated))
 
+        incisive_qs = _generate_incisive_questions(
+            low_confidence_traits=sorted(low_conf),
+            confidence_map=confidence_map,
+        )
+
         return ThinkSlowResult(
             partial_profile=partial,
             confidence_map=confidence_map,
             low_confidence_traits=sorted(low_conf),
             observations=data.get("observations", []),
+            incisive_questions=incisive_qs,
         )
 
 
