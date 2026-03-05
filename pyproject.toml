@@ -17,6 +17,10 @@ dev = [
 search = [
     "duckduckgo-search>=7.0",
 ]
+assessment = [
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+]
 
 [tool.pytest.ini_options]
 markers = [
