@@ -280,7 +280,7 @@
       "module_id": "gameplay_flow",
       "type": "page",
       "parents": ["gameplay"],
-      "children": ["gameplay", "main_menu"],
+      "children": ["gameplay", "main_menu", "leaderboard"],
       "dimensions": {"width": 1080, "height": 1920},
       "elements": [
         {
@@ -345,11 +345,29 @@
           "element_class": "editable"
         },
         {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 340, "y": 1120, "width": 400, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "transparent",
+            "color": "#4CAF50",
+            "font-size": "36px",
+            "border": "3px solid #4CAF50",
+            "border-radius": "16px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        },
+        {
           "id": "btn_menu",
           "type": "button",
           "asset_id": null,
           "inner_text": "主菜单",
-          "rect": {"x": 340, "y": 1120, "width": 400, "height": 100, "z_index": 2},
+          "rect": {"x": 340, "y": 1270, "width": 400, "height": 100, "z_index": 2},
           "style": {
             "background-color": "transparent",
             "color": "#888888",
@@ -360,6 +378,83 @@
           },
           "event": "click",
           "target_interface_id": "main_menu",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "leaderboard",
+      "interface_name": "排行榜",
+      "module_id": "menu_flow",
+      "type": "popup",
+      "parents": ["game_over"],
+      "children": [],
+      "dimensions": {"width": 800, "height": 1000},
+      "elements": [
+        {
+          "id": "panel_bg",
+          "type": "css",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 800, "height": 1000, "z_index": 0},
+          "style": {
+            "background-color": "#1A1A1A",
+            "border-radius": "24px",
+            "border": "3px solid #4CAF50"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 200, "y": 60, "width": 400, "height": 80, "z_index": 1},
+          "style": {
+            "color": "#4CAF50",
+            "font-size": "48px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_list",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "1. 42\n2. 35\n3. 28\n4. 19\n5. 12",
+          "rect": {"x": 100, "y": 200, "width": 600, "height": 500, "z_index": 1},
+          "style": {
+            "color": "#FFFFFF",
+            "font-size": "40px",
+            "line-height": "1.8",
+            "text-align": "left"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_close",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "关闭",
+          "rect": {"x": 250, "y": 820, "width": 300, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "#4CAF50",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "16px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": null,
           "element_class": "editable"
         }
       ],

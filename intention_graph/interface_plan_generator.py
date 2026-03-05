@@ -43,6 +43,10 @@ if screen A lists B in navigation_to, screen B MUST list A in navigation_from.
 11. Popups should be reachable from ALL screens that show a button for them. \
 For example, if both the start menu and game_over screen have a leaderboard button, \
 the leaderboard popup's navigation_from must include BOTH screens.
+12. If the PRD describes a preparation/selection step before gameplay \
+(e.g., choosing characters, loadout, plants, cards), create a separate \
+popup or page for that selection screen. It should appear between \
+the level/menu screen and the gameplay screen.
 
 Return ONLY valid JSON matching this schema:
 {

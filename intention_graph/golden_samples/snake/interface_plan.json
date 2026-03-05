@@ -2,7 +2,7 @@
   "game_title": "贪吃蛇",
   "art_style": "简约现代风格，深色背景，霓虹色彩",
   "global_resolution": {"width": 1080, "height": 1920},
-  "total_interfaces": 3,
+  "total_interfaces": 4,
   "entry_interface": "main_menu",
   "interfaces": [
     {
@@ -36,7 +36,18 @@
       "description": "显示'Game Over'文字和最终得分。如果打破记录显示'新纪录'提示。有重新开始按钮和返回菜单按钮。",
       "belongs_to": null,
       "navigation_from": ["gameplay"],
-      "navigation_to": ["gameplay", "main_menu"]
+      "navigation_to": ["gameplay", "main_menu", "leaderboard"]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {"width": 800, "height": 1000},
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": ["game_over"],
+      "navigation_to": []
     }
   ]
 }
