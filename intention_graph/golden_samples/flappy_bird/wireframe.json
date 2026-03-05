@@ -1,0 +1,446 @@
+{
+  "project": {
+    "title": "Flappy Bird",
+    "global_resolution": {"width": 1080, "height": 1920}
+  },
+  "asset_library": {
+    "bg_sky": {"type": "image", "path": "assets/images/bg_sky.png", "label": "天空背景"},
+    "ground": {"type": "image", "path": "assets/images/ground.png", "label": "地面"},
+    "bird_idle": {"type": "image", "path": "assets/images/bird_idle.png", "label": "小鸟待机"},
+    "pipe_top": {"type": "image", "path": "assets/images/pipe_top.png", "label": "上管道"},
+    "pipe_bottom": {"type": "image", "path": "assets/images/pipe_bottom.png", "label": "下管道"},
+    "title_logo": {"type": "image", "path": "assets/images/title_logo.png", "label": "标题Logo"},
+    "score_panel": {"type": "image", "path": "assets/images/score_panel.png", "label": "计分面板"},
+    "medal": {"type": "image", "path": "assets/images/medal.png", "label": "奖牌"},
+    "gameover_text": {"type": "image", "path": "assets/images/gameover_text.png", "label": "Game Over文字"},
+    "sfx_flap": {"type": "audio", "path": "assets/audio/sfx_flap.mp3", "label": "扇翅膀"},
+    "sfx_score": {"type": "audio", "path": "assets/audio/sfx_score.mp3", "label": "得分"},
+    "sfx_hit": {"type": "audio", "path": "assets/audio/sfx_hit.mp3", "label": "撞击"},
+    "sfx_die": {"type": "audio", "path": "assets/audio/sfx_die.mp3", "label": "坠落"}
+  },
+  "modules": [
+    {
+      "module_id": "menu_flow",
+      "module_name": "菜单流程",
+      "description": "开始界面和排行榜",
+      "color": "#4A90D9",
+      "interface_ids": ["start_screen", "leaderboard"]
+    },
+    {
+      "module_id": "gameplay_flow",
+      "module_name": "游戏流程",
+      "description": "核心游戏和结算",
+      "color": "#7ED321",
+      "interface_ids": ["gameplay", "game_over"]
+    }
+  ],
+  "module_connections": [
+    {"from": "menu_flow", "to": "gameplay_flow", "label": "开始游戏"},
+    {"from": "gameplay_flow", "to": "menu_flow", "label": "返回菜单"}
+  ],
+  "interfaces": [
+    {
+      "interface_id": "start_screen",
+      "interface_name": "开始界面",
+      "module_id": "menu_flow",
+      "type": "page",
+      "parents": [],
+      "children": ["gameplay"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_sky",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "ground",
+          "type": "image",
+          "asset_id": "ground",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 1680, "width": 1080, "height": 240, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title_logo",
+          "type": "image",
+          "asset_id": "title_logo",
+          "inner_text": null,
+          "rect": {"x": 190, "y": 380, "width": 700, "height": 200, "z_index": 2},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "bird_preview",
+          "type": "image",
+          "asset_id": "bird_idle",
+          "inner_text": null,
+          "rect": {"x": 460, "y": 700, "width": 160, "height": 120, "z_index": 2},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_play",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "Play",
+          "rect": {"x": 200, "y": 1100, "width": 280, "height": 120, "z_index": 3},
+          "style": {
+            "background-color": "#E8A43A",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "16px",
+            "text-align": "center",
+            "border": "4px solid #8B6914"
+          },
+          "event": "click",
+          "target_interface_id": "gameplay",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "Score",
+          "rect": {"x": 600, "y": 1100, "width": 280, "height": 120, "z_index": 3},
+          "style": {
+            "background-color": "#E8A43A",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "16px",
+            "text-align": "center",
+            "border": "4px solid #8B6914"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "gameplay",
+      "interface_name": "游戏主界面",
+      "module_id": "gameplay_flow",
+      "type": "page",
+      "parents": ["start_screen"],
+      "children": ["game_over"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_sky",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "pipe_bottom_1",
+          "type": "image",
+          "asset_id": "pipe_bottom",
+          "inner_text": null,
+          "rect": {"x": 800, "y": 1100, "width": 180, "height": 580, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "pipe_top_1",
+          "type": "image",
+          "asset_id": "pipe_top",
+          "inner_text": null,
+          "rect": {"x": 800, "y": 0, "width": 180, "height": 700, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "ground",
+          "type": "image",
+          "asset_id": "ground",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 1680, "width": 1080, "height": 240, "z_index": 2},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "bird",
+          "type": "image",
+          "asset_id": "bird_idle",
+          "inner_text": null,
+          "rect": {"x": 300, "y": 800, "width": 160, "height": 120, "z_index": 3},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_display",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "0",
+          "rect": {"x": 440, "y": 160, "width": 200, "height": 120, "z_index": 4},
+          "style": {
+            "color": "#FFFFFF",
+            "font-size": "96px",
+            "font-weight": "bold",
+            "text-align": "center",
+            "text-shadow": "4px 4px 0px #000000"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "tap_area",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1680, "z_index": 5},
+          "style": {"opacity": 0},
+          "event": "click",
+          "target_interface_id": null,
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "game_over",
+      "interface_name": "游戏结束界面",
+      "module_id": "gameplay_flow",
+      "type": "page",
+      "parents": ["gameplay"],
+      "children": ["start_screen", "leaderboard"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_sky",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "ground",
+          "type": "image",
+          "asset_id": "ground",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 1680, "width": 1080, "height": 240, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "gameover_text",
+          "type": "image",
+          "asset_id": "gameover_text",
+          "inner_text": null,
+          "rect": {"x": 240, "y": 300, "width": 600, "height": 140, "z_index": 2},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_panel",
+          "type": "image",
+          "asset_id": "score_panel",
+          "inner_text": null,
+          "rect": {"x": 140, "y": 520, "width": 800, "height": 400, "z_index": 2},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "medal_icon",
+          "type": "image",
+          "asset_id": "medal",
+          "inner_text": null,
+          "rect": {"x": 220, "y": 620, "width": 180, "height": 180, "z_index": 3},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_value",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "12",
+          "rect": {"x": 640, "y": 620, "width": 200, "height": 80, "z_index": 3},
+          "style": {
+            "color": "#FFFFFF",
+            "font-size": "48px",
+            "font-weight": "bold",
+            "text-align": "right"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "best_value",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "35",
+          "rect": {"x": 640, "y": 760, "width": 200, "height": 80, "z_index": 3},
+          "style": {
+            "color": "#FFFFFF",
+            "font-size": "48px",
+            "font-weight": "bold",
+            "text-align": "right"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_restart",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "Play",
+          "rect": {"x": 200, "y": 1050, "width": 280, "height": 120, "z_index": 3},
+          "style": {
+            "background-color": "#E8A43A",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "16px",
+            "text-align": "center",
+            "border": "4px solid #8B6914"
+          },
+          "event": "click",
+          "target_interface_id": "start_screen",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "Score",
+          "rect": {"x": 600, "y": 1050, "width": 280, "height": 120, "z_index": 3},
+          "style": {
+            "background-color": "#E8A43A",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "16px",
+            "text-align": "center",
+            "border": "4px solid #8B6914"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "leaderboard",
+      "interface_name": "排行榜",
+      "module_id": "menu_flow",
+      "type": "popup",
+      "parents": ["game_over", "start_screen"],
+      "children": [],
+      "dimensions": {"width": 800, "height": 1200},
+      "elements": [
+        {
+          "id": "panel_bg",
+          "type": "css",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 800, "height": 1200, "z_index": 0},
+          "style": {
+            "background-color": "#DEB04F",
+            "border-radius": "24px",
+            "border": "6px solid #8B6914"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "Score Board",
+          "rect": {"x": 150, "y": 60, "width": 500, "height": 80, "z_index": 1},
+          "style": {
+            "color": "#FFFFFF",
+            "font-size": "48px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_list",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "1. 99\n2. 75\n3. 42\n4. 35\n5. 12",
+          "rect": {"x": 100, "y": 200, "width": 600, "height": 700, "z_index": 1},
+          "style": {
+            "color": "#5A3E1B",
+            "font-size": "40px",
+            "line-height": "1.8",
+            "text-align": "left"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_close",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "OK",
+          "rect": {"x": 250, "y": 1020, "width": 300, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "#E8A43A",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "16px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": null,
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    }
+  ]
+}

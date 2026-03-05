@@ -1,0 +1,53 @@
+{
+  "game_title": "Flappy Bird",
+  "art_style": "复古像素风格，明亮色彩",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 4,
+  "entry_interface": "start_screen",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "start_screen",
+      "name": "开始界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "游戏标题'Flappy Bird'居中显示，小鸟在标题旁扇翅膀。下方显示开始按钮和排行榜按钮。底部是地面。点击开始按钮进入游戏。",
+      "belongs_to": null,
+      "navigation_from": ["game_over"],
+      "navigation_to": ["gameplay"]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏主界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "天空背景，绿色管道从上下伸出形成间隙。小鸟在左侧1/3位置飞行。顶部居中显示当前得分（大号白色数字带黑色描边）。底部是滚动的地面。点击屏幕小鸟向上跳。",
+      "belongs_to": null,
+      "navigation_from": ["start_screen"],
+      "navigation_to": ["game_over"]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'Game Over'文字，然后弹出计分面板。计分面板显示当前得分、最高分和奖牌。下方有重新开始按钮和排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["start_screen", "leaderboard"]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {"width": 800, "height": 1200},
+      "description": "显示玩家历史最高分排名列表。有返回按钮回到游戏结束界面。",
+      "belongs_to": "game_over",
+      "navigation_from": ["game_over", "start_screen"],
+      "navigation_to": ["game_over", "start_screen"]
+    }
+  ]
+}
