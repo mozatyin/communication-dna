@@ -1,0 +1,368 @@
+{
+  "mcq": [
+    {
+      "id": "jt_01",
+      "dimension": "jumping_thinking",
+      "question": "Your team's recommendation engine has low engagement. You notice the company cafeteria recently changed its menu layout and saw a 40% increase in selections. What do you do?",
+      "options": [
+        {"label": "A", "text": "Ignore it — cafeteria has nothing to do with tech", "score": 0},
+        {"label": "B", "text": "Note it's interesting but focus on A/B testing the algorithm", "score": 1},
+        {"label": "C", "text": "Study the cafeteria's choice architecture principles and prototype applying them to the recommendation UI", "score": 2}
+      ]
+    },
+    {
+      "id": "jt_02",
+      "dimension": "jumping_thinking",
+      "question": "You're debugging a slow database query. A colleague mentions that their kid's school uses a library checkout system that handles 10x the requests. What do you do?",
+      "options": [
+        {"label": "A", "text": "Politely acknowledge and keep profiling the query", "score": 0},
+        {"label": "B", "text": "Ask what system the school uses out of curiosity", "score": 1},
+        {"label": "C", "text": "Ask for details about the checkout system's architecture — different domains often solve similar scaling problems in novel ways", "score": 2}
+      ]
+    },
+    {
+      "id": "jt_03",
+      "dimension": "jumping_thinking",
+      "question": "A product manager asks you to improve search relevance. You recently read an article about how Netflix matches viewers to thumbnails. What's your first thought?",
+      "options": [
+        {"label": "A", "text": "Netflix is entertainment, our product is B2B — not relevant", "score": 0},
+        {"label": "B", "text": "Interesting parallel — maybe we could personalize how search results are displayed, not just ranked", "score": 2},
+        {"label": "C", "text": "Bookmark the article for later reading", "score": 1}
+      ]
+    },
+    {
+      "id": "jt_04",
+      "dimension": "jumping_thinking",
+      "question": "During a brainstorming session about reducing customer churn, someone mentions ant colonies self-organize without central control. How do you react?",
+      "options": [
+        {"label": "A", "text": "Stay focused — biology analogies waste meeting time", "score": 0},
+        {"label": "B", "text": "Ask how ant colony optimization might apply to our customer journey routing", "score": 2},
+        {"label": "C", "text": "Think it's interesting but don't bring it up to avoid seeming off-topic", "score": 1}
+      ]
+    },
+    {
+      "id": "jt_05",
+      "dimension": "jumping_thinking",
+      "question": "You're designing an API rate limiter. Your friend who's a traffic engineer describes how highway on-ramps use metered signals to regulate flow. What do you do?",
+      "options": [
+        {"label": "A", "text": "Appreciate the analogy but stick with standard token bucket algorithm", "score": 1},
+        {"label": "B", "text": "Explore whether the ramp metering's adaptive feedback loop could improve your rate limiter's burst handling", "score": 2},
+        {"label": "C", "text": "Ignore it — physical traffic has nothing to do with API traffic", "score": 0}
+      ]
+    },
+    {
+      "id": "jt_06",
+      "dimension": "jumping_thinking",
+      "question": "Your e-commerce site has a high cart abandonment rate. You visit a physical store and notice how staff approach customers who linger near the exit. What crosses your mind?",
+      "options": [
+        {"label": "A", "text": "Physical retail tactics don't translate to digital", "score": 0},
+        {"label": "B", "text": "Maybe we need exit-intent detection that mirrors the staff's timing and approach style", "score": 2},
+        {"label": "C", "text": "We should add a popup discount when users try to leave", "score": 1}
+      ]
+    },
+    {
+      "id": "jt_07",
+      "dimension": "jumping_thinking",
+      "question": "A data pipeline keeps failing silently. You read that hospitals use redundant monitoring where multiple nurses independently check vital signs. What do you think?",
+      "options": [
+        {"label": "A", "text": "Add more logging to the pipeline", "score": 1},
+        {"label": "B", "text": "Implement independent health-check observers that cross-validate each other, similar to the hospital's redundant monitoring model", "score": 2},
+        {"label": "C", "text": "Hospital workflows are too different to learn from", "score": 0}
+      ]
+    },
+    {
+      "id": "jt_08",
+      "dimension": "jumping_thinking",
+      "question": "Your team is struggling with microservice communication complexity. You watch a documentary about how octopus arms make semi-independent decisions. What's your takeaway?",
+      "options": [
+        {"label": "A", "text": "Fascinating nature, but our architecture decisions need engineering rigor", "score": 0},
+        {"label": "B", "text": "Maybe our services need more local autonomy with loose coordination — like the octopus nervous system", "score": 2},
+        {"label": "C", "text": "Consider event-driven architecture as a standard solution", "score": 1}
+      ]
+    },
+    {
+      "id": "pdca_01",
+      "dimension": "pdca_thinking",
+      "question": "You have a theory that shorter onboarding flows increase retention. Your manager wants a full analysis before any changes. What do you do?",
+      "options": [
+        {"label": "A", "text": "Write the full analysis report as requested", "score": 0},
+        {"label": "B", "text": "Propose a small A/B test on 5% of users while writing the analysis", "score": 2},
+        {"label": "C", "text": "Wait for more data before doing anything", "score": 0}
+      ]
+    },
+    {
+      "id": "pdca_02",
+      "dimension": "pdca_thinking",
+      "question": "Your team spent 3 months building a feature. After launch, usage is 10% of projections. What do you do first?",
+      "options": [
+        {"label": "A", "text": "Invest more in marketing the feature", "score": 0},
+        {"label": "B", "text": "Talk to 5 users this week, form a hypothesis about why, and run a 1-week experiment to test it", "score": 2},
+        {"label": "C", "text": "Commission a comprehensive user research study", "score": 1}
+      ]
+    },
+    {
+      "id": "pdca_03",
+      "dimension": "pdca_thinking",
+      "question": "You're tasked with improving page load speed. You have 6 optimization ideas. How do you proceed?",
+      "options": [
+        {"label": "A", "text": "Implement all 6 optimizations, then measure the combined improvement", "score": 0},
+        {"label": "B", "text": "Pick the highest-impact one, implement it, measure, then decide the next step based on results", "score": 2},
+        {"label": "C", "text": "Research best practices to find the optimal approach before starting", "score": 1}
+      ]
+    },
+    {
+      "id": "pdca_04",
+      "dimension": "pdca_thinking",
+      "question": "You implemented a caching layer that was supposed to reduce latency by 50%. After deployment, latency only dropped 15%. What do you do?",
+      "options": [
+        {"label": "A", "text": "15% is still an improvement — move on to the next task", "score": 0},
+        {"label": "B", "text": "Investigate why the gap exists, form a new hypothesis about the bottleneck, and test it", "score": 2},
+        {"label": "C", "text": "Add more cache capacity to get closer to 50%", "score": 0}
+      ]
+    },
+    {
+      "id": "pdca_05",
+      "dimension": "pdca_thinking",
+      "question": "Your team is deciding between two architectures for a new service. There's heated debate with no clear winner. What do you suggest?",
+      "options": [
+        {"label": "A", "text": "Let the most senior engineer decide", "score": 0},
+        {"label": "B", "text": "Build a minimal prototype of each over 2 days, compare against real load, then decide", "score": 2},
+        {"label": "C", "text": "Schedule more meetings to gather broader input", "score": 1}
+      ]
+    },
+    {
+      "id": "pdca_06",
+      "dimension": "pdca_thinking",
+      "question": "You're leading a project with high uncertainty. After 2 weeks, your initial design assumptions are proving wrong. What do you do?",
+      "options": [
+        {"label": "A", "text": "Stick to the plan — changing direction now would waste the work done", "score": 0},
+        {"label": "B", "text": "Document what you learned, revise the design based on new evidence, and set a checkpoint for 1 week", "score": 2},
+        {"label": "C", "text": "Escalate to management for guidance", "score": 1}
+      ]
+    },
+    {
+      "id": "pdca_07",
+      "dimension": "pdca_thinking",
+      "question": "A production incident reveals a flaw in your monitoring. After fixing the immediate issue, what's your next step?",
+      "options": [
+        {"label": "A", "text": "Write a postmortem report and file it", "score": 1},
+        {"label": "B", "text": "Run a 'chaos experiment' to verify the fix actually catches similar failures, then iterate on the monitoring", "score": 2},
+        {"label": "C", "text": "Move on — the fix is in, no need to dwell on it", "score": 0}
+      ]
+    },
+    {
+      "id": "ai_01",
+      "dimension": "ai_collaboration",
+      "question": "You ask an AI to generate a database schema. The output looks reasonable but you notice it denormalized a table you'd normally normalize. What do you do?",
+      "options": [
+        {"label": "A", "text": "Accept it — AI knows best practices", "score": 0},
+        {"label": "B", "text": "Ask the AI why it chose denormalization, evaluate its reasoning, then decide", "score": 2},
+        {"label": "C", "text": "Reject it and write your own schema from scratch", "score": 1}
+      ]
+    },
+    {
+      "id": "ai_02",
+      "dimension": "ai_collaboration",
+      "question": "You're using AI to draft a project proposal. The AI produces a polished document but you notice it assumes requirements you never mentioned. What do you do?",
+      "options": [
+        {"label": "A", "text": "Send it as-is — it looks professional", "score": 0},
+        {"label": "B", "text": "Review each assumption, ask the AI to explain its reasoning, keep valid inferences, and correct hallucinated ones", "score": 2},
+        {"label": "C", "text": "Rewrite the entire proposal yourself", "score": 1}
+      ]
+    },
+    {
+      "id": "ai_03",
+      "dimension": "ai_collaboration",
+      "question": "You need to analyze 500 customer feedback comments. How do you approach this with AI?",
+      "options": [
+        {"label": "A", "text": "Paste all 500 into AI and ask for a summary", "score": 0},
+        {"label": "B", "text": "Have AI categorize a sample of 50, verify the categories manually, refine the prompt, then process the full batch", "score": 2},
+        {"label": "C", "text": "Read all 500 manually — AI might miss nuances", "score": 1}
+      ]
+    },
+    {
+      "id": "ai_04",
+      "dimension": "ai_collaboration",
+      "question": "AI generates test cases for your function. All tests pass. But you notice the tests only cover happy paths. What do you do?",
+      "options": [
+        {"label": "A", "text": "All tests pass, so the code is correct", "score": 0},
+        {"label": "B", "text": "Ask the AI to generate edge cases and error scenarios, then verify those tests actually exercise different code paths", "score": 2},
+        {"label": "C", "text": "Write your own edge case tests from scratch", "score": 1}
+      ]
+    },
+    {
+      "id": "ai_05",
+      "dimension": "ai_collaboration",
+      "question": "You're debugging a complex issue. You paste the error into AI and it suggests a fix that works. But you don't understand why it works. What do you do?",
+      "options": [
+        {"label": "A", "text": "It works — commit and move on", "score": 0},
+        {"label": "B", "text": "Ask the AI to explain the root cause step by step, then verify the explanation against the codebase", "score": 2},
+        {"label": "C", "text": "Revert the fix and debug manually until you understand it", "score": 1}
+      ]
+    },
+    {
+      "id": "ai_06",
+      "dimension": "ai_collaboration",
+      "question": "You ask AI to optimize a slow SQL query. It rewrites the query completely with a different approach. The new query is 10x faster. What's your response?",
+      "options": [
+        {"label": "A", "text": "Deploy immediately — 10x improvement speaks for itself", "score": 0},
+        {"label": "B", "text": "Compare query plans of both versions, verify correctness on edge cases, then deploy with monitoring", "score": 2},
+        {"label": "C", "text": "Reject it — you don't trust AI-generated SQL in production", "score": 0}
+      ]
+    },
+    {
+      "id": "ai_07",
+      "dimension": "ai_collaboration",
+      "question": "Your team debates whether to use AI for code reviews. What's your position?",
+      "options": [
+        {"label": "A", "text": "AI can't understand context — human reviews only", "score": 0},
+        {"label": "B", "text": "Use AI for first-pass checks (style, bugs, patterns), then have humans focus on architecture and business logic", "score": 2},
+        {"label": "C", "text": "Replace human reviews with AI to save time", "score": 0}
+      ]
+    },
+    {
+      "id": "cq_01",
+      "dimension": "critical_questioning",
+      "question": "Your team's dashboard shows a 15% improvement in user satisfaction after a redesign. Leadership is celebrating. What's your reaction?",
+      "options": [
+        {"label": "A", "text": "Celebrate with the team", "score": 0},
+        {"label": "B", "text": "Ask what the baseline was, how satisfaction was measured, and whether the sample was representative", "score": 2},
+        {"label": "C", "text": "Suggest running the test longer", "score": 1}
+      ]
+    },
+    {
+      "id": "cq_02",
+      "dimension": "critical_questioning",
+      "question": "A vendor claims their tool will reduce deployment time by 80%. Your CTO is excited. What do you do?",
+      "options": [
+        {"label": "A", "text": "Trust the CTO's judgment and proceed with adoption", "score": 0},
+        {"label": "B", "text": "Ask: 80% of what baseline? Under what conditions? What's the migration cost? Can we run a parallel trial?", "score": 2},
+        {"label": "C", "text": "Research the vendor online for reviews", "score": 1}
+      ]
+    },
+    {
+      "id": "cq_03",
+      "dimension": "critical_questioning",
+      "question": "Everyone on the team agrees the new feature should use microservices. You're the newest member. What do you do?",
+      "options": [
+        {"label": "A", "text": "Go with the team consensus — they know the codebase better", "score": 0},
+        {"label": "B", "text": "Ask what specific problem microservices solve here that a modular monolith wouldn't, and what the operational cost tradeoff is", "score": 2},
+        {"label": "C", "text": "Suggest microservices might be overkill but don't push back", "score": 1}
+      ]
+    },
+    {
+      "id": "cq_04",
+      "dimension": "critical_questioning",
+      "question": "A colleague presents data showing users prefer Feature A over Feature B. The data comes from a survey of 50 power users. What's your response?",
+      "options": [
+        {"label": "A", "text": "Accept the finding — 50 users is a decent sample", "score": 0},
+        {"label": "B", "text": "Ask whether power users represent the broader user base, what the response rate was, and how the questions were framed", "score": 2},
+        {"label": "C", "text": "Suggest expanding the survey to more users", "score": 1}
+      ]
+    },
+    {
+      "id": "cq_05",
+      "dimension": "critical_questioning",
+      "question": "Your team's retrospective identifies 'lack of communication' as the top problem. What do you do?",
+      "options": [
+        {"label": "A", "text": "Propose adding a daily standup meeting", "score": 0},
+        {"label": "B", "text": "Ask: what specific communication failures occurred? Between whom? What information was missing at what decision point?", "score": 2},
+        {"label": "C", "text": "Create a shared Slack channel for the team", "score": 0}
+      ]
+    },
+    {
+      "id": "cq_06",
+      "dimension": "critical_questioning",
+      "question": "Management says the project deadline is fixed because of a partner launch date. The timeline feels impossibly tight. What do you do?",
+      "options": [
+        {"label": "A", "text": "Work overtime to meet the deadline", "score": 0},
+        {"label": "B", "text": "Ask: is the partner date actually fixed or estimated? What's the minimum viable scope? What happens if we're 2 weeks late vs. delivering a buggy product on time?", "score": 2},
+        {"label": "C", "text": "Flag the risk to your manager and let them decide", "score": 1}
+      ]
+    },
+    {
+      "id": "cq_07",
+      "dimension": "critical_questioning",
+      "question": "A blog post goes viral claiming 'Technology X is dead.' Your team uses Technology X extensively. What's your reaction?",
+      "options": [
+        {"label": "A", "text": "Start planning migration to the replacement technology", "score": 0},
+        {"label": "B", "text": "Examine the author's evidence, check if 'dead' means declining usage or just hype cycle shift, and evaluate whether the critique applies to your use case", "score": 2},
+        {"label": "C", "text": "Ignore it — blog posts are just opinions", "score": 1}
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "scenario_01",
+      "dimensions": ["pdca_thinking", "critical_questioning"],
+      "question": "Your company's customer support AI chatbot resolves 80% of tickets automatically, but customer satisfaction scores have dropped 12% since launch. Leadership wants to add more training data to improve the chatbot.\n\nDescribe how you would approach this problem. Consider: what assumptions might be wrong, what experiments you'd run, and how you'd decide between improving the chatbot vs. changing the approach entirely.",
+      "rubric": {
+        "dimension_relevance": "Does the response question the 80% resolution metric (e.g., are 'resolved' tickets actually resolved)? Does it challenge leadership's assumption that more training data is the solution?",
+        "depth_of_reasoning": "Does it propose specific, small experiments rather than big-bang changes? Does it consider multiple hypotheses for the satisfaction drop?",
+        "practical_applicability": "Are the proposed experiments actionable within a reasonable timeframe? Does it consider implementation constraints?",
+        "originality": "Does it consider non-obvious factors (e.g., the 20% that reach humans might now be harder cases, making human agents seem worse)? Does it connect to broader patterns?"
+      },
+      "max_score": 2.0
+    },
+    {
+      "id": "scenario_02",
+      "dimensions": ["jumping_thinking", "ai_collaboration"],
+      "question": "You're tasked with reducing employee onboarding time from 3 weeks to 1 week. Current onboarding involves reading documentation, shadowing colleagues, and completing training modules.\n\nDescribe your approach. How would you use AI tools in this process? What ideas from completely different domains might apply here?",
+      "rubric": {
+        "dimension_relevance": "Does the response draw inspiration from other domains (e.g., gaming tutorials, immersive language learning, military boot camps)? Does it propose meaningful AI integration beyond 'use a chatbot'?",
+        "depth_of_reasoning": "Does it break the problem into testable components? Does it question whether 3 weeks is actually too long or if the content is wrong?",
+        "practical_applicability": "Are the AI applications specific and feasible? Does it consider what can't be shortened?",
+        "originality": "Does it reframe the problem (e.g., maybe onboarding never 'ends' — make it continuous)? Does it propose novel measurement of onboarding effectiveness?"
+      },
+      "max_score": 2.0
+    },
+    {
+      "id": "scenario_03",
+      "dimensions": ["pdca_thinking", "jumping_thinking"],
+      "question": "Your team has been tasked with building a new internal tool. After 2 months of development, you discover that a similar open-source tool exists that covers 70% of your requirements.\n\nWhat do you do? Describe your decision-making process, what information you'd gather, and how you'd structure the evaluation.",
+      "rubric": {
+        "dimension_relevance": "Does it avoid sunk-cost fallacy? Does it propose a structured evaluation rather than emotional reaction? Does it draw on analogies from other 'build vs buy' decisions?",
+        "depth_of_reasoning": "Does it consider the 30% gap specifically? Does it propose testing the open-source tool before committing? Does it think about long-term maintenance?",
+        "practical_applicability": "Does it outline a concrete timeline for evaluation? Does it consider team morale and stakeholder communication?",
+        "originality": "Does it consider hybrid approaches (fork and extend)? Does it question why the team didn't find this tool earlier and what process improvement that implies?"
+      },
+      "max_score": 2.0
+    },
+    {
+      "id": "scenario_04",
+      "dimensions": ["critical_questioning", "ai_collaboration"],
+      "question": "Your company adopts a policy that all code must be reviewed by AI before human review. After 3 months, the AI catches 200 bugs that humans missed, but developers report feeling less engaged in code reviews and spending less time on them.\n\nAnalyze this situation. What's actually happening? What would you investigate? What would you recommend?",
+      "rubric": {
+        "dimension_relevance": "Does it question the '200 bugs' metric (severity? false positives?)? Does it recognize the human behavior change as a systemic effect rather than laziness?",
+        "depth_of_reasoning": "Does it consider second-order effects (skill atrophy, review quality decline)? Does it propose experiments to measure the net effect?",
+        "practical_applicability": "Does it suggest actionable changes to the workflow rather than just 'balance AI and human'? Does it consider team psychology?",
+        "originality": "Does it draw parallels (e.g., automation complacency in aviation)? Does it question whether the goal should be bug-catching or knowledge-sharing?"
+      },
+      "max_score": 2.0
+    },
+    {
+      "id": "scenario_05",
+      "dimensions": ["jumping_thinking", "critical_questioning"],
+      "question": "Your SaaS product's pricing page has a 2% conversion rate. The marketing team wants to A/B test different price points. The design team wants to redesign the page layout.\n\nHow would you approach improving the conversion rate? Whose approach would you prioritize, or would you do something different entirely?",
+      "rubric": {
+        "dimension_relevance": "Does it question whether 2% is actually low (industry benchmarks)? Does it look beyond the pricing page itself (e.g., traffic quality, product-market fit)?",
+        "depth_of_reasoning": "Does it propose a structured approach rather than jumping to solutions? Does it consider why visitors reach the pricing page but don't convert?",
+        "practical_applicability": "Does it propose quick, measurable experiments? Does it consider running parallel but non-conflicting tests?",
+        "originality": "Does it draw from other domains (e.g., behavioral economics, retail checkout optimization)? Does it challenge the assumption that the pricing page is the problem?"
+      },
+      "max_score": 2.0
+    },
+    {
+      "id": "scenario_06",
+      "dimensions": ["ai_collaboration", "pdca_thinking"],
+      "question": "You're given access to a new AI coding assistant for your team of 8 developers. Management expects a 30% productivity increase within a month.\n\nDescribe how you would roll this out. How would you measure 'productivity'? What could go wrong?",
+      "rubric": {
+        "dimension_relevance": "Does it question the 30% target and how productivity is defined? Does it propose iterative rollout rather than big-bang?",
+        "depth_of_reasoning": "Does it consider different developer skill levels? Does it anticipate adoption resistance? Does it think about security/IP concerns?",
+        "practical_applicability": "Does it propose specific rollout phases with checkpoints? Does it define measurable metrics beyond 'lines of code'?",
+        "originality": "Does it consider that productivity might dip initially (learning curve)? Does it think about which tasks benefit most from AI assistance?"
+      },
+      "max_score": 2.0
+    }
+  ]
+}
