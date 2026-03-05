@@ -13,7 +13,7 @@
       "dimensions": {"width": 1080, "height": 1920},
       "description": "游戏标题'植物大战僵尸'在顶部居中。中间显示僵尸手从草地伸出的标志性画面。下方有冒险模式按钮（主按钮）和小游戏按钮。底部有设置图标。",
       "belongs_to": null,
-      "navigation_from": ["game_over", "level_complete"],
+      "navigation_from": ["game_over"],
       "navigation_to": ["level_select"]
     },
     {
@@ -47,18 +47,18 @@
       "description": "5行草地/泳池网格占据主要区域。顶部是植物卡片槽（已选植物，显示冷却状态）和阳光计数器。僵尸从右侧进入，植物放置在网格上。阳光随机掉落需要点击收集。底部有铲子工具。",
       "belongs_to": null,
       "navigation_from": ["plant_select"],
-      "navigation_to": ["game_over", "level_complete", "pause_popup"]
+      "navigation_to": ["game_over"]
     },
     {
       "index": 5,
-      "id": "pause_popup",
-      "name": "暂停菜单",
+      "id": "leaderboard",
+      "name": "排行榜",
       "type": "popup",
-      "dimensions": {"width": 700, "height": 800},
-      "description": "暂停游戏。显示继续游戏按钮、重新开始按钮和返回主菜单按钮。",
-      "belongs_to": "gameplay",
-      "navigation_from": ["gameplay"],
-      "navigation_to": ["gameplay", "main_menu"]
+      "dimensions": {"width": 800, "height": 1000},
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": ["game_over"],
+      "navigation_to": []
     },
     {
       "index": 6,
@@ -69,7 +69,7 @@
       "description": "显示'僵尸吃掉了你的脑子！'文字和僵尸吃脑画面。下方有重试按钮和返回主菜单按钮。",
       "belongs_to": null,
       "navigation_from": ["gameplay"],
-      "navigation_to": ["gameplay", "main_menu"]
+      "navigation_to": ["gameplay", "main_menu", "leaderboard"]
     }
   ]
 }

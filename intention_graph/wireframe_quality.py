@@ -81,20 +81,51 @@ def evaluate(
     return report
 
 
+_SYNONYM_GROUPS = [
+    {"main", "menu", "start", "home", "title", "entry", "launch"},
+    {"gameplay", "play", "playing"},
+    {"level", "stage", "world", "map"},
+    {"over", "end", "result", "finish", "death", "fail", "lose", "complete",
+     "win", "victory", "success", "clear"},
+    {"pause", "stop", "suspend"},
+    {"setting", "config", "option", "preference"},
+    {"leader", "score", "board", "rank", "high"},
+    {"shop", "store", "buy", "purchase"},
+    {"inventory", "bag", "item", "equip"},
+    {"select", "choose", "pick", "preparation", "loadout"},
+]
+
+
 def _match_screens(
     gen: dict, gold: dict,
 ) -> list[tuple[dict, dict]]:
     """Match generated screens to golden screens by name/type similarity.
 
-    Uses fuzzy matching: ID substring match, name overlap, same type.
+    Two-pass approach: exact ID matches first, then fuzzy matching.
     Returns list of (gen_screen, gold_screen) pairs.
     """
     gen_screens = gen.get("interfaces", [])
     gold_screens = gold.get("interfaces", [])
     matched = []
     used_gold = set()
+    used_gen = set()
 
-    for gs in gen_screens:
+    # Pass 1: exact ID matches (highest confidence)
+    for gi, gs in enumerate(gen_screens):
+        gid = gs.get("interface_id", "").lower()
+        for ri, rs in enumerate(gold_screens):
+            if ri in used_gold:
+                continue
+            if gid == rs.get("interface_id", "").lower():
+                matched.append((gs, rs))
+                used_gold.add(ri)
+                used_gen.add(gi)
+                break
+
+    # Pass 2: fuzzy matching on remaining screens
+    for gi, gs in enumerate(gen_screens):
+        if gi in used_gen:
+            continue
         gid = gs.get("interface_id", "").lower()
         gname = gs.get("interface_name", "").lower()
         gtype = gs.get("type", "page")
@@ -110,24 +141,11 @@ def _match_screens(
             gold_type = golds.get("type", "page")
 
             score = 0
-            # Exact ID match
-            if gid == gold_id:
-                score += 3
             # ID substring
-            elif gid in gold_id or gold_id in gid:
+            if gid in gold_id or gold_id in gid:
                 score += 2
 
             # Synonym group matching — screens with same role
-            _SYNONYM_GROUPS = [
-                {"main", "menu", "start", "home", "title", "entry", "launch"},
-                {"game", "play", "gameplay", "level", "stage"},
-                {"over", "end", "result", "finish", "death", "fail", "lose"},
-                {"pause", "stop", "suspend"},
-                {"setting", "config", "option", "preference"},
-                {"leader", "score", "board", "rank", "high"},
-                {"shop", "store", "buy", "purchase"},
-                {"inventory", "bag", "item", "equip"},
-            ]
             combined = f"{gid} {gname}"
             gold_combined = f"{gold_id} {gold_name}"
             for group in _SYNONYM_GROUPS:
