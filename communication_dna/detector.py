@@ -446,23 +446,58 @@ def _parse_batch_response(raw: str) -> list[dict]:
 
 
 # ── Post-detection bias correction ────────────────────────────────────────────
-# Empirically measured directional biases consistent across multiple profiles
-# and stable across v1.0→v1.2b eval runs. Applied conservatively (< measured bias).
+# Context-aware corrections: flat corrections for consistent biases,
+# conditional corrections that depend on other feature values.
 
-_DETECTOR_BIAS_CORRECTION: dict[str, float] = {
-    "sentence_complexity": -0.07,       # consistent +0.098 across 3 profiles
-    "metacommentary": -0.06,            # consistent +0.125 across 2 profiles (declining)
-    "definition_tendency": -0.10,       # consistent +0.15 across 4 eval runs (single profile)
-    "emoji_usage": -0.04,               # consistent +0.067 across 2 non-trivial profiles
-    "expressive_punctuation": -0.03,    # consistent +0.058 across 2 profiles
+_FLAT_BIAS_CORRECTION: dict[str, float] = {
+    "sentence_complexity": -0.07,
+    "metacommentary": -0.06,
+    "definition_tendency": -0.10,
+    "emoji_usage": -0.04,
+    "expressive_punctuation": -0.03,
+    "vocabulary_richness": -0.05,
 }
 
 
 def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
-    """Apply post-detection bias corrections for consistently biased features."""
+    """Apply context-aware post-detection bias corrections."""
+    fmap = {f.name: f for f in features}
     corrected = []
+
     for f in features:
-        offset = _DETECTOR_BIAS_CORRECTION.get(f.name, 0.0)
+        offset = 0.0
+
+        # Flat corrections (feature-level bias consistent across all profiles)
+        offset += _FLAT_BIAS_CORRECTION.get(f.name, 0.0)
+
+        # Conditional corrections (context-dependent bias)
+        # When jargon is high, formality gets over-estimated — but only for
+        # moderate formality. Very high formality + high jargon = genuinely
+        # formal-technical (e.g. formal_academic), so don't correct.
+        if f.name == "formality":
+            jargon = fmap.get("jargon_density")
+            if jargon is not None and jargon.value > 0.7 and f.value < 0.80:
+                offset -= 0.12
+
+        # When hedging is high, colloquialism gets over-estimated
+        if f.name == "colloquialism":
+            hedging = fmap.get("hedging_frequency")
+            if hedging is not None and hedging.value > 0.6:
+                offset -= 0.10
+
+        # When narrative features are high, humor gets over-estimated — but only
+        # correct when detected humor is elevated (>0.50), since moderate/low humor
+        # with high narrative is likely accurate (e.g. storyteller profile).
+        if f.name == "humor_frequency":
+            example_f = fmap.get("example_frequency")
+            elaboration_f = fmap.get("response_elaboration")
+            narrative_score = max(
+                example_f.value if example_f is not None else 0.0,
+                elaboration_f.value if elaboration_f is not None else 0.0,
+            )
+            if narrative_score > 0.7 and f.value > 0.50:
+                offset -= 0.10
+
         if offset != 0.0:
             new_value = max(0.0, min(1.0, f.value + offset))
             corrected.append(Feature(
@@ -473,6 +508,7 @@ def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
             ))
         else:
             corrected.append(f)
+
     return corrected
 
 
