@@ -224,6 +224,81 @@ TRAIT_TOPIC_MAP: dict[str, list[str]] = {
         "Are you good at getting people to go along with your ideas?",
         "How do you usually persuade someone who disagrees with you?",
     ],
+    # AGR facets (previously missing)
+    "straightforwardness": [
+        "Are you someone who says exactly what you think, or do you soften things?",
+        "How do you handle giving someone bad news?",
+    ],
+    "altruism": [
+        "When a stranger asks for help, what's your first instinct?",
+        "Do you go out of your way to help people, or do you focus on your own stuff?",
+    ],
+    "compliance": [
+        "When someone pushes back on something you want, how do you usually react?",
+        "Are you the type to pick your battles, or do you stand firm on most things?",
+    ],
+    "tender_mindedness": [
+        "How do you react when you see someone having a really hard time?",
+        "Do you think society should do more to help people who are struggling?",
+    ],
+    # NEU facets (previously missing)
+    "angry_hostility": [
+        "What tends to set you off? Like, what really pushes your buttons?",
+        "When someone cuts you off in traffic or is rude, how do you react?",
+    ],
+    "depression": [
+        "Do you ever have stretches where everything just feels kind of flat or pointless?",
+        "How do you handle those days when motivation is just gone?",
+    ],
+    "impulsiveness": [
+        "Do you ever buy something on impulse and regret it later?",
+        "Are you someone who acts first and thinks later, or the opposite?",
+    ],
+    "self_consciousness": [
+        "Do you worry about what other people think of you?",
+        "How do you feel when everyone's attention is on you?",
+    ],
+    "vulnerability": [
+        "When things get really stressful, do you feel like you can handle it or does it overwhelm you?",
+        "How do you cope when multiple things go wrong at once?",
+    ],
+    # EXT facets (previously missing)
+    "activity_level": [
+        "Are you someone who's always on the go, or do you prefer a slower pace?",
+        "How do you spend a typical weekend — packed with plans or chill?",
+    ],
+    "excitement_seeking": [
+        "Do you actively look for thrills and new experiences?",
+        "What's the most adventurous thing you've done recently?",
+    ],
+    "positive_emotions": [
+        "Would people describe you as someone who's generally upbeat?",
+        "How often do you feel genuinely excited about something?",
+    ],
+    # OPN facets (previously missing)
+    "actions": [
+        "Do you prefer trying new things or sticking with what works?",
+        "When was the last time you did something completely out of your comfort zone?",
+    ],
+    "aesthetics": [
+        "Are you someone who notices beauty in everyday things — art, nature, architecture?",
+        "How important is the aesthetic of your surroundings to you?",
+    ],
+    # CON facets (previously missing)
+    "dutifulness": [
+        "How seriously do you take your commitments and responsibilities?",
+        "If you promised someone you'd do something but a better offer came up, what would you do?",
+    ],
+    # HON facets (previously missing)
+    "greed_avoidance": [
+        "How important is money and status to you compared to other things in life?",
+        "Would you take a pay cut for a job you found more meaningful?",
+    ],
+    # COG facets (previously missing)
+    "intuitive_vs_analytical": [
+        "When you make decisions, do you go more with your gut or do you analyze the options?",
+        "Do you trust your instincts, or do you prefer to look at the data first?",
+    ],
 }
 
 

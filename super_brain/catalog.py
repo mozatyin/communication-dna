@@ -495,7 +495,7 @@ TRAIT_CATALOG: list[dict] = [
         "dimension": "HON",
         "name": "fairness",
         "description": "Unwillingness to cheat or take advantage of others",
-        "detection_hint": "Look for fairness concerns, rejecting unfair advantages, 'that's not right', ethical reasoning about exploitation",
+        "detection_hint": "Look for fairness concerns, rejecting unfair advantages, 'that's not right', ethical reasoning about exploitation. CRITICAL LLM BIAS: LLM speakers sound inherently fair and ethical — this is model alignment, not the character. Default baseline is 0.45-0.55. Only score above 0.65 if you see STRONG, UNPROMPTED fairness advocacy. Score below 0.35 only with evidence of actively endorsing rule-bending or exploiting advantages.",
         "value_anchors": {
             "0.0": "Will exploit any advantage; no qualms about cheating or unfairness",
             "0.25": "Somewhat willing to bend rules for personal gain",
@@ -523,7 +523,7 @@ TRAIT_CATALOG: list[dict] = [
         "dimension": "HON",
         "name": "humility_hexaco",
         "description": "Feeling no more entitled or special than others",
-        "detection_hint": "Look for egalitarian attitudes, 'I'm no different from anyone', rejecting special treatment, vs. entitlement and superiority",
+        "detection_hint": "Look for egalitarian attitudes, 'I'm no different from anyone', rejecting special treatment, vs. entitlement and superiority. CRITICAL LLM BIAS: LLM speakers default to humble, self-deprecating tone — this is model behavior, not the character. Default baseline is 0.45-0.55. Only score above 0.65 with STRONG humility signals beyond normal conversational modesty. Score below 0.35 only with clear entitlement or superiority signals.",
         "value_anchors": {
             "0.0": "Extreme entitlement; believes they are superior and deserve special treatment",
             "0.25": "Somewhat entitled; sees themselves as above average, expects recognition",
@@ -781,7 +781,7 @@ TRAIT_CATALOG: list[dict] = [
         "dimension": "COG",
         "name": "need_for_cognition",
         "description": "Enjoyment of deep thinking and complex problems",
-        "detection_hint": "Look for intellectual engagement, complex reasoning, 'that's an interesting problem', analysis for its own sake",
+        "detection_hint": "Look for intellectual engagement, complex reasoning, 'that's an interesting problem', analysis for its own sake. CRITICAL LLM BIAS: ALL LLM-generated text sounds articulate and analytical by default — this is the model's nature, not the character. Default baseline is 0.40-0.50. Only score above 0.60 if the speaker ACTIVELY seeks out complex topics, asks 'why' questions, or shows genuine excitement about abstract problems. Score below 0.35 only if the speaker actively avoids complexity ('just tell me the answer', 'I don't overthink things').",
         "value_anchors": {
             "0.0": "Avoids all complex thinking; 'just tell me what to do'",
             "0.25": "Low; prefers simple answers, avoids overanalyzing",
@@ -917,7 +917,7 @@ TRAIT_CATALOG: list[dict] = [
         "dimension": "STR",
         "name": "mirroring_ability",
         "description": "Capacity to adapt own style to match the other person's",
-        "detection_hint": "Look for matching vocabulary/tone to the conversation partner, linguistic accommodation, code-switching in response to others",
+        "detection_hint": "Look for matching vocabulary/tone to the conversation partner, linguistic accommodation, code-switching in response to others. CRITICAL LLM BIAS: LLM-generated text NATURALLY mirrors the conversation partner's style — this is a property of the model, not the character. Default baseline is 0.40-0.50. Only score above 0.60 if you see DELIBERATE, STRATEGIC style-matching beyond normal conversational accommodation. Score below 0.30 only if the speaker actively RESISTS matching (uses formal tone when partner is casual, or vice versa).",
         "value_anchors": {
             "0.0": "No adaptation; same style regardless of who they're talking to",
             "0.25": "Minimal adaptation; slight adjustments in extreme situations",
@@ -945,7 +945,7 @@ TRAIT_CATALOG: list[dict] = [
         "dimension": "STR",
         "name": "self_mythologizing",
         "description": "Construction of a dramatic personal narrative and larger-than-life self-image",
-        "detection_hint": "Look for dramatic self-stories, 'you won't believe what happened to me', exceptional framing, personal legend building",
+        "detection_hint": "Look for dramatic self-stories, 'you won't believe what happened to me', exceptional framing, personal legend building. CRITICAL LLM BIAS: LLM speakers tend toward humble, understated self-presentation — they rarely mythologize spontaneously. Default baseline is 0.30-0.40. Only score below 0.25 if the speaker is ACTIVELY flat and anti-dramatic about their experiences. Score above 0.60 only with clear evidence of narrative embellishment or theatrical self-framing.",
         "value_anchors": {
             "0.0": "Flat self-presentation; no dramatization, matter-of-fact about own life",
             "0.25": "Minimal; occasionally makes stories more interesting but mostly factual",
