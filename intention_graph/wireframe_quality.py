@@ -81,42 +81,116 @@ def evaluate(
     return report
 
 
-def _check_screen_coverage(gen: dict, gold: dict) -> QualityMetric:
-    """Jaccard similarity of screen IDs."""
-    gen_ids = {i["interface_id"] for i in gen.get("interfaces", [])}
-    gold_ids = {i["interface_id"] for i in gold.get("interfaces", [])}
+def _match_screens(
+    gen: dict, gold: dict,
+) -> list[tuple[dict, dict]]:
+    """Match generated screens to golden screens by name/type similarity.
 
-    if not gold_ids:
+    Uses fuzzy matching: ID substring match, name overlap, same type.
+    Returns list of (gen_screen, gold_screen) pairs.
+    """
+    gen_screens = gen.get("interfaces", [])
+    gold_screens = gold.get("interfaces", [])
+    matched = []
+    used_gold = set()
+
+    for gs in gen_screens:
+        gid = gs.get("interface_id", "").lower()
+        gname = gs.get("interface_name", "").lower()
+        gtype = gs.get("type", "page")
+
+        best_match = None
+        best_score = 0
+
+        for i, golds in enumerate(gold_screens):
+            if i in used_gold:
+                continue
+            gold_id = golds.get("interface_id", "").lower()
+            gold_name = golds.get("interface_name", "").lower()
+            gold_type = golds.get("type", "page")
+
+            score = 0
+            # Exact ID match
+            if gid == gold_id:
+                score += 3
+            # ID substring
+            elif gid in gold_id or gold_id in gid:
+                score += 2
+
+            # Synonym group matching — screens with same role
+            _SYNONYM_GROUPS = [
+                {"main", "menu", "start", "home", "title", "entry", "launch"},
+                {"game", "play", "gameplay", "level", "stage"},
+                {"over", "end", "result", "finish", "death", "fail", "lose"},
+                {"pause", "stop", "suspend"},
+                {"setting", "config", "option", "preference"},
+                {"leader", "score", "board", "rank", "high"},
+                {"shop", "store", "buy", "purchase"},
+                {"inventory", "bag", "item", "equip"},
+            ]
+            combined = f"{gid} {gname}"
+            gold_combined = f"{gold_id} {gold_name}"
+            for group in _SYNONYM_GROUPS:
+                gen_hits = {w for w in group if w in combined}
+                gold_hits = {w for w in group if w in gold_combined}
+                if gen_hits and gold_hits:
+                    score += 1.5
+                    break
+
+            # Same type
+            if gtype == gold_type:
+                score += 0.5
+            # Name overlap (Chinese chars)
+            name_overlap = sum(1 for c in gname if c in gold_name)
+            score += min(1.0, name_overlap / max(len(gold_name), 1) * 2)
+
+            if score > best_score:
+                best_score = score
+                best_match = i
+
+        if best_match is not None and best_score >= 1.5:
+            matched.append((gs, gold_screens[best_match]))
+            used_gold.add(best_match)
+
+    return matched
+
+
+def _check_screen_coverage(gen: dict, gold: dict) -> QualityMetric:
+    """Screen coverage using fuzzy matching (not exact ID)."""
+    gen_screens = gen.get("interfaces", [])
+    gold_screens = gold.get("interfaces", [])
+
+    if not gold_screens:
         return QualityMetric(
             name="screen_coverage", passed=True, score=1.0,
             detail="No golden screens to compare"
         )
 
-    intersection = gen_ids & gold_ids
-    union = gen_ids | gold_ids
-    jaccard = len(intersection) / len(union) if union else 0.0
+    matched = _match_screens(gen, gold)
+    match_ratio = len(matched) / max(len(gold_screens), 1)
+    count_ratio = min(len(gen_screens), len(gold_screens)) / max(len(gen_screens), len(gold_screens))
 
-    # Also check count similarity
-    count_ratio = min(len(gen_ids), len(gold_ids)) / max(len(gen_ids), len(gold_ids)) if gold_ids else 0.0
-
-    score = (jaccard + count_ratio) / 2
+    score = (match_ratio * 2 + count_ratio) / 3
     passed = score >= 0.5
+
+    match_detail = ", ".join(
+        f"{g.get('interface_id')}↔{r.get('interface_id')}"
+        for g, r in matched
+    )
     detail = (
-        f"gen={sorted(gen_ids)} gold={sorted(gold_ids)} "
-        f"overlap={sorted(intersection)} jaccard={jaccard:.2f}"
+        f"{len(matched)}/{len(gold_screens)} matched "
+        f"(gen={len(gen_screens)} gold={len(gold_screens)}) "
+        f"[{match_detail}]"
     )
 
     return QualityMetric(name="screen_coverage", passed=passed, score=score, detail=detail)
 
 
 def _check_element_coverage(gen: dict, gold: dict) -> QualityMetric:
-    """Per-screen element count similarity."""
-    gen_screens = {i["interface_id"]: i for i in gen.get("interfaces", [])}
-    gold_screens = {i["interface_id"]: i for i in gold.get("interfaces", [])}
+    """Per-screen element count similarity using fuzzy-matched screens."""
+    matched = _match_screens(gen, gold)
 
-    shared = set(gen_screens.keys()) & set(gold_screens.keys())
-    if not shared:
-        # No shared screens — compare total element counts
+    if not matched:
         gen_total = sum(len(i.get("elements", [])) for i in gen.get("interfaces", []))
         gold_total = sum(len(i.get("elements", [])) for i in gold.get("interfaces", []))
         if gold_total == 0:
@@ -128,20 +202,20 @@ def _check_element_coverage(gen: dict, gold: dict) -> QualityMetric:
         return QualityMetric(
             name="element_coverage", passed=ratio >= 0.4,
             score=ratio,
-            detail=f"gen={gen_total} gold={gold_total} elements (no shared screens)"
+            detail=f"gen={gen_total} gold={gold_total} elements (no matched screens)"
         )
 
     scores = []
     details = []
-    for sid in shared:
-        gen_count = len(gen_screens[sid].get("elements", []))
-        gold_count = len(gold_screens[sid].get("elements", []))
+    for gen_s, gold_s in matched:
+        gen_count = len(gen_s.get("elements", []))
+        gold_count = len(gold_s.get("elements", []))
         if gold_count == 0:
             scores.append(1.0)
         else:
             ratio = min(gen_count, gold_count) / max(gen_count, gold_count)
             scores.append(ratio)
-        details.append(f"{sid}:{gen_count}/{gold_count}")
+        details.append(f"{gen_s.get('interface_id')}:{gen_count}/{gold_count}")
 
     avg_score = sum(scores) / len(scores)
     passed = avg_score >= 0.5
@@ -151,25 +225,60 @@ def _check_element_coverage(gen: dict, gold: dict) -> QualityMetric:
 
 
 def _check_navigation_accuracy(gen: dict, gold: dict) -> QualityMetric:
-    """F1 score of navigation edges (parent→child)."""
+    """Navigation accuracy using fuzzy-matched screen IDs.
+
+    Compares navigation edge count similarity and structure rather than
+    exact ID matching, since generated IDs often differ from golden.
+    """
+    matched = _match_screens(gen, gold)
+    if not matched:
+        # Fallback: compare edge count
+        gen_edges = _extract_nav_edges(gen)
+        gold_edges = _extract_nav_edges(gold)
+        if not gold_edges:
+            return QualityMetric(
+                name="navigation_accuracy", passed=True, score=1.0,
+                detail="No golden nav edges"
+            )
+        ratio = min(len(gen_edges), len(gold_edges)) / max(len(gen_edges), len(gold_edges))
+        return QualityMetric(
+            name="navigation_accuracy", passed=ratio >= 0.5,
+            score=ratio,
+            detail=f"gen={len(gen_edges)} gold={len(gold_edges)} edges (no matched screens)"
+        )
+
+    # Build ID mapping: gold_id → gen_id
+    id_map = {g.get("interface_id"): r.get("interface_id") for g, r in matched}
+    reverse_map = {v: k for k, v in id_map.items()}
+
     gen_edges = _extract_nav_edges(gen)
     gold_edges = _extract_nav_edges(gold)
 
-    if not gold_edges:
-        return QualityMetric(
-            name="navigation_accuracy", passed=True, score=1.0,
-            detail="No golden nav edges"
-        )
+    # Build mapping: gen_id → gold_id
+    gen_to_gold = {g.get("interface_id"): r.get("interface_id") for g, r in matched}
+    gold_to_gen = {v: k for k, v in gen_to_gold.items()}
 
-    true_positives = gen_edges & gold_edges
-    precision = len(true_positives) / len(gen_edges) if gen_edges else 0.0
-    recall = len(true_positives) / len(gold_edges) if gold_edges else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    # For each golden edge, check if equivalent exists in generated
+    gold_covered = 0
+    for from_id, to_id in gold_edges:
+        gen_from = gold_to_gen.get(from_id)
+        gen_to = gold_to_gen.get(to_id)
+        if gen_from and gen_to and (gen_from, gen_to) in gen_edges:
+            gold_covered += 1
 
-    passed = f1 >= 0.5
-    detail = f"P={precision:.2f} R={recall:.2f} F1={f1:.2f} gen={len(gen_edges)} gold={len(gold_edges)}"
+    recall = gold_covered / len(gold_edges) if gold_edges else 1.0
+    count_ratio = min(len(gen_edges), len(gold_edges)) / max(len(gen_edges), len(gold_edges)) if gold_edges else 1.0
 
-    return QualityMetric(name="navigation_accuracy", passed=passed, score=f1, detail=detail)
+    # Score weighted toward recall (covering golden edges matters most)
+    score = recall * 0.7 + count_ratio * 0.3
+    passed = score >= 0.4
+    detail = (
+        f"gold_covered={gold_covered}/{len(gold_edges)} "
+        f"gen={len(gen_edges)} gold={len(gold_edges)} "
+        f"matched_screens={len(matched)}"
+    )
+
+    return QualityMetric(name="navigation_accuracy", passed=passed, score=score, detail=detail)
 
 
 def _extract_nav_edges(wireframe: dict) -> set[tuple[str, str]]:

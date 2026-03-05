@@ -6,6 +6,7 @@ from intention_graph.wireframe_quality import (
     QualityMetric,
     QualityReport,
     evaluate,
+    _match_screens,
     _check_screen_coverage,
     _check_element_coverage,
     _check_navigation_accuracy,
@@ -109,6 +110,33 @@ def test_report_summary():
         QualityMetric(name="test", passed=True, score=1.0, detail="ok"),
     ])
     assert "PASS" in report.summary()
+
+
+# ── Fuzzy matching ───────────────────────────────────────────────────────────
+
+
+def test_match_screens_exact_ids():
+    matched = _match_screens(_GOLDEN, _GOLDEN)
+    assert len(matched) == 3
+
+
+def test_match_screens_fuzzy():
+    gen = {
+        "interfaces": [
+            {"interface_id": "main_menu", "interface_name": "主菜单", "type": "page"},
+            {"interface_id": "gameplay", "interface_name": "游戏", "type": "page"},
+            {"interface_id": "game_over", "interface_name": "结束", "type": "page"},
+        ],
+    }
+    gold = {
+        "interfaces": [
+            {"interface_id": "start_screen", "interface_name": "开始界面", "type": "page"},
+            {"interface_id": "gameplay", "interface_name": "Game", "type": "page"},
+            {"interface_id": "game_over", "interface_name": "Game Over", "type": "page"},
+        ],
+    }
+    matched = _match_screens(gen, gold)
+    assert len(matched) >= 2  # gameplay and game_over should match
 
 
 # ── Screen coverage ──────────────────────────────────────────────────────────
