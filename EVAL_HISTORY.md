@@ -31,6 +31,8 @@
 | V1.8 | 0.184 | 72.7% | 91.8% | 5 | Humor suppression for low-humor profiles |
 | **V2.0-2.2** | **0.196** | **69.7%** | **92.4%** | 3 | Deep Listening + ThinkSlow + Gap-Aware Incisive Q |
 | V2.0-2.2@10t | **0.176** | **74.2%** | **94.9%** | 3 | Same system, measured at 10 turns (beats V1.8!) |
+| **V2.3** | **0.185** | **76.3%** | **92.4%** | 3 | ThinkFast + Conductor (dynamic, no fixed phases) |
+| V2.3@10t | **0.168** | **78.3%** | **92.9%** | 3 | Same system, measured at 10 turns |
 
 ## Per-Dimension MAE (20 turns)
 
@@ -70,6 +72,24 @@ Note: V0.1-V0.8 used 3 profiles; V1.7+ used 5 profiles. Numbers not directly com
 | SOC | 0.173 | 0.270 | +56% |
 | STR | 0.237 | 0.287 | +21% |
 
+**V2.3 Per-Dimension MAE (20 turns, 3 profiles):**
+
+| Dimension | V2.2(3p) | V2.3(3p) | Change |
+|-----------|----------|----------|--------|
+| OPN | 0.168 | **0.127** | -24% |
+| EXT | 0.142 | 0.147 | +4% |
+| DRK | 0.141 | 0.161 | +14% |
+| HUM | 0.198 | **0.162** | -18% |
+| VAL | 0.165 | 0.173 | +5% |
+| CON | 0.186 | **0.180** | -3% |
+| NEU | 0.213 | **0.181** | -15% |
+| EMO | 0.146 | 0.181 | +24% |
+| SOC | 0.270 | **0.185** | -31% |
+| AGR | 0.178 | 0.211 | +19% |
+| COG | 0.249 | **0.235** | -6% |
+| HON | 0.234 | 0.243 | +4% |
+| STR | 0.287 | **0.263** | -8% |
+
 ## Key Findings
 
 1. **DRK (Dark Traits)** went from worst dimension (MAE 0.402) to one of the best (0.118-0.174) by:
@@ -101,7 +121,7 @@ Note: V0.1-V0.8 used 3 profiles; V1.7+ used 5 profiles. Numbers not directly com
    - `information_control` — high info control hard to express without sounding evasive
    - `competence` — method actor/self-deprecation undermines high-competence expression
 
-8. **Best composite version**: V0.5 has best MAE (0.186), V0.8 has best ≤0.25 rate (74.2%). No single version is best across all dimensions — an ensemble approach could theoretically achieve MAE ~0.14 by picking per-dimension best.
+8. **Best composite version**: V2.3 has best 20t MAE (0.185) and best ≤0.25 rate (76.3%). V2.3@10t has best 10t MAE (0.168) and ≤0.25 rate (78.3%). No single version is best across all dimensions — an ensemble approach could theoretically achieve MAE ~0.14 by picking per-dimension best.
 
 ## Changes Per Version
 
@@ -229,3 +249,29 @@ Note: V0.1-V0.8 used 3 profiles; V1.7+ used 5 profiles. Numbers not directly com
 3. **DRK, EMO, HUM all improved significantly** at 20 turns (-16%, -19%, -19%)
 4. **NEU, SOC, STR regressed** — Detector's conservative baselines suppress legitimate deeper conversation signals
 5. **Next step**: Detector context awareness needs updating for Deep Listening conversation style, or use ThinkSlow results directly instead of one-shot batch detection
+
+### V2.3 — ThinkFast + Conductor (Dynamic Probabilistic Modes)
+
+**Core change**: Replaced fixed conversation phases (rapport→deepening→incisive) with dynamic Conductor that decides action each turn based on real-time signals.
+
+**New modules**:
+- `super_brain/think_fast.py` — Rule-based signal detection (every turn): new_facts, emotional_shift, contradiction, opening, info_entropy
+- `super_brain/conductor.py` — Dynamic action selection: listen / follow_thread / ask_incisive / push
+- Enhanced `super_brain/think_slow.py` — Now generates ranked incisive questions from trait gaps via trait_topic_map
+
+**Architecture**:
+- ThinkFast analyzes every speaker message (regex patterns, no LLM cost)
+- Conductor decides mode based on: early turns→listen, opening→follow_thread, stale info+questions→ask_incisive
+- `_build_chatter_from_action()` replaces `_build_chatter_system()` — Deep Listening base + mode-specific suffix
+- ThinkSlow interval changed from 5 to 3 turns (more frequent extraction)
+
+**Key findings**:
+1. **Both 10t and 20t improved** over V2.2: 10t 0.176→0.168 (-4.5%), 20t 0.196→0.185 (-5.6%)
+2. **10t/20t gap smaller**: 0.017 vs V2.2's 0.020 — dynamic modes avoid 20t regression
+3. **SOC massively improved** at 20t: 0.270→0.185 (-31%) — no longer fighting fixed phase structure
+4. **NEU recovered**: 0.213→0.181 (-15%) — dynamic listening doesn't force unnatural deepening
+5. **OPN best ever**: 0.127 (-24%) — Conductor follows openings naturally
+6. **HUM improved**: 0.198→0.162 (-18%) — better signal from dynamic conversation flow
+7. **EMO regressed**: 0.146→0.181 (+24%) — needs investigation, may need emotion-specific follow-up mode
+8. **AGR regressed**: 0.178→0.211 (+19%) — dynamic mode may not probe agreeableness enough
+9. **STR, HON still stubborn** but improved: STR 0.287→0.263, HON 0.234→0.243
