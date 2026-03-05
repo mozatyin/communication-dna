@@ -97,7 +97,7 @@ class WireframeGenerator:
     """Generate wireframe layouts from PRD + plan + assets."""
 
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514"):
-        kwargs: dict = {"api_key": api_key}
+        kwargs: dict = {"api_key": api_key, "timeout": 600.0}
         if api_key.startswith("sk-or-"):
             kwargs["base_url"] = "https://openrouter.ai/api"
         self._client = anthropic.Anthropic(**kwargs)
