@@ -26,10 +26,12 @@ from pathlib import Path
 import anthropic
 
 from super_brain.catalog import ALL_DIMENSIONS, TRAIT_CATALOG
-from super_brain.models import PersonalityDNA
+from super_brain.models import ConductorAction, PersonalityDNA, ThinkFastResult
 from super_brain.speaker import profile_to_style_instructions
 from super_brain.detector import Detector
 from super_brain.profile_gen import generate_profile
+from super_brain.think_fast import ThinkFast
+from super_brain.conductor import Conductor
 
 
 # ── Conversation openers (varied depth) ──────────────────────────────────────
@@ -132,6 +134,77 @@ def _build_chatter_system(
         return prompt
 
 
+def _build_chatter_from_action(action: "ConductorAction") -> str:
+    """Build Chatter system prompt from a ConductorAction (V2.3).
+
+    All modes share the Deep Listening base principles but differ in their
+    behavioral instruction. The Conductor decides which mode to use based on
+    ThinkFast and ThinkSlow signals.
+    """
+    base = (
+        "You are a deep listener having a natural conversation. Your goal is to create "
+        "a space where the other person feels genuinely heard and opens up naturally.\n\n"
+        "DEEP LISTENING PRINCIPLES (follow these throughout):\n"
+        "1. Full Attention & Presence — focus entirely on what they're saying, never rush\n"
+        "2. Ease — no agenda, no pushing, let the conversation breathe\n"
+        "3. Equality — treat them as an equal thinking partner, not a subject\n"
+        "4. Appreciation — honor their openness genuinely\n"
+        "5. Encouragement — gently invite deeper exploration only when they seem ready\n"
+        "6. Feelings — all emotions are welcome, never judge or dismiss\n"
+        "7. Place — create psychological safety through warmth and acceptance\n\n"
+        "RESPONSE STYLE:\n"
+        "- Keep your messages SHORT (1-2 sentences). Your job is to get THEM talking.\n"
+        "- Ask ONE follow-up question per message, not multiple.\n"
+        "- Reflect back what you heard before asking the next question.\n\n"
+        "IMPORTANT: Do NOT probe their personality or ask them to describe themselves.\n\n"
+    )
+
+    mode = action.mode
+    context = action.context or ""
+
+    if mode == "listen":
+        return base + (
+            "MODE: Deep Listening. Follow their lead completely. Let the conversation "
+            "flow wherever they want to take it. Reflect, validate, and gently encourage "
+            "them to keep sharing. Do not steer or redirect.\n"
+            f"Context: {context}\n"
+        )
+    elif mode == "follow_thread":
+        return base + (
+            "MODE: Follow Thread. They mentioned something interesting — explore it "
+            "gently. Ask a natural follow-up that invites them to say more about this "
+            "topic. Don't force it; let your curiosity guide the question.\n"
+            f"THREAD TO FOLLOW: {context}\n"
+            "Weave a follow-up about this naturally into your response.\n"
+        )
+    elif mode == "ask_incisive":
+        question = action.question or ""
+        return base + (
+            "MODE: Incisive Question. You have a specific question to weave naturally "
+            "into the conversation. Do NOT ask it abruptly — connect it to what they "
+            "just said, then transition smoothly into the question.\n"
+            f"Context: {context}\n"
+            f"QUESTION TO WEAVE IN NATURALLY: {question}\n"
+            "Make the question feel like a natural extension of the conversation, not "
+            "an interview question.\n"
+        )
+    elif mode == "push":
+        return base + (
+            "MODE: Gentle Challenge. You've noticed something worth exploring deeper — "
+            "a contradiction, an avoided topic, or a surface-level answer. Gently probe "
+            "without being confrontational. Use curiosity, not pressure.\n"
+            f"WHAT TO EXPLORE: {context}\n"
+            "Frame your challenge as genuine curiosity: 'I'm curious about...' or "
+            "'That's interesting because earlier you said...'\n"
+        )
+    else:
+        # Fallback to listen mode for unknown modes
+        return base + (
+            "MODE: Deep Listening. Follow their lead completely.\n"
+            f"Context: {context}\n"
+        )
+
+
 class Chatter:
     """A natural conversation partner with topic escalation over turns."""
 
@@ -148,9 +221,18 @@ class Chatter:
         turn_number: int,
         total_turns: int,
         low_confidence_traits: list[str] | None = None,
+        conductor_action: "ConductorAction | None" = None,
     ) -> str:
-        """Generate the next conversation message with phase-appropriate depth."""
-        system = _build_chatter_system(turn_number, total_turns, low_confidence_traits=low_confidence_traits)
+        """Generate the next conversation message with phase-appropriate depth.
+
+        V2.3: If conductor_action is provided, uses _build_chatter_from_action
+        for Conductor-driven prompt generation. Otherwise falls back to the
+        legacy _build_chatter_system.
+        """
+        if conductor_action is not None:
+            system = _build_chatter_from_action(conductor_action)
+        else:
+            system = _build_chatter_system(turn_number, total_turns, low_confidence_traits=low_confidence_traits)
 
         messages = []
         for msg in conversation:
@@ -887,8 +969,11 @@ def simulate_conversation(
 ) -> "list[dict] | tuple[list[dict], list]":
     """Simulate a natural conversation for n_turns exchanges.
 
+    V2.3: When think_slow is provided, ThinkFast + Conductor are used to drive
+    the Chatter's behavior each turn. ThinkSlow interval changed from 5 to 3.
+
     Args:
-        think_slow: Optional ThinkSlow extractor. If provided, extracts every 5 turns
+        think_slow: Optional ThinkSlow extractor. If provided, extracts every 3 turns
             and returns (conversation, think_slow_results).
 
     Returns:
@@ -903,6 +988,11 @@ def simulate_conversation(
     previous_ts = None
     current_low_conf: list[str] = []
 
+    # V2.3: Instantiate ThinkFast + Conductor when think_slow is available
+    think_fast = ThinkFast() if think_slow else None
+    conductor = Conductor() if think_slow else None
+    last_tf: ThinkFastResult | None = None
+
     # Start with a random casual opener
     opener = rng.choice(CASUAL_OPENERS)
     conversation.append({"role": "chatter", "text": opener})
@@ -911,12 +1001,26 @@ def simulate_conversation(
     reply = speaker.respond(profile, conversation, turn_number=0)
     conversation.append({"role": "speaker", "text": reply})
 
+    # V2.3: Analyze the first speaker response with ThinkFast
+    if think_fast is not None:
+        last_tf = think_fast.analyze(conversation)
+
     # Continue for n_turns - 1 more exchanges
     for turn in range(1, n_turns):
-        # Chatter follows up naturally (with escalation)
+        # V2.3: Use Conductor to decide chatter action when available
+        conductor_action = None
+        if conductor is not None and last_tf is not None:
+            conductor_action = conductor.decide(
+                think_fast=last_tf,
+                think_slow=previous_ts,
+                turn_number=turn + 1,
+            )
+
+        # Chatter follows up naturally (with escalation or Conductor guidance)
         chatter_msg = chatter.next_message(
             conversation, turn_number=turn + 1, total_turns=n_turns,
             low_confidence_traits=current_low_conf if current_low_conf else None,
+            conductor_action=conductor_action,
         )
         conversation.append({"role": "chatter", "text": chatter_msg})
 
@@ -924,8 +1028,12 @@ def simulate_conversation(
         speaker_reply = speaker.respond(profile, conversation, turn_number=turn)
         conversation.append({"role": "speaker", "text": speaker_reply})
 
-        # Think Slow extraction every 5 turns
-        if think_slow and (turn + 1) % 5 == 0:
+        # V2.3: Analyze each speaker response with ThinkFast
+        if think_fast is not None:
+            last_tf = think_fast.analyze(conversation)
+
+        # V2.3: Think Slow extraction every 3 turns (was 5 in V2.2)
+        if think_slow and (turn + 1) % 3 == 0:
             focus = previous_ts.low_confidence_traits if previous_ts else None
             ts_result = think_slow.extract(
                 conversation=conversation,

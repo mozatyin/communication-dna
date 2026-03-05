@@ -122,7 +122,7 @@ def test_think_slow_extract_with_focus_traits():
 
 
 def test_simulate_conversation_with_think_slow():
-    """simulate_conversation should accept a ThinkSlow and extract every 5 turns."""
+    """simulate_conversation should accept a ThinkSlow and extract every 3 turns (V2.3)."""
     from unittest.mock import MagicMock, patch
     import json
 
@@ -164,8 +164,8 @@ def test_simulate_conversation_with_think_slow():
             think_slow=think_slow,
         )
 
-        # Should have 2 ThinkSlow results (at turn 5 and turn 10)
-        assert len(ts_results) == 2
+        # V2.3: ThinkSlow runs every 3 turns → at turn 3, 6, 9 = 3 results
+        assert len(ts_results) == 3
         assert all(hasattr(r, "confidence_map") for r in ts_results)
 
 
