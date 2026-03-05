@@ -53,6 +53,14 @@ class PersonalityDNA(BaseModel):
     trait_relations: list[TraitRelation] = Field(default_factory=list)
 
 
+class IncisiveQuestion(BaseModel):
+    """A targeted question generated from Soul gaps to probe low-confidence traits."""
+    question: str
+    target: str
+    priority: float = Field(default=0.5, ge=0.0, le=1.0)
+    source: str = "trait_gap"
+
+
 class ThinkSlowResult(BaseModel):
     """Result of periodic Think Slow extraction (V2.1).
 
@@ -63,14 +71,8 @@ class ThinkSlowResult(BaseModel):
     confidence_map: dict[str, float] = Field(default_factory=dict)
     low_confidence_traits: list[str] = Field(default_factory=list)
     observations: list[str] = Field(default_factory=list)
-
-
-class IncisiveQuestion(BaseModel):
-    """A targeted question generated from Soul gaps to probe low-confidence traits."""
-    question: str
-    target: str
-    priority: float = Field(default=0.5, ge=0.0, le=1.0)
-    source: str = "trait_gap"
+    incisive_questions: list[IncisiveQuestion] = Field(default_factory=list)
+    info_staleness: float = Field(ge=0.0, le=1.0, default=0.0)
 
 
 class ThinkFastResult(BaseModel):
