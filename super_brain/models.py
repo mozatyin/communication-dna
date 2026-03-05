@@ -63,3 +63,35 @@ class ThinkSlowResult(BaseModel):
     confidence_map: dict[str, float] = Field(default_factory=dict)
     low_confidence_traits: list[str] = Field(default_factory=list)
     observations: list[str] = Field(default_factory=list)
+
+
+class IncisiveQuestion(BaseModel):
+    """A targeted question generated from Soul gaps to probe low-confidence traits."""
+    question: str
+    target: str
+    priority: float = Field(default=0.5, ge=0.0, le=1.0)
+    source: str = "trait_gap"
+
+
+class ThinkFastResult(BaseModel):
+    """Real-time signal detection from a single conversational exchange.
+
+    Produced after every exchange. Captures new facts, emotional shifts,
+    contradictions, and conversational openings for the Conductor.
+    """
+    new_facts: list[str] = Field(default_factory=list)
+    emotional_shift: Optional[str] = None
+    contradiction: Optional[str] = None
+    opening: Optional[str] = None
+    info_entropy: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class ConductorAction(BaseModel):
+    """Action selected by the Conductor to steer the conversation.
+
+    Modes: listen (passive), follow_thread (continue topic),
+    ask_incisive (probe a gap), push (challenge or redirect).
+    """
+    mode: str = Field(default="listen")
+    context: str = Field(default="")
+    question: Optional[str] = None
