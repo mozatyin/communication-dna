@@ -57,6 +57,10 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
         (0.0, 0.0), (0.25, 0.10), (0.40, 0.20), (0.50, 0.30),
         (0.60, 0.42), (0.70, 0.55), (0.80, 0.65), (0.90, 0.80), (1.0, 1.0),
     ],
+    "humor_frequency": [
+        (0.0, 0.0), (0.10, 0.0), (0.20, 0.10), (0.30, 0.20),
+        (0.50, 0.42), (0.70, 0.62), (0.85, 0.80), (1.0, 1.0),
+    ],
 }
 
 
@@ -346,11 +350,13 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
                 "Do NOT write as if transcribing speech. Write as if composing a thoughtful personal letter."
             )
 
-    # High jargon + mid formality → over-formalization
-    if fmap.get("jargon_density", 0) > 0.7 and 0.40 <= fmap.get("formality", 0.5) <= 0.70:
+    # High jargon + moderate formality → over-formalization
+    if fmap.get("jargon_density", 0) > 0.7 and fmap.get("formality", 0.5) < 0.65:
         warnings.append(
-            "- WARNING: High jargon density can inflate perceived formality. Use technical terms "
-            "but keep sentence structure and connecting words casual/standard."
+            "- WARNING: High jargon with moderate formality. Technical vocabulary does NOT mean "
+            "formal writing. Include some contractions ('it's', 'don't') and casual connectors "
+            "('so', 'basically') to keep formality at the target level. Don't over-correct — "
+            "aim for a mix of technical precision with accessible sentence structure."
         )
 
     # High formality + moderate directness → text sounds too indirect
