@@ -1,0 +1,75 @@
+{
+  "game_title": "植物大战僵尸",
+  "art_style": "卡通手绘风格，明亮色彩，2D横向视角",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 6,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "游戏标题'植物大战僵尸'在顶部居中。中间显示僵尸手从草地伸出的标志性画面。下方有冒险模式按钮（主按钮）和小游戏按钮。底部有设置图标。",
+      "belongs_to": null,
+      "navigation_from": ["game_over", "level_complete"],
+      "navigation_to": ["level_select"]
+    },
+    {
+      "index": 2,
+      "id": "level_select",
+      "name": "关卡选择",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "地图路径显示关卡进度。每个关卡是一个圆形节点，已通关的显示绿色勾，当前关卡高亮。顶部显示玩家当前阳光数和金币。底部有返回按钮。",
+      "belongs_to": null,
+      "navigation_from": ["main_menu"],
+      "navigation_to": ["plant_select", "main_menu"]
+    },
+    {
+      "index": 3,
+      "id": "plant_select",
+      "name": "植物选择",
+      "type": "popup",
+      "dimensions": {"width": 900, "height": 1400},
+      "description": "展示可用植物卡片网格。每张卡片显示植物图标、名称和阳光消耗。玩家选择最多6张卡片放入战斗槽位。底部有开始战斗按钮。",
+      "belongs_to": "level_select",
+      "navigation_from": ["level_select"],
+      "navigation_to": ["gameplay"]
+    },
+    {
+      "index": 4,
+      "id": "gameplay",
+      "name": "战斗界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "5行草地/泳池网格占据主要区域。顶部是植物卡片槽（已选植物，显示冷却状态）和阳光计数器。僵尸从右侧进入，植物放置在网格上。阳光随机掉落需要点击收集。底部有铲子工具。",
+      "belongs_to": null,
+      "navigation_from": ["plant_select"],
+      "navigation_to": ["game_over", "level_complete", "pause_popup"]
+    },
+    {
+      "index": 5,
+      "id": "pause_popup",
+      "name": "暂停菜单",
+      "type": "popup",
+      "dimensions": {"width": 700, "height": 800},
+      "description": "暂停游戏。显示继续游戏按钮、重新开始按钮和返回主菜单按钮。",
+      "belongs_to": "gameplay",
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu"]
+    },
+    {
+      "index": 6,
+      "id": "game_over",
+      "name": "游戏失败",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'僵尸吃掉了你的脑子！'文字和僵尸吃脑画面。下方有重试按钮和返回主菜单按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu"]
+    }
+  ]
+}

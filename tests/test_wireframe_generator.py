@@ -17,6 +17,15 @@ def _mock_llm_response(text: str) -> MagicMock:
     return mock_response
 
 
+def _mock_stream(text: str) -> MagicMock:
+    """Create a mock for the streaming context manager."""
+    stream_mock = MagicMock()
+    stream_mock.__enter__ = MagicMock(return_value=stream_mock)
+    stream_mock.__exit__ = MagicMock(return_value=False)
+    stream_mock.text_stream = iter([text])
+    return stream_mock
+
+
 _SAMPLE_WIREFRAME = json.dumps({
     "project": {
         "title": "Flappy Bird",
@@ -91,7 +100,7 @@ def test_generate_returns_wireframe():
     with patch("intention_graph.wireframe_generator.anthropic.Anthropic"):
         gen = WireframeGenerator(api_key="test-key")
 
-    gen._client.messages.create.return_value = _mock_llm_response(
+    gen._client.messages.stream.return_value = _mock_stream(
         _SAMPLE_WIREFRAME
     )
 
@@ -106,7 +115,7 @@ def test_generate_has_elements():
     with patch("intention_graph.wireframe_generator.anthropic.Anthropic"):
         gen = WireframeGenerator(api_key="test-key")
 
-    gen._client.messages.create.return_value = _mock_llm_response(
+    gen._client.messages.stream.return_value = _mock_stream(
         _SAMPLE_WIREFRAME
     )
 
@@ -124,26 +133,26 @@ def test_generate_calls_llm_once():
     with patch("intention_graph.wireframe_generator.anthropic.Anthropic"):
         gen = WireframeGenerator(api_key="test-key")
 
-    gen._client.messages.create.return_value = _mock_llm_response(
+    gen._client.messages.stream.return_value = _mock_stream(
         _SAMPLE_WIREFRAME
     )
 
     gen.generate(_SAMPLE_PRD, _SAMPLE_PLAN, _SAMPLE_ASSETS)
-    gen._client.messages.create.assert_called_once()
+    gen._client.messages.stream.assert_called_once()
 
 
 def test_generate_with_reference():
     with patch("intention_graph.wireframe_generator.anthropic.Anthropic"):
         gen = WireframeGenerator(api_key="test-key")
 
-    gen._client.messages.create.return_value = _mock_llm_response(
+    gen._client.messages.stream.return_value = _mock_stream(
         _SAMPLE_WIREFRAME
     )
 
     reference = json.loads(_SAMPLE_WIREFRAME)
     gen.generate(_SAMPLE_PRD, _SAMPLE_PLAN, _SAMPLE_ASSETS, reference_wireframe=reference)
 
-    call_args = gen._client.messages.create.call_args
+    call_args = gen._client.messages.stream.call_args
     user_msg = call_args.kwargs["messages"][0]["content"]
     assert "Golden Sample" in user_msg
 
@@ -152,13 +161,13 @@ def test_generate_without_reference():
     with patch("intention_graph.wireframe_generator.anthropic.Anthropic"):
         gen = WireframeGenerator(api_key="test-key")
 
-    gen._client.messages.create.return_value = _mock_llm_response(
+    gen._client.messages.stream.return_value = _mock_stream(
         _SAMPLE_WIREFRAME
     )
 
     gen.generate(_SAMPLE_PRD, _SAMPLE_PLAN, _SAMPLE_ASSETS)
 
-    call_args = gen._client.messages.create.call_args
+    call_args = gen._client.messages.stream.call_args
     user_msg = call_args.kwargs["messages"][0]["content"]
     assert "Golden Sample" not in user_msg
 

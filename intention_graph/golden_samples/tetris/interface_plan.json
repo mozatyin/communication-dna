@@ -1,0 +1,53 @@
+{
+  "game_title": "俄罗斯方块",
+  "art_style": "经典像素风格，深色背景，明亮方块",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 4,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "游戏标题'TETRIS'居中显示，带有方块下落动画效果。下方有开始游戏按钮和排行榜按钮。底部显示最高分。",
+      "belongs_to": null,
+      "navigation_from": ["game_over"],
+      "navigation_to": ["gameplay", "leaderboard"]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "10x20格网居中显示，方块从顶部下落。右侧显示下一个方块预览区域、当前分数、等级和已消行数。左下角有暂停按钮。方块可以旋转、左移、右移和加速下落。",
+      "belongs_to": null,
+      "navigation_from": ["main_menu"],
+      "navigation_to": ["game_over"]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'Game Over'文字、最终得分、消除行数和达到的等级。如果打破记录显示'新纪录'。下方有重新开始按钮和返回菜单按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu", "leaderboard"]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {"width": 800, "height": 1200},
+      "description": "显示前10名最高分排名列表，包括分数和达到的等级。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": ["main_menu", "game_over"],
+      "navigation_to": []
+    }
+  ]
+}

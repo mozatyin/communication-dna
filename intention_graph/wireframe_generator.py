@@ -40,6 +40,9 @@ pointing to a valid interface_id (except gameplay action buttons).
 12. Popup screens should be SIMPLE — typically 3-6 elements: \
 a background panel (css), title text, content, and close/action button. \
 Do NOT over-engineer popups with decorative elements.
+13. MUST use "image" type elements with asset_id for ALL image assets \
+in the asset_table. Every page should have at least one "image" element \
+(typically the background). Do NOT replace image assets with "css" elements.
 
 Style properties (CSS-like):
 - background-color, color, font-size, font-weight, text-align
@@ -139,16 +142,49 @@ class WireframeGenerator:
 
         user_parts.append("\nGenerate the wireframe JSON.")
 
-        response = self._client.messages.create(
+        chunks: list[str] = []
+        with self._client.messages.stream(
             model=self._model,
-            max_tokens=20000,
-            temperature=0.4,
+            max_tokens=32000,
+            temperature=0.2,
             system=_WIREFRAME_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": "\n".join(user_parts)}],
-        )
+        ) as stream:
+            for text in stream.text_stream:
+                chunks.append(text)
 
-        raw = response.content[0].text
-        return _parse_json(raw)
+        raw = "".join(chunks)
+        wireframe = _parse_json(raw)
+        return _validate_against_plan(wireframe, interface_plan)
+
+
+def _validate_against_plan(wireframe: dict, plan: dict) -> dict:
+    """Post-process wireframe to enforce consistency with interface plan."""
+    plan_screens = {s.get("id", ""): s for s in plan.get("interfaces", [])}
+    wf_screens = {s.get("interface_id", ""): s for s in wireframe.get("interfaces", [])}
+
+    for iface in wireframe.get("interfaces", []):
+        iid = iface.get("interface_id", "")
+        plan_screen = plan_screens.get(iid)
+        if not plan_screen:
+            continue
+
+        # Ensure children match plan's navigation_to
+        plan_nav_to = plan_screen.get("navigation_to", [])
+        # Map plan IDs to wireframe IDs (they should match)
+        valid_targets = {t for t in plan_nav_to if t in wf_screens}
+        if valid_targets:
+            current_children = set(iface.get("children", []))
+            iface["children"] = sorted(current_children | valid_targets)
+
+        # Ensure parents match plan's navigation_from
+        plan_nav_from = plan_screen.get("navigation_from", [])
+        valid_parents = {p for p in plan_nav_from if p in wf_screens}
+        if valid_parents:
+            current_parents = set(iface.get("parents", []))
+            iface["parents"] = sorted(current_parents | valid_parents)
+
+    return wireframe
 
 
 def _parse_json(raw: str) -> dict:

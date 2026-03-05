@@ -1,0 +1,42 @@
+{
+  "game_title": "贪吃蛇",
+  "art_style": "简约现代风格，深色背景，霓虹色彩",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 3,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "游戏标题'贪吃蛇'居中显示。下方有开始游戏按钮。底部显示最高分。",
+      "belongs_to": null,
+      "navigation_from": ["game_over"],
+      "navigation_to": ["gameplay"]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "方形游戏区域居中。蛇身由连续方块组成，食物随机出现。顶部显示当前分数和最高分。底部有方向控制按钮（上下左右）。",
+      "belongs_to": null,
+      "navigation_from": ["main_menu"],
+      "navigation_to": ["game_over"]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'Game Over'文字和最终得分。如果打破记录显示'新纪录'提示。有重新开始按钮和返回菜单按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu"]
+    }
+  ]
+}

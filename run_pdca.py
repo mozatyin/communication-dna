@@ -28,6 +28,7 @@ GAMES = {
     "flappy": "做一个Flappy Bird",
     "pvz": "做一个植物大战僵尸",
     "tetris": "做一个俄罗斯方块",
+    "snake": "做一个贪吃蛇",
 }
 
 GOLDEN_DIR = os.path.join(
@@ -63,9 +64,8 @@ def run_pdca(
     api_key = api_key or os.environ["ANTHROPIC_API_KEY"]
     prompt = GAMES.get(game, game)
 
-    golden_plan, golden_wf = load_golden(
-        {"flappy": "flappy_bird", "pvz": "pvz", "tetris": "tetris"}.get(game, game)
-    )
+    game_to_dir = {"flappy": "flappy_bird", "pvz": "pvz", "tetris": "tetris", "snake": "snake"}
+    golden_plan, golden_wf = load_golden(game_to_dir.get(game, game))
 
     t0 = time.time()
     results = {"game": game, "stages": {}}
@@ -158,13 +158,36 @@ def run_pdca(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--game", default="flappy", choices=list(GAMES.keys()))
+    parser.add_argument("--game", default="flappy", choices=list(GAMES.keys()) + ["all"])
     parser.add_argument("--with-golden", action="store_true")
     parser.add_argument("--semantic", action="store_true")
     args = parser.parse_args()
 
-    run_pdca(
-        game=args.game,
-        with_golden=args.with_golden,
-        with_semantic=args.semantic,
-    )
+    if args.game == "all":
+        all_results = {}
+        for g in GAMES:
+            r = run_pdca(
+                game=g,
+                with_golden=args.with_golden,
+                with_semantic=args.semantic,
+            )
+            all_results[g] = r
+        print("\n" + "=" * 60)
+        print("CROSS-PRODUCT SUMMARY")
+        print("=" * 60)
+        for g, r in all_results.items():
+            structural = r.get("structural", {}).get("overall", "N/A")
+            if isinstance(structural, float):
+                structural = f"{structural:.0%}"
+            layout = r.get("self_metrics", {}).get("layout_completeness", 0)
+            types_ = r.get("self_metrics", {}).get("element_types", 0)
+            print(f"  {g:8s}: structural={structural:>5s}  "
+                  f"layout={layout:.0%}  types={types_:.0%}  "
+                  f"screens={r['stages']['wireframe']['screen_count']}  "
+                  f"time={r['elapsed_sec']}s")
+    else:
+        run_pdca(
+            game=args.game,
+            with_golden=args.with_golden,
+            with_semantic=args.semantic,
+        )
