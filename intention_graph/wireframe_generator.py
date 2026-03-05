@@ -31,6 +31,15 @@ Layout rules:
 6. Every element in asset_table should appear in at least one interface.
 7. Group interfaces into logical modules (menu_flow, gameplay_flow, etc.).
 8. Navigation between modules uses module_connections.
+9. parents and children MUST match the interface plan exactly. \
+If the plan says screen A navigates to B, then A's children must include B \
+and B's parents must include A.
+10. Every button with event="click" MUST have a target_interface_id \
+pointing to a valid interface_id (except gameplay action buttons).
+11. Generate EXACTLY the screens listed in the interface plan — no more, no fewer.
+12. Popup screens should be SIMPLE — typically 3-6 elements: \
+a background panel (css), title text, content, and close/action button. \
+Do NOT over-engineer popups with decorative elements.
 
 Style properties (CSS-like):
 - background-color, color, font-size, font-weight, text-align

@@ -28,13 +28,21 @@ modals, overlays, HUD, etc.
 6. Screen descriptions should describe CONTENT and LOGIC, not layout positions.
 7. Use the same language as the PRD for screen names and descriptions.
 8. Match screen count to product complexity:
-   - Simple/arcade games (Flappy Bird, Tetris): 3-4 screens only. \
+   - Simple/arcade games (Flappy Bird, Tetris): 3-5 screens. \
+Include score/leaderboard popup if the game has scoring. \
 NO settings, NO tutorials, NO pause menus unless PRD explicitly requires them.
-   - Casual games (PvZ, Angry Birds): 4-6 screens.
+   - Casual games (PvZ, Angry Birds): 5-7 screens.
    - Mid-core/complex games: 6-10 screens.
    - Apps/SaaS: match to feature count in PRD.
    IMPORTANT: Do NOT add screens the PRD doesn't describe or imply. \
 Every screen must be justified by specific PRD content.
+9. For games with scoring, ALWAYS include a score/leaderboard popup screen \
+(type "popup", belongs_to the game_over or result screen).
+10. navigation_from and navigation_to MUST be symmetric: \
+if screen A lists B in navigation_to, screen B MUST list A in navigation_from.
+11. Popups should be reachable from ALL screens that show a button for them. \
+For example, if both the start menu and game_over screen have a leaderboard button, \
+the leaderboard popup's navigation_from must include BOTH screens.
 
 Return ONLY valid JSON matching this schema:
 {

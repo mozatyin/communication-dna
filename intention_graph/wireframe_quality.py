@@ -288,6 +288,9 @@ def _extract_nav_edges(wireframe: dict) -> set[tuple[str, str]]:
         iface_id = iface.get("interface_id", "")
         for child in iface.get("children", []):
             edges.add((iface_id, child))
+        # Reverse edges from parents
+        for parent in iface.get("parents", []):
+            edges.add((parent, iface_id))
         # Also check button targets
         for elem in iface.get("elements", []):
             target = elem.get("target_interface_id")
@@ -308,10 +311,17 @@ def _check_layout_completeness(gen: dict) -> QualityMetric:
     complete = 0
     for iface in interfaces:
         elements = iface.get("elements", [])
+        is_popup = iface.get("type") == "popup"
         has_bg = any(
             e.get("type") in ("image", "css") and e.get("rect", {}).get("z_index", 99) == 0
             for e in elements
         )
+        # Popups: a css panel at any z_index counts as background
+        if not has_bg and is_popup:
+            has_bg = any(
+                e.get("type") == "css"
+                for e in elements
+            )
         has_interactive = any(
             e.get("event") or e.get("type") == "button"
             for e in elements
