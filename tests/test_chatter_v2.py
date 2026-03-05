@@ -56,3 +56,32 @@ def test_chatter_max_tokens_reduced():
         assert call_kwargs["max_tokens"] <= 150, (
             f"Chatter max_tokens should be ≤150, got {call_kwargs['max_tokens']}"
         )
+
+
+def test_chatter_accepts_low_confidence_traits():
+    """V2.2: _build_chatter_system should accept low_confidence_traits parameter."""
+    from eval_conversation import _build_chatter_system
+
+    prompt = _build_chatter_system(
+        turn_number=16,
+        total_turns=20,
+        low_confidence_traits=["social_dominance", "humor_self_enhancing"],
+    )
+
+    # Late-phase prompt should include suggested topics for low-confidence traits
+    lower_prompt = prompt.lower()
+    assert "suggested" in lower_prompt or "exploration" in lower_prompt
+
+
+def test_chatter_gap_aware_early_phase_ignores_traits():
+    """Early phase should NOT inject gap-aware topics (not enough rapport)."""
+    from eval_conversation import _build_chatter_system
+
+    prompt = _build_chatter_system(
+        turn_number=3,
+        total_turns=20,
+        low_confidence_traits=["social_dominance", "humor_self_enhancing"],
+    )
+
+    # Early turns should NOT have suggested exploration topics injected
+    assert "suggested exploration" not in prompt.lower()
