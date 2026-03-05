@@ -6,9 +6,12 @@ Works with any PRD output from OneSentencePrd or PrdGenerator.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
+
+import anthropic
 
 from intention_graph.one_sentence_prd import _COMPLEXITY_PROFILES
 
@@ -339,3 +342,85 @@ def _check_design_questions(doc: str) -> QualityMetric:
     detail = f"{blocks_with_question}/{len(design_blocks)} have questions"
 
     return QualityMetric(name="design_questions", passed=passed, score=score, detail=detail)
+
+
+# ── LLM-as-Judge Semantic Evaluation ─────────────────────────────────────────
+
+
+def semantic_evaluate(
+    prd_document: str,
+    metadata: dict[str, Any],
+    api_key: str,
+    model: str = "claude-sonnet-4-20250514",
+) -> QualityMetric:
+    """Use LLM to judge PRD semantic quality (faithfulness, depth, specificity).
+
+    This is expensive (1 LLM call) but catches issues that regex can't:
+    - Does the PRD describe the right game?
+    - Are system descriptions concrete or abstract filler?
+    - Are design tradeoffs genuine or generic?
+
+    Returns a single QualityMetric with score 0.0-1.0 and detailed feedback.
+    """
+    game_name = metadata.get("detected_game", "unknown")
+    complexity = metadata.get("complexity", "mid-core")
+    core_systems = metadata.get("core_systems", [])
+
+    kwargs: dict = {"api_key": api_key}
+    if api_key.startswith("sk-or-"):
+        kwargs["base_url"] = "https://openrouter.ai/api"
+    client = anthropic.Anthropic(**kwargs)
+
+    response = client.messages.create(
+        model=model,
+        max_tokens=1024,
+        temperature=0.0,
+        system=(
+            "You are a game design PRD quality evaluator. "
+            "Score the PRD on 3 dimensions (each 0-10):\n"
+            "1. faithfulness: Does it accurately describe the ORIGINAL game? "
+            "No invented systems or mechanics the game never had.\n"
+            "2. depth: Are system descriptions concrete (specific numbers, "
+            "player actions, emotional moments) or abstract filler?\n"
+            "3. tradeoffs: Are 设计考量 genuine design dilemmas with "
+            "concrete tradeoff analysis, or generic questions?\n\n"
+            "Return ONLY valid JSON."
+        ),
+        messages=[{"role": "user", "content": (
+            f"Game: {game_name} ({complexity})\n"
+            f"Expected systems: {', '.join(core_systems)}\n\n"
+            f"PRD:\n{prd_document[:6000]}\n\n"
+            "Score JSON:\n"
+            '{"faithfulness": <0-10>, "depth": <0-10>, "tradeoffs": <0-10>, '
+            '"issues": ["<list any specific problems found>"]}'
+        )}],
+    )
+
+    raw = response.content[0].text
+    try:
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+        start = raw.find("{")
+        last = raw.rfind("}")
+        if start != -1 and last != -1:
+            raw = raw[start:last + 1]
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return QualityMetric(
+            name="semantic", passed=False, score=0.0,
+            detail="LLM judge response parsing failed"
+        )
+
+    faithfulness = parsed.get("faithfulness", 5)
+    depth = parsed.get("depth", 5)
+    tradeoffs = parsed.get("tradeoffs", 5)
+    issues = parsed.get("issues", [])
+
+    score = (faithfulness + depth + tradeoffs) / 30.0
+    passed = score >= 0.6 and faithfulness >= 6
+    detail = (
+        f"faith={faithfulness}/10 depth={depth}/10 trade={tradeoffs}/10"
+        + (f" issues={issues}" if issues else "")
+    )
+
+    return QualityMetric(name="semantic", passed=passed, score=score, detail=detail)

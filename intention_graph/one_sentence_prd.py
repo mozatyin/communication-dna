@@ -4,11 +4,12 @@ Orchestrates the existing IG pipeline (Connect → Expand → Clarify) with
 web research and self-answering to produce comprehensive PRDs without
 multi-turn conversation.
 
-v2 — Key improvements over v1:
+v3 — Direct PRD pipeline:
+- Merged identify + research into one LLM call (saves 1 call)
+- Direct PRD generation from research + IntentionGraph (no synthetic conversation)
 - Complexity detection: arcade games stay simple, no system inflation
 - Faithful research: respects original game's design philosophy
-- Genre-aware self-answer: focuses on real design tradeoffs, not generic questions
-- Honest conversation synthesis: separates user-stated vs research-inferred
+- Genre-aware self-answer: focuses on real design tradeoffs
 - System count limits based on complexity level
 """
 
@@ -26,7 +27,6 @@ from intention_graph.expand import Expand
 from intention_graph.clarify import Clarify
 from intention_graph.models import IntentionGraph, Transition
 from intention_graph.prd_generator import (
-    PrdGenerator,
     _PRD_SYSTEM_PROMPT,
     _graph_to_context,
     _parse_prd_response,
@@ -41,7 +41,6 @@ _COMPLEXITY_PROFILES = {
         "max_systems": 4,
         "skip_expand": True,
         "research_chars": 1500,
-        "conversation_turns": "6-8",
         "min_prd_chars": 3000,
         "prd_max_tokens": 6000,
         "research_constraint": (
@@ -59,7 +58,6 @@ _COMPLEXITY_PROFILES = {
         "max_systems": 6,
         "skip_expand": False,
         "research_chars": 2000,
-        "conversation_turns": "8-10",
         "min_prd_chars": 4500,
         "prd_max_tokens": 8000,
         "research_constraint": (
@@ -72,8 +70,7 @@ _COMPLEXITY_PROFILES = {
         "max_systems": 8,
         "skip_expand": False,
         "research_chars": 3000,
-        "conversation_turns": "10-12",
-        "min_prd_chars": 5500,
+        "min_prd_chars": 5000,
         "prd_max_tokens": 10000,
         "research_constraint": (
             "This is a mid-core game with moderate system depth.\n"
@@ -85,7 +82,6 @@ _COMPLEXITY_PROFILES = {
         "max_systems": 10,
         "skip_expand": False,
         "research_chars": 4000,
-        "conversation_turns": "12-14",
         "min_prd_chars": 5000,
         "prd_max_tokens": 12000,
         "research_constraint": (
@@ -107,24 +103,17 @@ class GameInfo:
     genre: str
     era: str
     core_systems: list[str] = field(default_factory=list)
-
-
-@dataclass
-class SimpleGame:
-    """Minimal game object for PrdGenerator compatibility."""
-    facts: list[str] = field(default_factory=list)
+    research_text: str = ""
 
 
 class OneSentencePrd:
     """Generate a full PRD from a single sentence.
 
-    v2 Pipeline:
-    1. Identify game (name, complexity, genre, era, core systems)
-    2. Research with faithfulness constraints
-    3. Connect → Expand(conditional) → Clarify (existing IG pipeline)
-    4. Self-answer ambiguities with genre context
-    5. Synthesize honest conversation (user-stated vs inferred)
-    6. PrdGenerator (existing, unchanged)
+    v3 Pipeline (4-5 LLM calls):
+    1. Identify + Research (merged, 1 call + web search)
+    2. Connect → Expand(conditional) → Clarify (existing IG pipeline, 2-3 calls)
+    3. Self-answer ambiguities if any (0-1 call)
+    4. Direct PRD generation from research + IntentionGraph (1 call)
     """
 
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514"):
@@ -136,7 +125,6 @@ class OneSentencePrd:
         self._connect = Connect(api_key=api_key, model=model)
         self._expand = Expand(api_key=api_key, model=model)
         self._clarify = Clarify(api_key=api_key, model=model)
-        self._prd_generator = PrdGenerator(api_key=api_key, model=model)
 
     def generate(
         self,
@@ -156,20 +144,17 @@ class OneSentencePrd:
         Returns:
             {"prd_document": str, "prd_summary": str, "metadata": dict}
         """
-        # Step 1: Identify game with complexity detection
-        game_info = self._identify_game(sentence)
+        # Step 1: Identify game + research (merged into 1 LLM call)
+        game_info = self._identify_and_research(sentence)
         profile = _COMPLEXITY_PROFILES.get(
             game_info.complexity,
             _COMPLEXITY_PROFILES["mid-core"],
         )
 
-        # Step 2: Research with faithfulness constraints
-        research_text = self._research_game(sentence, game_info, profile)
+        # Step 2: Run IG pipeline (complexity-aware)
+        graph = self._run_ig_pipeline(game_info, game_info.research_text, profile)
 
-        # Step 3: Run IG pipeline (complexity-aware)
-        graph = self._run_ig_pipeline(game_info, research_text, profile)
-
-        # Step 4: Handle ambiguities (interactive or self-answer)
+        # Step 3: Handle ambiguities (interactive or self-answer)
         self_answered: list[dict[str, str]] = []
         user_answers: list[dict[str, str]] = []
         if graph.ambiguities:
@@ -179,17 +164,17 @@ class OneSentencePrd:
                 )
             else:
                 graph, self_answered = self._self_answer(
-                    graph, game_info, research_text
+                    graph, game_info, game_info.research_text
                 )
 
-        # Step 5: Generate PRD directly from research + IG
+        # Step 4: Generate PRD directly from research + IG
         result = self._generate_prd_direct(
-            game_info, research_text, graph, profile, self_answered
+            game_info, game_info.research_text, graph, profile, self_answered
         )
 
         # Enrich metadata
         result["metadata"]["research_source"] = (
-            "web+llm" if research_text else "llm_only"
+            "web+llm" if game_info.research_text else "llm_only"
         )
         result["metadata"]["self_answered_questions"] = self_answered
         result["metadata"]["user_answered_questions"] = user_answers
@@ -203,45 +188,61 @@ class OneSentencePrd:
 
         return result
 
-    # ── Step 1: Identify ─────────────────────────────────────────────────
+    # ── Step 1: Identify + Research (merged) ──────────────────────────
 
-    def _identify_game(self, sentence: str) -> GameInfo:
-        """Identify game name, complexity, genre, era, and core systems."""
+    def _identify_and_research(self, sentence: str) -> GameInfo:
+        """Identify game and produce research in a single LLM call.
+
+        Merges the old _identify_game + _research_game into one call,
+        saving 1 LLM round-trip. Web search is still done separately
+        and fed as grounding context.
+        """
+        # Web search first (no LLM needed)
+        web_research = research_game(sentence, language="zh")
+
+        web_context = ""
+        if web_research:
+            web_context = f"\n## Web Research (use as grounding)\n{web_research}\n"
+
         response = self._client.messages.create(
             model=self._model,
-            max_tokens=512,
-            temperature=0.0,
+            max_tokens=3000,
+            temperature=0.2,
             system=(
-                "You are a game design expert. Identify the game from the user's "
-                "sentence and classify its design complexity. Return ONLY valid JSON."
+                "You are a game design expert. Given a user's sentence about "
+                "a game they want to make, do TWO things:\n"
+                "1. Identify and classify the game\n"
+                "2. Write a detailed game design research summary\n\n"
+                "Return ONLY valid JSON."
             ),
             messages=[{"role": "user", "content": (
-                f'User sentence: "{sentence}"\n\n'
-                "Analyze this and return JSON:\n"
+                f'User sentence: "{sentence}"\n'
+                f"{web_context}\n"
+                "Return JSON with these fields:\n"
                 "{\n"
                 '  "game_name": "<name in English>",\n'
                 '  "game_name_original": "<name as user wrote it>",\n'
                 '  "language": "<zh or en>",\n'
                 '  "complexity": "<arcade|casual|mid-core|hardcore>",\n'
-                '  "genre": "<specific genre, e.g. vertical scrolling shooter>",\n'
-                '  "era": "<original era, e.g. 1987 arcade>",\n'
-                '  "core_systems": ["<list of systems the ORIGINAL game actually has, '
-                'written in the SAME LANGUAGE as the user input>"]\n'
+                '  "genre": "<specific genre>",\n'
+                '  "era": "<original era>",\n'
+                '  "core_systems": ["<systems the ORIGINAL game has, '
+                'in the SAME LANGUAGE as user input>"],\n'
+                '  "research": "<detailed game design summary, 1500-4000 chars, '
+                'covering how each core system works mechanically, why it is fun, '
+                'and concrete numbers. Write in the same language as user input. '
+                'DO NOT invent systems the game never had.>"\n'
                 "}\n\n"
                 "Complexity guide:\n"
-                "- arcade: Classic arcade games (Pac-Man, Space Invaders, 1943, Tetris, Flappy Bird). "
-                "Simple controls, no progression between sessions, score-based.\n"
-                "- casual: Simple modern games (Angry Birds, Candy Crush, Plants vs Zombies). "
-                "Light progression, few systems.\n"
-                "- mid-core: Moderate depth (Clash Royale, Stardew Valley, Hollow Knight). "
-                "Multiple interlocking systems.\n"
-                "- hardcore: Deep complex games (Honor of Kings/王者荣耀, League of Legends, "
-                "Dark Souls, Civilization). Many systems, steep learning curve.\n\n"
-                "core_systems: List ONLY systems the original game actually had. "
+                "- arcade: Classic arcade (Pac-Man, 1943, Tetris, Flappy Bird). "
+                "Simple controls, score-based.\n"
+                "- casual: Simple modern (Angry Birds, PvZ). Light progression.\n"
+                "- mid-core: Moderate depth (Hollow Knight, Stardew Valley).\n"
+                "- hardcore: Deep complex (王者荣耀, LoL, Dark Souls).\n\n"
+                "core_systems: ONLY systems the original game actually had. "
                 "Write in the SAME language as the user's input. "
                 "For Chinese input about 1943: [射击系统, 强化道具, 计分系统, BOSS战斗, 生命值]. "
-                "For English input: [shooting, power-ups, scoring, boss battles, lives]. "
-                "Do NOT invent systems the game never had."
+                "Do NOT invent systems."
             )}],
         )
         raw = response.content[0].text
@@ -255,53 +256,10 @@ class OneSentencePrd:
             genre=parsed.get("genre", ""),
             era=parsed.get("era", ""),
             core_systems=parsed.get("core_systems", []),
+            research_text=parsed.get("research", ""),
         )
 
-    # ── Step 2: Research ─────────────────────────────────────────────────
-
-    def _research_game(
-        self, sentence: str, info: GameInfo, profile: dict
-    ) -> str:
-        """Research game with faithfulness constraints based on complexity."""
-        # Web search
-        web_research = research_game(info.game_name, language=info.language)
-
-        max_chars = profile["research_chars"]
-        constraint = profile["research_constraint"]
-
-        parts = [
-            f'The user wants to make: "{sentence}"',
-            f"Game: {info.game_name} ({info.era})",
-            f"Genre: {info.genre}",
-            f"Complexity level: {info.complexity}",
-            f"Original core systems: {', '.join(info.core_systems)}",
-        ]
-        if web_research:
-            parts.append(f"\n## Web Research (use as grounding)\n{web_research}")
-
-        parts.append(
-            f"\n## Design Constraint\n{constraint}\n\n"
-            f"## Task\n"
-            f"Write a game design summary in {max_chars}-{max_chars + 500} characters.\n"
-            f"Cover ONLY the systems that this game actually has:\n"
-            f"  {', '.join(info.core_systems)}\n\n"
-            f"For each system, describe:\n"
-            f"- How it works mechanically (specific, concrete)\n"
-            f"- Why it's fun (the feeling, not the mechanic)\n"
-            f"- Concrete numbers/thresholds where possible\n\n"
-            f"DO NOT invent systems the original game never had.\n"
-            f"Write in the same language as the user's input."
-        )
-
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=2048,
-            temperature=0.4,
-            messages=[{"role": "user", "content": "\n".join(parts)}],
-        )
-        return response.content[0].text
-
-    # ── Step 3: IG Pipeline ──────────────────────────────────────────────
+    # ── Step 2: IG Pipeline ──────────────────────────────────────────────
 
     def _run_ig_pipeline(
         self, info: GameInfo, research_text: str, profile: dict
@@ -331,7 +289,7 @@ class OneSentencePrd:
 
         return graph
 
-    # ── Step 4: Self-Answer ──────────────────────────────────────────────
+    # ── Step 3: Self-Answer ──────────────────────────────────────────────
 
     def _self_answer(
         self, graph: IntentionGraph, info: GameInfo, research_text: str
@@ -440,10 +398,8 @@ class OneSentencePrd:
             })
             # If user's answer matches a branch name, boost it
             if q["branches"]:
-                # Try to find the best matching branch
-                best_branch = q["branches"][0]  # default to first
+                best_branch = q["branches"][0]
                 for branch_id in q["branches"]:
-                    # Find node text for this branch
                     branch_node = next(
                         (n for n in graph.nodes if n.id == branch_id), None
                     )
@@ -466,7 +422,7 @@ class OneSentencePrd:
 
         return graph, answered
 
-    # ── Step 5: Direct PRD Generation ────────────────────────────────────
+    # ── Step 4: Direct PRD Generation ────────────────────────────────────
 
     def _generate_prd_direct(
         self,
@@ -476,19 +432,12 @@ class OneSentencePrd:
         profile: dict,
         self_answered: list[dict[str, str]],
     ) -> dict[str, Any]:
-        """Generate PRD directly from research + IntentionGraph.
-
-        Replaces _synthesize_conversation + PrdGenerator.generate_sync,
-        eliminating 4 redundant LLM calls (synthesize + PrdGenerator's
-        internal connect + expand + generate).
-        """
+        """Generate PRD directly from research + IntentionGraph."""
         ig_context = _graph_to_context(graph)
 
-        # Build user prompt with all context
         lang = "Chinese (中文)" if info.language.startswith("zh") else "English"
         max_systems = profile["max_systems"]
 
-        # Format core systems as if user described them
         core_systems_text = "\n".join(
             f"- {s}" for s in info.core_systems
         )
@@ -536,8 +485,6 @@ class OneSentencePrd:
 
         user_message = "\n".join(user_parts)
 
-        # Supplementary instruction for direct mode: override [INFERRED]
-        # rule since there's no conversation to check against
         direct_mode_supplement = (
             "\n\n## DIRECT MODE OVERRIDE\n"
             "This PRD is being generated from structured design input, "
@@ -563,7 +510,6 @@ class OneSentencePrd:
 
         prd_document, prd_summary = _parse_prd_response(raw)
 
-        # Build metadata compatible with PrdGenerator output
         core_intention = ""
         num_intentions = len(graph.nodes) if graph.nodes else 0
         if graph.end_goal and graph.nodes:
@@ -580,7 +526,7 @@ class OneSentencePrd:
             "ig_available": bool(graph.nodes),
             "language": info.language,
             "model": self._model,
-            "pipeline": "direct",  # distinguishes from v2's PrdGenerator path
+            "pipeline": "direct",
         }
 
         return {
@@ -588,111 +534,6 @@ class OneSentencePrd:
             "prd_summary": prd_summary,
             "metadata": metadata,
         }
-
-    # ── Legacy: Synthesize Conversation (kept for reference) ──────────
-
-    def _synthesize_conversation(
-        self,
-        info: GameInfo,
-        research_text: str,
-        graph: IntentionGraph,
-        profile: dict,
-    ) -> tuple[list[dict[str, str]], list[str]]:
-        """Synthesize honest conversation that separates user intent from research."""
-        graph_nodes = "\n".join(
-            f"- {n.text} (confidence={n.confidence:.2f})"
-            for n in graph.nodes
-        )
-        end_goal_text = ""
-        if graph.end_goal:
-            end_node = next(
-                (n for n in graph.nodes if n.id == graph.end_goal), None
-            )
-            if end_node:
-                end_goal_text = f"Core goal: {end_node.text}"
-
-        lang_instruction = (
-            "Chinese (中文)" if info.language.startswith("zh") else "English"
-        )
-        max_systems = profile["max_systems"]
-        turns = profile["conversation_turns"]
-
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=4096,
-            temperature=0.5,
-            system=(
-                "You are generating a synthetic game design conversation.\n\n"
-                "CRITICAL RULES:\n"
-                "1. The User's FIRST message must be EXACTLY their original sentence "
-                "(this is the only thing they actually said).\n"
-                "2. After the first message, the User expands based on the research, "
-                "but ONLY discusses systems that the original game actually has.\n"
-                "3. The Host asks probing questions about specific mechanics, "
-                "not about adding new systems.\n"
-                "4. Do NOT have the User describe systems that the original game "
-                "never had (no invented RPG/progression systems for arcade games).\n"
-                "5. Keep the conversation scope proportional to the game's complexity.\n"
-                "6. IMPORTANT: The User must mention ALL core systems listed in the "
-                "constraints. Every system should appear in at least one User message. "
-                "This ensures the PRD doesn't mark core systems as [INFERRED].\n\n"
-                "Return ONLY valid JSON."
-            ),
-            messages=[{"role": "user", "content": (
-                f"## Original User Input (the ONLY thing the user actually said)\n"
-                f'"{info.game_name_original}"\n\n'
-                f"## Game Info\n"
-                f"Game: {info.game_name} ({info.era})\n"
-                f"Genre: {info.genre}\n"
-                f"Complexity: {info.complexity}\n"
-                f"Original core systems: {', '.join(info.core_systems)}\n\n"
-                f"## Research (use to flesh out User responses)\n"
-                f"{research_text[:2500]}\n\n"
-                f"## Intention Graph\n{graph_nodes}\n"
-                f"{end_goal_text}\n\n"
-                f"## Constraints\n"
-                f"- Generate {turns} turns\n"
-                f"- Maximum {max_systems} game systems discussed\n"
-                f"- User's first message MUST be: \"{info.game_name_original}\"\n"
-                f"- Write in {lang_instruction}\n\n"
-                f"## CHECKLIST: User MUST mention ALL of these systems\n"
-                + "".join(
-                    f"- [ ] {sys}\n" for sys in info.core_systems
-                )
-                + "\nEvery system above must appear in at least one User message. "
-                f"This prevents the PRD from marking core systems as [INFERRED].\n\n"
-                f"## Facts\n"
-                f"Extract {max_systems + 2}-{max_systems + 5} structured facts. "
-                f"Only include facts about systems the original game has.\n\n"
-                f"Return JSON:\n"
-                '{{\n'
-                '  "conversation": [\n'
-                '    {{"role": "user", "content": "..."}},\n'
-                '    {{"role": "host", "content": "..."}}\n'
-                '  ],\n'
-                '  "facts": ["fact 1", "fact 2"]\n'
-                '}}'
-            )}],
-        )
-
-        raw = response.content[0].text
-        parsed = _parse_json(raw)
-
-        conversation = parsed.get("conversation", [])
-        facts = parsed.get("facts", [])
-
-        # Fallback
-        if not conversation:
-            conversation = [
-                {"role": "user", "content": info.game_name_original},
-                {"role": "host", "content": "Tell me more about the game design."},
-                {"role": "user", "content": research_text[:2000]},
-            ]
-
-        if not facts:
-            facts = [f"Game: {info.game_name} ({info.genre})"]
-
-        return conversation, facts
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
