@@ -81,7 +81,7 @@ out of 10, that is moderate (~0.50), not high. Reserve 0.80+ for texts saturated
   * Sentence length should be estimated by counting actual words. 10-15 words average is low-moderate \
 (~0.30), 15-20 is moderate (~0.50), 20-25 is moderately high (~0.65).
   * ELLIPSIS: Count all instances of '...' and syntactically incomplete/trailing sentences. \
-0=0.00, 1-2=0.15-0.30, 3-5=0.40-0.60, 6-8=0.65-0.80, 9+=0.85+.
+0=0.00, 1-2=0.15-0.30, 3-4=0.35-0.55, 5-6=0.55-0.70, 7-8=0.70-0.80, 9+=0.85+.
   * METACOMMENTARY: Count comments about HOW the speaker is communicating ('I\'m not explaining \
 this well', 'does that make sense?', 'sorry I\'m rambling'). 0=0.00, 1=0.20-0.30, \
 2=0.40-0.55, 3+=0.65+. Hedging ('I think') is NOT metacommentary.
@@ -206,7 +206,19 @@ _BATCH_CALIBRATION_EXAMPLES: dict[str, str] = {
         'get out of bed. I feel like I\'m failing everyone around me and I don\'t know how to ask for help."\n'
         "→ vulnerability_willingness=0.85, disclosure_depth=0.80, emotion_word_density=0.75\n"
         "Note: disclosure_depth follows the same pattern — mentioning a topic = 0.40-0.55, "
-        "sharing personal details/feelings about it = 0.60-0.75, deep intimate exposure = 0.80+.\n"
+        "sharing personal details/feelings about it = 0.60-0.75, deep intimate exposure = 0.80+.\n\n"
+        "Example G — HIGH emotional_polarity_balance (positive bias, ~0.75):\n"
+        '"Oh that is wonderful news! I\'m so thrilled for you — you absolutely deserve this after '
+        'everything you\'ve been through. This is going to be such an amazing chapter in your life!"\n'
+        "→ emotional_polarity_balance=0.80, empathy_expression=0.85, emotion_word_density=0.80\n"
+        "Note: emotional_polarity_balance measures the RATIO of positive to negative emotions. "
+        "0.50 = balanced (equal positive and negative). 0.75 = predominantly positive/supportive. "
+        "A warm, supportive, encouraging text with mostly positive emotions = 0.70-0.85. "
+        "Only score < 0.50 if negative emotions dominate.\n\n"
+        "Note on empathy_expression 0.90+: the text must show ACTIVE emotional mirroring — "
+        "not just 'I understand' but reflecting back feelings, validating emotions, and showing "
+        "they truly feel what the other person feels. 'I can only imagine how overwhelming/exciting/scary "
+        "that must feel' = 0.85+. Simply being nice and supportive = 0.60-0.75.\n"
     ),
     "IDN,MET,TMP": (
         "## Scoring Calibration Examples\n\n"
