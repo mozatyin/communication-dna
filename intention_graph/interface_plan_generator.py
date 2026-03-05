@@ -27,6 +27,14 @@ modals, overlays, HUD, etc.
 5. Use global_resolution 1080x1920 (portrait mobile) unless PRD specifies otherwise.
 6. Screen descriptions should describe CONTENT and LOGIC, not layout positions.
 7. Use the same language as the PRD for screen names and descriptions.
+8. Match screen count to product complexity:
+   - Simple/arcade games (Flappy Bird, Tetris): 3-4 screens only. \
+NO settings, NO tutorials, NO pause menus unless PRD explicitly requires them.
+   - Casual games (PvZ, Angry Birds): 4-6 screens.
+   - Mid-core/complex games: 6-10 screens.
+   - Apps/SaaS: match to feature count in PRD.
+   IMPORTANT: Do NOT add screens the PRD doesn't describe or imply. \
+Every screen must be justified by specific PRD content.
 
 Return ONLY valid JSON matching this schema:
 {
