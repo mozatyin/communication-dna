@@ -25,7 +25,12 @@ from intention_graph.connect import Connect
 from intention_graph.expand import Expand
 from intention_graph.clarify import Clarify
 from intention_graph.models import IntentionGraph, Transition
-from intention_graph.prd_generator import PrdGenerator
+from intention_graph.prd_generator import (
+    PrdGenerator,
+    _PRD_SYSTEM_PROMPT,
+    _graph_to_context,
+    _parse_prd_response,
+)
 from intention_graph.web_search import research_game
 
 
@@ -37,6 +42,8 @@ _COMPLEXITY_PROFILES = {
         "skip_expand": True,
         "research_chars": 1500,
         "conversation_turns": "6-8",
+        "min_prd_chars": 3000,
+        "prd_max_tokens": 6000,
         "research_constraint": (
             "This is a classic arcade game. Respect its simplicity.\n"
             "DO NOT add modern systems that the original game never had:\n"
@@ -53,6 +60,8 @@ _COMPLEXITY_PROFILES = {
         "skip_expand": False,
         "research_chars": 2000,
         "conversation_turns": "8-10",
+        "min_prd_chars": 4500,
+        "prd_max_tokens": 8000,
         "research_constraint": (
             "This is a casual game. Keep systems lightweight.\n"
             "Only include progression systems that are simple and natural.\n"
@@ -64,6 +73,8 @@ _COMPLEXITY_PROFILES = {
         "skip_expand": False,
         "research_chars": 3000,
         "conversation_turns": "10-12",
+        "min_prd_chars": 5500,
+        "prd_max_tokens": 10000,
         "research_constraint": (
             "This is a mid-core game with moderate system depth.\n"
             "Include progression, economy, and social systems where appropriate.\n"
@@ -75,6 +86,8 @@ _COMPLEXITY_PROFILES = {
         "skip_expand": False,
         "research_chars": 4000,
         "conversation_turns": "12-14",
+        "min_prd_chars": 5000,
+        "prd_max_tokens": 12000,
         "research_constraint": (
             "This is a complex, hardcore game with deep systems.\n"
             "Include comprehensive progression, economy, social, and meta-game systems.\n"
@@ -169,22 +182,9 @@ class OneSentencePrd:
                     graph, game_info, research_text
                 )
 
-        # Step 5: Synthesize honest conversation
-        conversation, facts = self._synthesize_conversation(
-            game_info, research_text, graph, profile
-        )
-
-        # Step 6: Generate PRD via existing PrdGenerator
-        game = SimpleGame(facts=facts)
-        session_info = {
-            "uid": "one_sentence",
-            "session_id": "one_sentence",
-            "language": game_info.language,
-        }
-        result = self._prd_generator.generate_sync(
-            game=game,
-            conversation_history=conversation,
-            session_info=session_info,
+        # Step 5: Generate PRD directly from research + IG
+        result = self._generate_prd_direct(
+            game_info, research_text, graph, profile, self_answered
         )
 
         # Enrich metadata
@@ -225,7 +225,8 @@ class OneSentencePrd:
                 '  "complexity": "<arcade|casual|mid-core|hardcore>",\n'
                 '  "genre": "<specific genre, e.g. vertical scrolling shooter>",\n'
                 '  "era": "<original era, e.g. 1987 arcade>",\n'
-                '  "core_systems": ["<list of systems the ORIGINAL game actually has>"]\n'
+                '  "core_systems": ["<list of systems the ORIGINAL game actually has, '
+                'written in the SAME LANGUAGE as the user input>"]\n'
                 "}\n\n"
                 "Complexity guide:\n"
                 "- arcade: Classic arcade games (Pac-Man, Space Invaders, 1943, Tetris, Flappy Bird). "
@@ -237,7 +238,9 @@ class OneSentencePrd:
                 "- hardcore: Deep complex games (Honor of Kings/王者荣耀, League of Legends, "
                 "Dark Souls, Civilization). Many systems, steep learning curve.\n\n"
                 "core_systems: List ONLY systems the original game actually had. "
-                "For 1943: [shooting, power-ups, scoring, boss battles, lives/energy]. "
+                "Write in the SAME language as the user's input. "
+                "For Chinese input about 1943: [射击系统, 强化道具, 计分系统, BOSS战斗, 生命值]. "
+                "For English input: [shooting, power-ups, scoring, boss battles, lives]. "
                 "Do NOT invent systems the game never had."
             )}],
         )
@@ -463,7 +466,130 @@ class OneSentencePrd:
 
         return graph, answered
 
-    # ── Step 5: Synthesize Conversation ──────────────────────────────────
+    # ── Step 5: Direct PRD Generation ────────────────────────────────────
+
+    def _generate_prd_direct(
+        self,
+        info: GameInfo,
+        research_text: str,
+        graph: IntentionGraph,
+        profile: dict,
+        self_answered: list[dict[str, str]],
+    ) -> dict[str, Any]:
+        """Generate PRD directly from research + IntentionGraph.
+
+        Replaces _synthesize_conversation + PrdGenerator.generate_sync,
+        eliminating 4 redundant LLM calls (synthesize + PrdGenerator's
+        internal connect + expand + generate).
+        """
+        ig_context = _graph_to_context(graph)
+
+        # Build user prompt with all context
+        lang = "Chinese (中文)" if info.language.startswith("zh") else "English"
+        max_systems = profile["max_systems"]
+
+        # Format core systems as if user described them
+        core_systems_text = "\n".join(
+            f"- {s}" for s in info.core_systems
+        )
+
+        user_parts = [
+            f"## Game\n{info.game_name} ({info.genre}, {info.era})",
+            f"Complexity: {info.complexity}",
+            f"\n## User's Original Request\n\"{info.game_name_original}\"",
+            (
+                f"\n## What the User Described (user-stated systems)\n"
+                f"The user wants to make {info.game_name}. "
+                f"They explicitly described these game systems:\n{core_systems_text}\n\n"
+                f"CRITICAL: Every system listed above is user-stated. "
+                f"When writing Section 3, these systems MUST NOT be tagged [INFERRED]. "
+                f"Only tag a system [INFERRED] if it does NOT appear in this list "
+                f"and you added it yourself."
+            ),
+            f"\n## Game Design Research\n{research_text}",
+        ]
+
+        if self_answered:
+            user_parts.append("\n## Design Decisions (Q&A)")
+            for qa in self_answered:
+                user_parts.append(f"Q: {qa['question']}\nA: {qa['answer']}")
+
+        if ig_context:
+            user_parts.append(f"\n## Intention Graph Analysis\n{ig_context}")
+
+        min_chars = profile.get("min_prd_chars", 6000)
+        user_parts.append(
+            f"\n## Constraints\n"
+            f"- Write the entire PRD in {lang}\n"
+            f"- EXACTLY {max_systems} game systems in Section 3 "
+            f"(no more, no fewer)\n"
+            f"- Only include systems the original game actually has\n"
+            f"- Every 设计考量 MUST contain at least one '?' question\n\n"
+            f"## Length Requirements (CRITICAL)\n"
+            f"- Section 1 (游戏总览): ~800-1200 chars\n"
+            f"- Section 2 (核心游戏循环): ~1000-1500 chars\n"
+            f"- Section 3 (游戏系统): Each system ~500-800 chars "
+            f"with 如何运作/为何感觉良好/设计考量/如何连接 all filled\n"
+            f"- Section 4 (美术与音效风格): ~1200-1800 chars, all 8 subsections\n"
+            f"- TOTAL MINIMUM: {min_chars} characters. Write richly."
+        )
+
+        user_message = "\n".join(user_parts)
+
+        # Supplementary instruction for direct mode: override [INFERRED]
+        # rule since there's no conversation to check against
+        direct_mode_supplement = (
+            "\n\n## DIRECT MODE OVERRIDE\n"
+            "This PRD is being generated from structured design input, "
+            "not a conversation. The [INFERRED] rule should be applied as follows:\n"
+            "- Systems listed under 'What the User Described' are user-stated → "
+            "do NOT tag them [INFERRED], even if the system name in the PRD "
+            "differs slightly (e.g., '生命值' → '生命值系统' is the same).\n"
+            "- Only tag [INFERRED] for systems you add that are NOT listed "
+            "in the user's described systems.\n"
+            "- IMPORTANT: Write at least 6000 characters. Each system in "
+            "Section 3 needs 400-600 characters of detailed description."
+        )
+
+        prd_max_tokens = profile.get("prd_max_tokens", 8000)
+        response = self._client.messages.create(
+            model=self._model,
+            max_tokens=prd_max_tokens,
+            temperature=0.7,
+            system=_PRD_SYSTEM_PROMPT + direct_mode_supplement,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        raw = response.content[0].text
+
+        prd_document, prd_summary = _parse_prd_response(raw)
+
+        # Build metadata compatible with PrdGenerator output
+        core_intention = ""
+        num_intentions = len(graph.nodes) if graph.nodes else 0
+        if graph.end_goal and graph.nodes:
+            end_node = next(
+                (n for n in graph.nodes if n.id == graph.end_goal), None
+            )
+            if end_node:
+                core_intention = end_node.text
+
+        metadata = {
+            "core_intention": core_intention,
+            "num_intentions": num_intentions,
+            "num_facts": len(info.core_systems),
+            "ig_available": bool(graph.nodes),
+            "language": info.language,
+            "model": self._model,
+            "pipeline": "direct",  # distinguishes from v2's PrdGenerator path
+        }
+
+        return {
+            "prd_document": prd_document,
+            "prd_summary": prd_summary,
+            "metadata": metadata,
+        }
+
+    # ── Legacy: Synthesize Conversation (kept for reference) ──────────
 
     def _synthesize_conversation(
         self,

@@ -26,6 +26,7 @@ from intention_graph.one_sentence_prd import (
     _parse_json,
     _COMPLEXITY_PROFILES,
 )
+from intention_graph.prd_generator import _graph_to_context, _parse_prd_response
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -378,14 +379,11 @@ class TestPipelineOrchestration:
             )
         ])
         prd._run_ig_pipeline = MagicMock(return_value=graph_with_amb)
-        prd._synthesize_conversation = MagicMock(
-            return_value=([{"role": "user", "content": "hi"}], ["fact1"])
-        )
-        prd._prd_generator.generate_sync.return_value = {
+        prd._generate_prd_direct = MagicMock(return_value={
             "prd_document": "doc",
             "prd_summary": "sum",
             "metadata": {"ig_available": True},
-        }
+        })
 
         answer_fn = MagicMock(return_value=["My answer"])
         result = prd.generate("测试", answer_fn=answer_fn)
@@ -409,14 +407,11 @@ class TestPipelineOrchestration:
         ))
         prd._research_game = MagicMock(return_value="research")
         prd._run_ig_pipeline = MagicMock(return_value=_make_graph(2, 1))
-        prd._synthesize_conversation = MagicMock(
-            return_value=([{"role": "user", "content": "hi"}], ["fact1"])
-        )
-        prd._prd_generator.generate_sync.return_value = {
+        prd._generate_prd_direct = MagicMock(return_value={
             "prd_document": "doc",
             "prd_summary": "sum",
             "metadata": {"ig_available": True},
-        }
+        })
 
         result = prd.generate("测试")
 
@@ -461,6 +456,101 @@ class TestPipelineOrchestration:
         assert len(answered) == 1
         assert answered[0]["question"] == "Which approach do you prefer?"
         assert result_graph.ambiguities == []  # cleared
+
+    def test_generate_prd_direct_returns_valid_structure(self):
+        """Verify _generate_prd_direct produces correct output format."""
+        prd = self._make_prd()
+        prd._client.messages.create.return_value = _mock_llm_response(
+            "<prd>## 1. 游戏总览\nTest PRD content here\n"
+            "## 2. 核心游戏循环\nLoop\n"
+            "## 3. 游戏系统\nSystems\n"
+            "## 4. 美术与音效风格\nArt</prd>\n"
+            "<summary>A test game summary.</summary>"
+        )
+
+        info = GameInfo(
+            game_name="TestGame",
+            game_name_original="测试游戏",
+            language="zh",
+            complexity="arcade",
+            genre="test shooter",
+            era="1987",
+            core_systems=["shooting", "scoring"],
+        )
+        profile = _COMPLEXITY_PROFILES["arcade"]
+        graph = _make_graph(2, 1)
+
+        result = prd._generate_prd_direct(
+            info, "research text", graph, profile, []
+        )
+
+        assert result["prd_document"]
+        assert "游戏总览" in result["prd_document"]
+        assert result["prd_summary"]
+        assert result["metadata"]["ig_available"] is True
+        assert result["metadata"]["pipeline"] == "direct"
+        assert result["metadata"]["num_intentions"] == 2
+
+    def test_generate_prd_direct_includes_self_answered_in_prompt(self):
+        """Verify self-answered Q&A is passed to the LLM prompt."""
+        prd = self._make_prd()
+        prd._client.messages.create.return_value = _mock_llm_response(
+            "<prd>content</prd><summary>sum</summary>"
+        )
+
+        info = GameInfo(
+            game_name="Test",
+            game_name_original="test",
+            language="en",
+            complexity="casual",
+            genre="puzzle",
+            era="2020",
+            core_systems=["matching"],
+        )
+        profile = _COMPLEXITY_PROFILES["casual"]
+        graph = _make_graph(2, 1)
+        self_answered = [
+            {"question": "How many levels?", "answer": "50 levels"},
+        ]
+
+        prd._generate_prd_direct(
+            info, "research", graph, profile, self_answered
+        )
+
+        # Verify the LLM was called with Q&A in the prompt
+        call_args = prd._client.messages.create.call_args
+        user_msg = call_args.kwargs["messages"][0]["content"]
+        assert "How many levels?" in user_msg
+        assert "50 levels" in user_msg
+
+    def test_generate_prd_direct_uses_prd_system_prompt(self):
+        """Verify that _generate_prd_direct uses _PRD_SYSTEM_PROMPT as base."""
+        prd = self._make_prd()
+        prd._client.messages.create.return_value = _mock_llm_response(
+            "<prd>content</prd><summary>sum</summary>"
+        )
+
+        info = GameInfo(
+            game_name="Test",
+            game_name_original="test",
+            language="en",
+            complexity="arcade",
+            genre="shooter",
+            era="1987",
+            core_systems=["shooting"],
+        )
+        profile = _COMPLEXITY_PROFILES["arcade"]
+        graph = _make_graph(2, 1)
+
+        prd._generate_prd_direct(info, "research", graph, profile, [])
+
+        call_args = prd._client.messages.create.call_args
+        from intention_graph.prd_generator import _PRD_SYSTEM_PROMPT
+        system_prompt = call_args.kwargs["system"]
+        assert system_prompt.startswith(_PRD_SYSTEM_PROMPT)
+        assert "DIRECT MODE OVERRIDE" in system_prompt
+
+    # Legacy: synthesize_conversation tests (method still exists)
 
     def test_synthesize_conversation_returns_valid_structure(self):
         prd = self._make_prd()
@@ -519,6 +609,36 @@ class TestPipelineOrchestration:
         # Should use fallback
         assert len(conv) >= 2
         assert len(facts) >= 1
+
+
+# ── Unit Tests: Reused prd_generator utilities ────────────────────────────────
+
+
+class TestPrdGeneratorUtils:
+    """Test _graph_to_context and _parse_prd_response reuse."""
+
+    def test_graph_to_context_includes_end_goal(self):
+        graph = _make_graph(3, 2)
+        ctx = _graph_to_context(graph)
+        assert "end goal" in ctx.lower() or "Core Intention" in ctx
+
+    def test_graph_to_context_lists_nodes(self):
+        graph = _make_graph(3, 2)
+        ctx = _graph_to_context(graph)
+        assert "intention 1" in ctx
+        assert "intention 2" in ctx
+
+    def test_parse_prd_response_extracts_tags(self):
+        raw = "<prd>My PRD content</prd>\n<summary>Game summary</summary>"
+        doc, summary = _parse_prd_response(raw)
+        assert doc == "My PRD content"
+        assert summary == "Game summary"
+
+    def test_parse_prd_response_fallback_no_tags(self):
+        raw = "Just plain PRD text without tags."
+        doc, summary = _parse_prd_response(raw)
+        assert "Just plain PRD text" in doc
+        assert summary  # auto-generated from first sentences
 
 
 # ── Unit Tests: Web Search ───────────────────────────────────────────────────
@@ -598,27 +718,17 @@ class TestGenerateOrchestration:
             })),
             # research call
             _mock_llm_response("Pac-Man is a classic arcade game..."),
-            # synthesize call
-            _mock_llm_response(json.dumps({
-                "conversation": [
-                    {"role": "user", "content": "吃豆人"},
-                    {"role": "host", "content": "好的"},
-                ],
-                "facts": ["type: maze chase"],
-            })),
+            # direct PRD generation call
+            _mock_llm_response(
+                "<prd>## 1. 游戏总览\nmock PRD</prd>\n"
+                "<summary>mock summary</summary>"
+            ),
         ]
 
         # Mock IG pipeline
         graph = _make_graph(3, 2)
         prd._connect.run.return_value = graph
         prd._clarify.run.return_value = graph
-
-        # Mock PrdGenerator
-        prd._prd_generator.generate_sync.return_value = {
-            "prd_document": "mock PRD",
-            "prd_summary": "mock summary",
-            "metadata": {"ig_available": True, "num_intentions": 3},
-        }
 
         result = prd.generate("吃豆人")
 
@@ -627,6 +737,7 @@ class TestGenerateOrchestration:
         assert result["metadata"]["complexity"] == "arcade"
         assert result["metadata"]["detected_game"] == "Pac-Man"
         assert result["metadata"]["research_source"] == "web+llm"
+        assert result["metadata"]["pipeline"] == "direct"
 
     @patch("intention_graph.one_sentence_prd.research_game")
     def test_generate_runs_expand_for_hardcore(self, mock_research):
@@ -646,13 +757,11 @@ class TestGenerateOrchestration:
                 "core_systems": ["heroes", "combat", "items"],
             })),
             _mock_llm_response("Honor of Kings is a MOBA..."),
-            _mock_llm_response(json.dumps({
-                "conversation": [
-                    {"role": "user", "content": "王者荣耀"},
-                    {"role": "host", "content": "好的"},
-                ],
-                "facts": ["type: MOBA"],
-            })),
+            # direct PRD generation call
+            _mock_llm_response(
+                "<prd>## 1. 游戏总览\nmock PRD</prd>\n"
+                "<summary>mock summary</summary>"
+            ),
         ]
 
         graph = _make_graph(5, 4)
@@ -660,18 +769,13 @@ class TestGenerateOrchestration:
         prd._expand.run.return_value = graph
         prd._clarify.run.return_value = graph
 
-        prd._prd_generator.generate_sync.return_value = {
-            "prd_document": "mock PRD",
-            "prd_summary": "mock summary",
-            "metadata": {"ig_available": True, "num_intentions": 5},
-        }
-
         result = prd.generate("王者荣耀")
 
         prd._expand.run.assert_called_once()  # hardcore → runs expand
         assert result["metadata"]["complexity"] == "hardcore"
         # research_source is "web+llm" because research_text (LLM output) is truthy
         assert result["metadata"]["research_source"] == "web+llm"
+        assert result["metadata"]["pipeline"] == "direct"
 
 
 # ── Integration Tests (require API key) ──────────────────────────────────────
