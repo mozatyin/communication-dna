@@ -47,7 +47,7 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
     ],
     "directness": [
         (0.0, 0.0), (0.25, 0.15), (0.40, 0.25), (0.50, 0.35),
-        (0.60, 0.45), (0.80, 0.70), (0.95, 0.90), (1.0, 1.0),
+        (0.60, 0.48), (0.80, 0.75), (0.90, 0.88), (0.95, 0.95), (1.0, 1.0),
     ],
     "hedging_frequency": [
         (0.0, 0.0), (0.15, 0.05), (0.30, 0.15), (0.50, 0.35),
@@ -107,7 +107,7 @@ _STRUCTURAL_CONSTRAINTS: dict[str, list[tuple[tuple[float, float], str]]] = {
         ((0.75, 1.01), "Use '...' frequently throughout, at least 7 times. Many sentences trail off with '...' or remain unfinished."),
     ],
     "sentence_length": [
-        ((0.0, 0.15), "Maximum 8 words per sentence. Use fragments freely. Terse and punchy."),
+        ((0.0, 0.15), "Maximum 6 words per sentence. Use fragments and single-word responses freely. Ultra-terse."),
         ((0.15, 0.30), "Average 6-10 words per sentence. Maximum 14 words. Short and punchy."),
         ((0.30, 0.45), "Average 10-15 words per sentence. Maximum 20 words."),
         ((0.45, 0.60), "Average 15-20 words per sentence. Maximum 25 words."),
@@ -367,6 +367,14 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
             "direct claims: 'This approach is inadequate', 'The data demonstrate X', 'This conclusion "
             "is unsupported'. Do NOT only use 'it could be argued', 'one might suggest', 'perhaps'. "
             "Formal register does NOT mean avoiding direct assertions."
+        )
+
+    # High directness + low formality → text sounds less direct than intended
+    if fmap.get("directness", 0) > 0.75 and fmap.get("formality", 0.5) < 0.20:
+        warnings.append(
+            "- WARNING: Very casual text can sound less direct because bro-speak uses hedging-like "
+            "fillers. Make BLUNT assertions: 'That's wrong.' 'Just do X.' 'Nah, not happening.' "
+            "Casual directness = short, assertive, no room for debate."
         )
 
     return "\n".join(warnings)
