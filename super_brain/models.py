@@ -97,3 +97,46 @@ class ConductorAction(BaseModel):
     mode: str = Field(default="listen")
     context: str = Field(default="")
     question: Optional[str] = None
+
+
+class Fact(BaseModel):
+    """A factual piece of information about the person."""
+    category: str       # "career", "relationship", "hobby", "education",
+                        # "location", "family", "preference", "experience"
+    content: str        # "software engineer at a startup"
+    confidence: float = Field(ge=0.0, le=1.0)
+    source_turn: int    # which turn this was extracted from
+
+
+class Reality(BaseModel):
+    """Current reality snapshot of the person's life situation."""
+    summary: str                    # narrative: "Currently a mid-career engineer..."
+    domains: dict[str, str]         # {"career": "...", "relationships": "..."}
+    constraints: list[str]          # things limiting them
+    resources: list[str]            # things they have going for them
+
+
+class FactExtractionResult(BaseModel):
+    """Result of a single FactExtractor cycle."""
+    new_facts: list[Fact]           # facts found in this cycle
+    reality: Reality | None = None  # updated reality snapshot
+    secrets: list[str] = Field(default_factory=list)
+    contradictions: list[str] = Field(default_factory=list)
+
+
+class Soul(BaseModel):
+    """Full Soul model aggregating all layers of understanding about a person."""
+    id: str
+
+    # Layer 1: Character (existing 66-trait PersonalityDNA)
+    character: PersonalityDNA
+
+    # Layer 2: Facts (accumulated from FactExtractor)
+    facts: list[Fact] = Field(default_factory=list)
+
+    # Layer 3: Reality (latest snapshot from FactExtractor)
+    reality: Reality | None = None
+
+    # Cross-layer insights
+    secrets: list[str] = Field(default_factory=list)
+    contradictions: list[str] = Field(default_factory=list)
