@@ -296,6 +296,29 @@
           "event": "click",
           "target_interface_id": null,
           "element_class": "editable"
+        },
+        {
+          "id": "btn_restart",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "重来",
+          "rect": {
+            "x": 840,
+            "y": 1760,
+            "width": 200,
+            "height": 80,
+            "z_index": 3
+          },
+          "style": {
+            "background-color": "#795548",
+            "color": "#FFFFFF",
+            "font-size": "28px",
+            "border-radius": "12px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "gameplay",
+          "element_class": "editable"
         }
       ],
       "bg_music_asset_id": null

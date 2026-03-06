@@ -295,6 +295,28 @@
           "event": "click",
           "target_interface_id": null,
           "element_class": "editable"
+        },
+        {
+          "id": "flag_count",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "🚩 0",
+          "rect": {
+            "x": 440,
+            "y": 1260,
+            "width": 200,
+            "height": 50,
+            "z_index": 1
+          },
+          "style": {
+            "color": "#F44336",
+            "font-size": "32px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
         }
       ],
       "bg_music_asset_id": null

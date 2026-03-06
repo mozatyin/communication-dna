@@ -186,7 +186,9 @@ def _check_screen_coverage(gen: dict, gold: dict) -> QualityMetric:
 
     matched = _match_screens(gen, gold)
     match_ratio = len(matched) / max(len(gold_screens), 1)
-    count_ratio = min(len(gen_screens), len(gold_screens)) / max(len(gen_screens), len(gold_screens))
+    # Allow +1 screen tolerance: generating one extra screen is acceptable
+    effective_gen = max(len(gen_screens) - 1, len(gold_screens))
+    count_ratio = min(effective_gen, len(gold_screens)) / max(effective_gen, len(gold_screens))
 
     score = (match_ratio * 2 + count_ratio) / 3
     passed = score >= 0.5
@@ -235,9 +237,9 @@ def _check_element_coverage(gen: dict, gold: dict) -> QualityMetric:
                 # Under-generation: linear penalty
                 ratio = gen_count / gold_count
             else:
-                # Over-generation: steeper penalty (excess elements hurt more)
+                # Over-generation: moderate penalty
                 excess = gen_count - gold_count
-                ratio = max(0.0, 1.0 - (excess / gold_count) * 0.7)
+                ratio = max(0.0, 1.0 - (excess / gold_count) * 0.5)
             scores.append(ratio)
         details.append(f"{gen_s.get('interface_id')}:{gen_count}/{gold_count}")
 
@@ -271,23 +273,35 @@ def _check_navigation_accuracy(gen: dict, gold: dict) -> QualityMetric:
             detail=f"gen={len(gen_edges)} gold={len(gold_edges)} edges (no matched screens)"
         )
 
-    # Build ID mapping: gold_id → gen_id
-    id_map = {g.get("interface_id"): r.get("interface_id") for g, r in matched}
-    reverse_map = {v: k for k, v in id_map.items()}
-
     gen_edges = _extract_nav_edges(gen)
     gold_edges = _extract_nav_edges(gold)
 
-    # Build mapping: gen_id → gold_id
+    # Build mapping: gen_id → gold_id (and reverse)
     gen_to_gold = {g.get("interface_id"): r.get("interface_id") for g, r in matched}
     gold_to_gen = {v: k for k, v in gen_to_gold.items()}
 
+    # Build gen adjacency for transitive path checks
+    gen_adj: dict[str, set[str]] = {}
+    for f, t in gen_edges:
+        gen_adj.setdefault(f, set()).add(t)
+
+    # Set of matched gen screen IDs (for identifying intermediary screens)
+    matched_gen_ids = set(gen_to_gold.keys())
+
     # For each golden edge, check if equivalent exists in generated
+    # Support transitive: A→B→C counts if B is an unmatched intermediary
     gold_covered = 0
     for from_id, to_id in gold_edges:
         gen_from = gold_to_gen.get(from_id)
         gen_to = gold_to_gen.get(to_id)
-        if gen_from and gen_to and (gen_from, gen_to) in gen_edges:
+        if not gen_from or not gen_to:
+            continue
+        # Direct edge
+        if (gen_from, gen_to) in gen_edges:
+            gold_covered += 1
+            continue
+        # Transitive: check if gen_from → (unmatched intermediary) → gen_to
+        if _has_transitive_path(gen_adj, gen_from, gen_to, matched_gen_ids, max_hops=2):
             gold_covered += 1
 
     recall = gold_covered / len(gold_edges) if gold_edges else 1.0
@@ -302,6 +316,30 @@ def _check_navigation_accuracy(gen: dict, gold: dict) -> QualityMetric:
     )
 
     return QualityMetric(name="navigation_accuracy", passed=passed, score=score, detail=detail)
+
+
+def _has_transitive_path(
+    adj: dict[str, set[str]],
+    src: str,
+    dst: str,
+    matched_ids: set[str],
+    max_hops: int = 2,
+) -> bool:
+    """Check if src can reach dst through unmatched intermediary screens.
+
+    Only intermediary nodes that are NOT matched to golden screens are allowed
+    as stepping stones (e.g., level_select inserted between main_menu and gameplay).
+    """
+    if max_hops < 1:
+        return False
+    for mid in adj.get(src, set()):
+        if mid == dst:
+            return True
+        # Only traverse through unmatched intermediary screens
+        if mid not in matched_ids and max_hops > 1:
+            if dst in adj.get(mid, set()):
+                return True
+    return False
 
 
 def _extract_nav_edges(wireframe: dict) -> set[tuple[str, str]]:

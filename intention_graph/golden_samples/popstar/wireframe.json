@@ -224,6 +224,22 @@
           "event": null,
           "target_interface_id": null,
           "element_class": "editable"
+        },
+        {
+          "id": "combo_display",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "连击 x3",
+          "rect": {"x": 380, "y": 1680, "width": 320, "height": 50, "z_index": 2},
+          "style": {
+            "color": "#FF6B6B",
+            "font-size": "32px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
         }
       ],
       "bg_music_asset_id": null

@@ -300,6 +300,27 @@
           "event": "click",
           "target_interface_id": null,
           "element_class": "editable"
+        },
+        {
+          "id": "combo",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "Combo x3",
+          "rect": {
+            "x": 40,
+            "y": 60,
+            "width": 200,
+            "height": 60,
+            "z_index": 1
+          },
+          "style": {
+            "color": "#FF5722",
+            "font-size": "36px",
+            "font-weight": "bold"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
         }
       ],
       "bg_music_asset_id": null

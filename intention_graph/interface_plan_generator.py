@@ -36,8 +36,10 @@ NO settings, NO tutorials, NO pause menus unless PRD explicitly requires them.
    - Apps/SaaS: match to feature count in PRD.
    IMPORTANT: Do NOT add screens the PRD doesn't describe or imply. \
 Every screen must be justified by specific PRD content.
-9. For games with scoring, ALWAYS include a score/leaderboard popup screen \
-(type "popup", belongs_to the game_over or result screen).
+9. For games with scoring, ALWAYS include a leaderboard popup screen \
+with id="leaderboard" (type "popup", belongs_to the game_over or result screen). \
+The leaderboard MUST be accessible from both the main menu AND the game_over screen. \
+Do NOT rename it to "best_scores", "high_scores", or "ranking" — use id="leaderboard".
 10. navigation_from and navigation_to MUST be symmetric: \
 if screen A lists B in navigation_to, screen B MUST list A in navigation_from.
 11. Popups should be reachable from ALL screens that show a button for them. \

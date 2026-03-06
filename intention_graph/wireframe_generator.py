@@ -56,6 +56,8 @@ Do NOT add decorative CSS elements beyond what is needed for visual structure.
 Use the interface_id from the plan that matches the button's purpose. \
 For example: "返回主菜单" → main_menu, "重新开始" → gameplay, \
 "排行榜" → leaderboard, "开始游戏" → gameplay or level_select.
+16. If the interface plan includes a leaderboard screen, BOTH the main_menu \
+AND game_over screens MUST have a button navigating to it.
 
 Style properties (CSS-like):
 - background-color, color, font-size, font-weight, text-align
@@ -226,6 +228,8 @@ _TEXT_TO_TARGET = {
     "开始游戏": "gameplay", "start": "gameplay", "play": "gameplay",
     "开始": "gameplay", "start game": "gameplay",
     "排行榜": "leaderboard", "leaderboard": "leaderboard",
+    "最高分": "leaderboard", "高分榜": "leaderboard", "best scores": "leaderboard",
+    "high scores": "leaderboard", "ranking": "leaderboard",
     "设置": "settings", "settings": "settings",
     "关卡选择": "level_select", "选择关卡": "level_select",
     "冒险模式": "level_select", "adventure": "level_select",

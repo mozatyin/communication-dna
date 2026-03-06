@@ -293,6 +293,27 @@
           "event": "click",
           "target_interface_id": null,
           "element_class": "editable"
+        },
+        {
+          "id": "level_label",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "第 1 关",
+          "rect": {
+            "x": 440,
+            "y": 140,
+            "width": 200,
+            "height": 50,
+            "z_index": 1
+          },
+          "style": {
+            "color": "#9C27B0",
+            "font-size": "28px",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
         }
       ],
       "bg_music_asset_id": null
