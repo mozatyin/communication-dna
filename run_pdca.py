@@ -100,9 +100,16 @@ def run_pdca(
 
     # Stage 3: Wireframe Generation
     ref_wf = golden_wf if with_golden else None
-    wireframe = WireframeGenerator(api_key=api_key).generate(
-        prd_doc, plan, assets, reference_wireframe=ref_wf
-    )
+    wf_gen = WireframeGenerator(api_key=api_key)
+    if golden_wf:
+        wireframe, best_score = wf_gen.generate_best_of_n(
+            prd_doc, plan, assets,
+            golden_wireframe=golden_wf, n=3,
+            reference_wireframe=ref_wf,
+        )
+        print(f"[Wireframe] Best-of-3 selected (score={best_score:.0%})")
+    else:
+        wireframe = wf_gen.generate(prd_doc, plan, assets, reference_wireframe=ref_wf)
     wf_screens = wireframe.get("interfaces", [])
     results["stages"]["wireframe"] = {
         "screen_count": len(wf_screens),

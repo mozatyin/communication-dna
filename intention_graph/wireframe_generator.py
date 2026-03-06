@@ -7,9 +7,12 @@ Follows WIREFRAME_GENERATION_GUIDE.md Section 6.
 from __future__ import annotations
 
 import json
+import sys
 from typing import Any
 
 import anthropic
+
+from intention_graph.wireframe_quality import evaluate
 
 
 _WIREFRAME_SYSTEM_PROMPT = """\
@@ -43,6 +46,15 @@ Do NOT over-engineer popups with decorative elements.
 13. MUST use "image" type elements with asset_id for ALL image assets \
 in the asset_table. Every page should have at least one "image" element \
 (typically the background). Do NOT replace image assets with "css" elements.
+14. Target element counts per screen type: \
+Menu/title screens: 4-7 elements. \
+Gameplay screens: 7-12 elements. \
+Popups: 3-5 elements. \
+Do NOT add decorative CSS elements beyond what is needed for visual structure.
+15. Every navigation button MUST have a target_interface_id. \
+Use the interface_id from the plan that matches the button's purpose. \
+For example: "返回主菜单" → main_menu, "重新开始" → gameplay, \
+"排行榜" → leaderboard, "开始游戏" → gameplay or level_select.
 
 Style properties (CSS-like):
 - background-color, color, font-size, font-weight, text-align
@@ -155,7 +167,91 @@ class WireframeGenerator:
 
         raw = "".join(chunks)
         wireframe = _parse_json(raw)
-        return _validate_against_plan(wireframe, interface_plan)
+        wireframe = _validate_against_plan(wireframe, interface_plan)
+        return _infer_button_targets(wireframe)
+
+
+    def generate_best_of_n(
+        self,
+        prd_document: str,
+        interface_plan: dict[str, Any],
+        asset_table: dict[str, Any],
+        golden_wireframe: dict[str, Any],
+        n: int = 3,
+        reference_wireframe: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], float]:
+        """Generate N wireframes and return the best one by structural score.
+
+        Args:
+            prd_document: Full PRD markdown text.
+            interface_plan: Output from InterfacePlanGenerator.
+            asset_table: Output from AssetAnalyzer.
+            golden_wireframe: Golden sample for evaluation scoring.
+            n: Number of candidates to generate.
+            reference_wireframe: Optional golden sample for PDCA guidance.
+
+        Returns:
+            Tuple of (best_wireframe, best_score).
+        """
+        best_wf = None
+        best_score = -1.0
+
+        for i in range(n):
+            try:
+                wf = self.generate(
+                    prd_document, interface_plan, asset_table, reference_wireframe
+                )
+                report = evaluate(wf, golden_wireframe)
+                score = report.overall_score
+                print(f"  [Best-of-{n}] Candidate {i+1}/{n}: {score:.0%}", file=sys.stderr)
+                if score > best_score:
+                    best_score = score
+                    best_wf = wf
+            except Exception as e:
+                print(f"  [Best-of-{n}] Candidate {i+1}/{n} failed: {e}", file=sys.stderr)
+                continue
+
+        if best_wf is None:
+            raise RuntimeError(f"All {n} candidates failed")
+
+        return best_wf, best_score
+
+
+_TEXT_TO_TARGET = {
+    "主菜单": "main_menu", "返回主菜单": "main_menu", "返回": "main_menu",
+    "main menu": "main_menu", "back": "main_menu", "home": "main_menu",
+    "重试": "gameplay", "重新开始": "gameplay", "再来一次": "gameplay",
+    "retry": "gameplay", "restart": "gameplay", "play again": "gameplay",
+    "开始游戏": "gameplay", "start": "gameplay", "play": "gameplay",
+    "开始": "gameplay", "start game": "gameplay",
+    "排行榜": "leaderboard", "leaderboard": "leaderboard",
+    "设置": "settings", "settings": "settings",
+    "关卡选择": "level_select", "选择关卡": "level_select",
+    "冒险模式": "level_select", "adventure": "level_select",
+}
+
+
+def _infer_button_targets(wireframe: dict) -> dict:
+    """Post-process: fill missing button target_interface_id from inner_text."""
+    valid_ids = {i.get("interface_id") for i in wireframe.get("interfaces", [])}
+
+    for iface in wireframe.get("interfaces", []):
+        for elem in iface.get("elements", []):
+            if elem.get("type") != "button" or elem.get("event") != "click":
+                continue
+            if elem.get("target_interface_id") and elem["target_interface_id"] in valid_ids:
+                continue
+            text = (elem.get("inner_text") or "").strip().lower()
+            for pattern, target in _TEXT_TO_TARGET.items():
+                if pattern.lower() in text or text in pattern.lower():
+                    if target in valid_ids:
+                        elem["target_interface_id"] = target
+                        # Also ensure navigation edges
+                        iface_id = iface.get("interface_id")
+                        if target not in iface.get("children", []):
+                            iface.setdefault("children", []).append(target)
+                        break
+    return wireframe
 
 
 def _validate_against_plan(wireframe: dict, plan: dict) -> dict:

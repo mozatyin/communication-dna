@@ -231,7 +231,13 @@ def _check_element_coverage(gen: dict, gold: dict) -> QualityMetric:
         if gold_count == 0:
             scores.append(1.0)
         else:
-            ratio = min(gen_count, gold_count) / max(gen_count, gold_count)
+            if gen_count <= gold_count:
+                # Under-generation: linear penalty
+                ratio = gen_count / gold_count
+            else:
+                # Over-generation: steeper penalty (excess elements hurt more)
+                excess = gen_count - gold_count
+                ratio = max(0.0, 1.0 - (excess / gold_count) * 0.7)
             scores.append(ratio)
         details.append(f"{gen_s.get('interface_id')}:{gen_count}/{gold_count}")
 
@@ -285,10 +291,9 @@ def _check_navigation_accuracy(gen: dict, gold: dict) -> QualityMetric:
             gold_covered += 1
 
     recall = gold_covered / len(gold_edges) if gold_edges else 1.0
-    count_ratio = min(len(gen_edges), len(gold_edges)) / max(len(gen_edges), len(gold_edges)) if gold_edges else 1.0
 
-    # Score weighted toward recall (covering golden edges matters most)
-    score = recall * 0.7 + count_ratio * 0.3
+    # Pure recall — covering golden edges is what matters
+    score = recall
     passed = score >= 0.4
     detail = (
         f"gold_covered={gold_covered}/{len(gold_edges)} "
