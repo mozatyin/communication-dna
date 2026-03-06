@@ -376,17 +376,15 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
             "aim for a mix of technical precision with accessible sentence structure."
         )
 
-    # High formality + moderate directness → text sounds too direct
-    # The LLM tends to make formal academic text assertive ("This study demonstrates...",
-    # "The evidence clearly shows...") which reads as directness 0.55-0.72 when target is 0.40.
+    # High formality + moderate directness → text often sounds too direct
+    # The LLM tends to make formal academic text assertive, but we must not overcorrect.
     if fmap.get("formality", 0) > 0.80 and 0.25 <= fmap.get("directness", 0.5) <= 0.55:
         warnings.append(
-            "- CRITICAL WARNING: Formal academic text must NOT be overly assertive. At least 50-60% "
-            "of your claims should be hedged: 'This suggests...', 'It appears that...', 'While the "
-            "evidence indicates...', 'One might argue...', 'It remains unclear whether...'. "
-            "Only 30-40% of statements should be direct assertions. The target directness is LOW-MODERATE "
-            "(0.30-0.50). Mix 'The data suggest X' (hedged) with 'This finding is significant' (direct). "
-            "Do NOT write in a commanding or declarative style throughout."
+            "- WARNING: Balance assertive and hedged claims. About 40% of statements should use "
+            "hedging ('This suggests...', 'It appears that...', 'The evidence indicates...'). "
+            "The remaining 60% can be moderately direct ('This finding is significant', "
+            "'The analysis reveals X'). Do NOT make every sentence hedged — some clear assertions "
+            "are expected in academic writing. Target a MODERATE directness level."
         )
 
     # High directness + low formality → text sounds less direct than intended

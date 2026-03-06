@@ -156,7 +156,7 @@ def _detect_with_averaging(
     profile_name: str,
     n_samples: int = 3,
 ) -> tuple[dict[str, float], dict[str, float]]:
-    """Run detection n_samples times and return (means, stds)."""
+    """Run detection n_samples times and return (medians, stds)."""
     accumulated: dict[str, list[float]] = {}
 
     for i in range(n_samples):
@@ -169,12 +169,13 @@ def _detect_with_averaging(
             key = f"{f.dimension}:{f.name}"
             accumulated.setdefault(key, []).append(f.value)
 
-    means = {key: statistics.mean(vals) for key, vals in accumulated.items()}
+    # Use median instead of mean for robustness against outlier samples
+    medians = {key: statistics.median(vals) for key, vals in accumulated.items()}
     stds = {
         key: statistics.stdev(vals) if len(vals) >= 2 else 0.0
         for key, vals in accumulated.items()
     }
-    return means, stds
+    return medians, stds
 
 
 def _spearman_correlation(x: list[float], y: list[float]) -> float:
@@ -367,7 +368,7 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 3)
             print(f"\n  v0.1 baseline MAE: {bl_mae:.3f} → v0.2 MAE: {overall_mae:.3f} (Δ{overall_mae - bl_mae:+.3f})")
 
     # ── Save results for future comparison ────────────────────────────────
-    version_tag = "v2.2"  # Update per release
+    version_tag = "v2.3"  # Update per release
     output_path = Path(f"eval_results_{version_tag}.json")
     save_data = dict(results)
     save_data["_overall"] = {
