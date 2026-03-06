@@ -1,0 +1,84 @@
+{
+  "game_title": "扫雷",
+  "art_style": "经典Windows风格，灰色方块，简约图标",
+  "global_resolution": {
+    "width": 1080,
+    "height": 1920
+  },
+  "total_interfaces": 4,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      },
+      "description": "游戏标题'扫雷'居中显示。下方有开始游戏按钮和排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": [
+        "game_over"
+      ],
+      "navigation_to": [
+        "gameplay"
+      ]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏界面",
+      "type": "page",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      },
+      "description": "顶部显示剩余地雷数和计时器。主区域是9x9网格，每格可点击翻开或长按插旗。数字显示周围地雷数。",
+      "belongs_to": null,
+      "navigation_from": [
+        "main_menu"
+      ],
+      "navigation_to": [
+        "game_over"
+      ]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      },
+      "description": "显示游戏结束文字和最终得分。有重试按钮、返回主菜单按钮和排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": [
+        "gameplay"
+      ],
+      "navigation_to": [
+        "gameplay",
+        "main_menu",
+        "leaderboard"
+      ]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {
+        "width": 800,
+        "height": 1000
+      },
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": [
+        "game_over"
+      ],
+      "navigation_to": []
+    }
+  ]
+}

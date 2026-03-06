@@ -1,0 +1,421 @@
+{
+  "project": {
+    "title": "合成大西瓜",
+    "global_resolution": {"width": 1080, "height": 1920}
+  },
+  "asset_library": {
+    "bg_light": {"type": "image", "path": "assets/images/bg_light.png", "label": "浅色背景"},
+    "watermelon": {"type": "image", "path": "assets/images/watermelon.png", "label": "西瓜"},
+    "grape": {"type": "image", "path": "assets/images/grape.png", "label": "葡萄"},
+    "cherry": {"type": "image", "path": "assets/images/cherry.png", "label": "樱桃"},
+    "sfx_merge": {"type": "audio", "path": "assets/audio/sfx_merge.mp3", "label": "合成音效"},
+    "sfx_drop": {"type": "audio", "path": "assets/audio/sfx_drop.mp3", "label": "掉落音效"}
+  },
+  "modules": [
+    {
+      "module_id": "menu_flow",
+      "module_name": "菜单流程",
+      "description": "主菜单和排行榜",
+      "color": "#A8D8A8",
+      "interface_ids": ["main_menu", "leaderboard"]
+    },
+    {
+      "module_id": "gameplay_flow",
+      "module_name": "游戏流程",
+      "description": "核心游戏和结算",
+      "color": "#FF6B6B",
+      "interface_ids": ["gameplay", "game_over"]
+    }
+  ],
+  "module_connections": [
+    {"from": "menu_flow", "to": "gameplay_flow", "label": "开始游戏"},
+    {"from": "gameplay_flow", "to": "menu_flow", "label": "返回菜单"}
+  ],
+  "interfaces": [
+    {
+      "interface_id": "main_menu",
+      "interface_name": "主菜单",
+      "module_id": "menu_flow",
+      "type": "page",
+      "parents": ["game_over"],
+      "children": ["gameplay"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_light",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "合成大西瓜",
+          "rect": {"x": 190, "y": 350, "width": 700, "height": 160, "z_index": 1},
+          "style": {
+            "color": "#2E7D32",
+            "font-size": "72px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "watermelon_icon",
+          "type": "image",
+          "asset_id": "watermelon",
+          "inner_text": null,
+          "rect": {"x": 340, "y": 560, "width": 400, "height": 400, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_play",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "开始游戏",
+          "rect": {"x": 290, "y": 1080, "width": 500, "height": 120, "z_index": 2},
+          "style": {
+            "background-color": "#4CAF50",
+            "color": "#FFFFFF",
+            "font-size": "42px",
+            "font-weight": "bold",
+            "border-radius": "60px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "gameplay",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 340, "y": 1250, "width": 400, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "transparent",
+            "color": "#4CAF50",
+            "font-size": "36px",
+            "border": "3px solid #4CAF50",
+            "border-radius": "50px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "gameplay",
+      "interface_name": "游戏界面",
+      "module_id": "gameplay_flow",
+      "type": "page",
+      "parents": ["main_menu"],
+      "children": ["game_over"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_light",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_display",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "得分: 0",
+          "rect": {"x": 40, "y": 60, "width": 300, "height": 60, "z_index": 1},
+          "style": {
+            "color": "#2E7D32",
+            "font-size": "40px",
+            "font-weight": "bold"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "next_fruit",
+          "type": "image",
+          "asset_id": "grape",
+          "inner_text": null,
+          "rect": {"x": 900, "y": 40, "width": 80, "height": 80, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "next_label",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "下一个",
+          "rect": {"x": 860, "y": 130, "width": 160, "height": 40, "z_index": 1},
+          "style": {
+            "color": "#888888",
+            "font-size": "24px",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "container",
+          "type": "css",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 40, "y": 220, "width": 1000, "height": 1500, "z_index": 1},
+          "style": {
+            "background-color": "rgba(0,0,0,0.05)",
+            "border": "3px solid #CCCCCC",
+            "border-radius": "0 0 16px 16px"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "danger_line",
+          "type": "css",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 40, "y": 220, "width": 1000, "height": 4, "z_index": 2},
+          "style": {
+            "background-color": "#FF0000",
+            "opacity": 0.5
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "tap_area",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 5},
+          "style": {"opacity": 0},
+          "event": "click",
+          "target_interface_id": null,
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "game_over",
+      "interface_name": "游戏结束",
+      "module_id": "gameplay_flow",
+      "type": "page",
+      "parents": ["gameplay"],
+      "children": ["gameplay", "main_menu", "leaderboard"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_light",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 0.4},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "gameover_text",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "游戏结束",
+          "rect": {"x": 240, "y": 500, "width": 600, "height": 120, "z_index": 1},
+          "style": {
+            "color": "#2E7D32",
+            "font-size": "64px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "final_score",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "得分: 1680",
+          "rect": {"x": 290, "y": 680, "width": 500, "height": 80, "z_index": 1},
+          "style": {
+            "color": "#333333",
+            "font-size": "40px",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "best_fruit",
+          "type": "image",
+          "asset_id": "cherry",
+          "inner_text": null,
+          "rect": {"x": 440, "y": 790, "width": 200, "height": 200, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_retry",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "再来一次",
+          "rect": {"x": 290, "y": 1080, "width": 500, "height": 120, "z_index": 2},
+          "style": {
+            "background-color": "#4CAF50",
+            "color": "#FFFFFF",
+            "font-size": "42px",
+            "font-weight": "bold",
+            "border-radius": "60px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "gameplay",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_menu",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "主菜单",
+          "rect": {"x": 290, "y": 1250, "width": 500, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "#795548",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "border-radius": "50px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "main_menu",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 340, "y": 1400, "width": 400, "height": 80, "z_index": 2},
+          "style": {
+            "background-color": "transparent",
+            "color": "#4CAF50",
+            "font-size": "32px",
+            "border": "2px solid #4CAF50",
+            "border-radius": "40px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "leaderboard",
+      "interface_name": "排行榜",
+      "module_id": "menu_flow",
+      "type": "popup",
+      "parents": ["game_over"],
+      "children": [],
+      "dimensions": {"width": 800, "height": 1000},
+      "elements": [
+        {
+          "id": "panel_bg",
+          "type": "css",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 800, "height": 1000, "z_index": 0},
+          "style": {
+            "background-color": "#FFFFFF",
+            "border-radius": "24px",
+            "border": "4px solid #4CAF50"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 200, "y": 60, "width": 400, "height": 80, "z_index": 1},
+          "style": {
+            "color": "#2E7D32",
+            "font-size": "48px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_list",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "1. 5280\n2. 3640\n3. 2100\n4. 1680\n5. 890",
+          "rect": {"x": 100, "y": 200, "width": 600, "height": 500, "z_index": 1},
+          "style": {
+            "color": "#333333",
+            "font-size": "40px",
+            "line-height": "1.8",
+            "text-align": "left"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_close",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "关闭",
+          "rect": {"x": 250, "y": 820, "width": 300, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "#4CAF50",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "50px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": null,
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    }
+  ]
+}

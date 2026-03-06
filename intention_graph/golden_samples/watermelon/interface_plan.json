@@ -1,0 +1,53 @@
+{
+  "game_title": "合成大西瓜",
+  "art_style": "清新可爱风格，水果图标，浅色背景",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 4,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "清新背景。标题'合成大西瓜'配大西瓜图标。中间有开始游戏按钮。底部有排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": ["game_over"],
+      "navigation_to": ["gameplay"]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "顶部显示得分和下一个水果预览。主区域是容器，水果在其中堆叠。玩家点击屏幕释放水果，相同水果碰撞合成更大水果。水果从小到大：葡萄→樱桃→橘子→柠檬→猕猴桃→番茄→桃子→椰子→半个西瓜→西瓜。超过容器顶部则游戏结束。",
+      "belongs_to": null,
+      "navigation_from": ["main_menu"],
+      "navigation_to": ["game_over"]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'游戏结束'文字。显示最终得分和最大合成水果。有重试按钮和返回主菜单按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu", "leaderboard"]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {"width": 800, "height": 1000},
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": ["game_over"],
+      "navigation_to": []
+    }
+  ]
+}

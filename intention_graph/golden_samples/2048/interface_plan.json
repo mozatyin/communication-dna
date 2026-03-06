@@ -1,0 +1,53 @@
+{
+  "game_title": "2048",
+  "art_style": "扁平化简约设计，柔和暖色调，圆角方块",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 4,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "游戏标题'2048'大号居中显示。下方有开始游戏按钮和排行榜按钮。底部显示游戏玩法简要说明。",
+      "belongs_to": null,
+      "navigation_from": ["game_over"],
+      "navigation_to": ["gameplay"]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏主界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "顶部显示当前得分和最高分。4x4网格占据中间主要区域，每个格子可以有数字方块（2/4/8/16...2048）。网格上方有新游戏按钮。玩家通过滑动合并相同数字。",
+      "belongs_to": null,
+      "navigation_from": ["main_menu"],
+      "navigation_to": ["game_over"]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "半透明遮罩覆盖游戏界面。显示'Game Over'或'You Win!'文字。显示最终得分。下方有重试按钮、返回主菜单按钮和排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu", "leaderboard"]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {"width": 800, "height": 1000},
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": ["game_over"],
+      "navigation_to": []
+    }
+  ]
+}

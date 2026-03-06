@@ -1,0 +1,84 @@
+{
+  "game_title": "打砖块",
+  "art_style": "霓虹复古风格，黑色背景，彩色砖块",
+  "global_resolution": {
+    "width": 1080,
+    "height": 1920
+  },
+  "total_interfaces": 4,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      },
+      "description": "游戏标题'打砖块'居中显示。下方有开始游戏按钮和排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": [
+        "game_over"
+      ],
+      "navigation_to": [
+        "gameplay"
+      ]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏界面",
+      "type": "page",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      },
+      "description": "顶部是彩色砖块阵列。底部有一个可左右移动的挡板。球在屏幕中弹跳，碰到砖块消除得分。顶部显示得分、关卡和生命数。",
+      "belongs_to": null,
+      "navigation_from": [
+        "main_menu"
+      ],
+      "navigation_to": [
+        "game_over"
+      ]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      },
+      "description": "显示游戏结束文字和最终得分。有重试按钮、返回主菜单按钮和排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": [
+        "gameplay"
+      ],
+      "navigation_to": [
+        "gameplay",
+        "main_menu",
+        "leaderboard"
+      ]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {
+        "width": 800,
+        "height": 1000
+      },
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": [
+        "game_over"
+      ],
+      "navigation_to": []
+    }
+  ]
+}

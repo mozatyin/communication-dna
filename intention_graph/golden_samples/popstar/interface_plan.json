@@ -1,0 +1,53 @@
+{
+  "game_title": "消灭星星",
+  "art_style": "卡通可爱风格，彩色星星，深色背景",
+  "global_resolution": {"width": 1080, "height": 1920},
+  "total_interfaces": 4,
+  "entry_interface": "main_menu",
+  "interfaces": [
+    {
+      "index": 1,
+      "id": "main_menu",
+      "name": "主菜单",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "深色星空背景。游戏标题'消灭星星'在上方，配有彩色星星装饰。中间有开始游戏按钮。底部有排行榜按钮。",
+      "belongs_to": null,
+      "navigation_from": ["game_over"],
+      "navigation_to": ["gameplay"]
+    },
+    {
+      "index": 2,
+      "id": "gameplay",
+      "name": "游戏界面",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "顶部显示当前关卡、得分和目标分数。主区域是10x10的星星网格，星星有5种颜色（红黄蓝绿紫）。点击2个以上相连的同色星星消除得分。底部显示剩余星星数。",
+      "belongs_to": null,
+      "navigation_from": ["main_menu"],
+      "navigation_to": ["game_over"]
+    },
+    {
+      "index": 3,
+      "id": "game_over",
+      "name": "游戏结束",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'过关成功'或'游戏结束'。显示本关得分和总得分。有继续下一关按钮（如果过关）、重试按钮和返回主菜单按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["gameplay", "main_menu", "leaderboard"]
+    },
+    {
+      "index": 4,
+      "id": "leaderboard",
+      "name": "排行榜",
+      "type": "popup",
+      "dimensions": {"width": 800, "height": 1000},
+      "description": "显示前5名最高分排名列表。底部有关闭按钮。",
+      "belongs_to": "game_over",
+      "navigation_from": ["game_over"],
+      "navigation_to": []
+    }
+  ]
+}

@@ -1,0 +1,390 @@
+{
+  "project": {
+    "title": "跳一跳",
+    "global_resolution": {"width": 1080, "height": 1920}
+  },
+  "asset_library": {
+    "bg_gradient": {"type": "image", "path": "assets/images/bg_gradient.png", "label": "渐变背景"},
+    "player": {"type": "image", "path": "assets/images/player.png", "label": "小人"},
+    "block_1": {"type": "image", "path": "assets/images/block_1.png", "label": "方块1"},
+    "block_2": {"type": "image", "path": "assets/images/block_2.png", "label": "方块2"},
+    "sfx_jump": {"type": "audio", "path": "assets/audio/sfx_jump.mp3", "label": "跳跃音效"},
+    "sfx_land": {"type": "audio", "path": "assets/audio/sfx_land.mp3", "label": "落地音效"},
+    "sfx_fail": {"type": "audio", "path": "assets/audio/sfx_fail.mp3", "label": "失败音效"}
+  },
+  "modules": [
+    {
+      "module_id": "menu_flow",
+      "module_name": "菜单流程",
+      "description": "主菜单和排行榜",
+      "color": "#B3E5FC",
+      "interface_ids": ["main_menu", "leaderboard"]
+    },
+    {
+      "module_id": "gameplay_flow",
+      "module_name": "游戏流程",
+      "description": "核心游戏和结算",
+      "color": "#81C784",
+      "interface_ids": ["gameplay", "game_over"]
+    }
+  ],
+  "module_connections": [
+    {"from": "menu_flow", "to": "gameplay_flow", "label": "开始游戏"},
+    {"from": "gameplay_flow", "to": "menu_flow", "label": "返回菜单"}
+  ],
+  "interfaces": [
+    {
+      "interface_id": "main_menu",
+      "interface_name": "主菜单",
+      "module_id": "menu_flow",
+      "type": "page",
+      "parents": ["game_over"],
+      "children": ["gameplay"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_gradient",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "跳一跳",
+          "rect": {"x": 240, "y": 400, "width": 600, "height": 160, "z_index": 1},
+          "style": {
+            "color": "#37474F",
+            "font-size": "80px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "player_preview",
+          "type": "image",
+          "asset_id": "player",
+          "inner_text": null,
+          "rect": {"x": 440, "y": 650, "width": 200, "height": 300, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_play",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "开始游戏",
+          "rect": {"x": 290, "y": 1080, "width": 500, "height": 120, "z_index": 2},
+          "style": {
+            "background-color": "#37474F",
+            "color": "#FFFFFF",
+            "font-size": "42px",
+            "font-weight": "bold",
+            "border-radius": "60px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "gameplay",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 340, "y": 1250, "width": 400, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "transparent",
+            "color": "#37474F",
+            "font-size": "36px",
+            "border": "3px solid #37474F",
+            "border-radius": "50px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "gameplay",
+      "interface_name": "游戏界面",
+      "module_id": "gameplay_flow",
+      "type": "page",
+      "parents": ["main_menu"],
+      "children": ["game_over"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_gradient",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_display",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "0",
+          "rect": {"x": 440, "y": 100, "width": 200, "height": 100, "z_index": 1},
+          "style": {
+            "color": "#37474F",
+            "font-size": "72px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "current_block",
+          "type": "image",
+          "asset_id": "block_1",
+          "inner_text": null,
+          "rect": {"x": 200, "y": 900, "width": 300, "height": 200, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "next_block",
+          "type": "image",
+          "asset_id": "block_2",
+          "inner_text": null,
+          "rect": {"x": 600, "y": 700, "width": 300, "height": 200, "z_index": 1},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "player_char",
+          "type": "image",
+          "asset_id": "player",
+          "inner_text": null,
+          "rect": {"x": 310, "y": 700, "width": 80, "height": 200, "z_index": 2},
+          "style": {"opacity": 1},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "hold_area",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 5},
+          "style": {"opacity": 0},
+          "event": "click",
+          "target_interface_id": null,
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "game_over",
+      "interface_name": "游戏结束",
+      "module_id": "gameplay_flow",
+      "type": "page",
+      "parents": ["gameplay"],
+      "children": ["gameplay", "main_menu", "leaderboard"],
+      "dimensions": {"width": 1080, "height": 1920},
+      "elements": [
+        {
+          "id": "bg",
+          "type": "image",
+          "asset_id": "bg_gradient",
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 1080, "height": 1920, "z_index": 0},
+          "style": {"opacity": 0.5},
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "gameover_text",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "游戏结束",
+          "rect": {"x": 240, "y": 500, "width": 600, "height": 120, "z_index": 1},
+          "style": {
+            "color": "#37474F",
+            "font-size": "64px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "final_score",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "得分: 28",
+          "rect": {"x": 290, "y": 680, "width": 500, "height": 80, "z_index": 1},
+          "style": {
+            "color": "#37474F",
+            "font-size": "48px",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_retry",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "再来一次",
+          "rect": {"x": 290, "y": 900, "width": 500, "height": 120, "z_index": 2},
+          "style": {
+            "background-color": "#37474F",
+            "color": "#FFFFFF",
+            "font-size": "42px",
+            "font-weight": "bold",
+            "border-radius": "60px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "gameplay",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_menu",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "主菜单",
+          "rect": {"x": 290, "y": 1070, "width": 500, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "#78909C",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "border-radius": "50px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "main_menu",
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_leaderboard",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 340, "y": 1220, "width": 400, "height": 80, "z_index": 2},
+          "style": {
+            "background-color": "transparent",
+            "color": "#37474F",
+            "font-size": "32px",
+            "border": "2px solid #37474F",
+            "border-radius": "40px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": "leaderboard",
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    },
+    {
+      "interface_id": "leaderboard",
+      "interface_name": "排行榜",
+      "module_id": "menu_flow",
+      "type": "popup",
+      "parents": ["game_over"],
+      "children": [],
+      "dimensions": {"width": 800, "height": 1000},
+      "elements": [
+        {
+          "id": "panel_bg",
+          "type": "css",
+          "asset_id": null,
+          "inner_text": null,
+          "rect": {"x": 0, "y": 0, "width": 800, "height": 1000, "z_index": 0},
+          "style": {
+            "background-color": "#ECEFF1",
+            "border-radius": "24px",
+            "border": "4px solid #37474F"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "排行榜",
+          "rect": {"x": 200, "y": 60, "width": 400, "height": 80, "z_index": 1},
+          "style": {
+            "color": "#37474F",
+            "font-size": "48px",
+            "font-weight": "bold",
+            "text-align": "center"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "score_list",
+          "type": "text",
+          "asset_id": null,
+          "inner_text": "1. 328\n2. 256\n3. 189\n4. 142\n5. 88",
+          "rect": {"x": 100, "y": 200, "width": 600, "height": 500, "z_index": 1},
+          "style": {
+            "color": "#37474F",
+            "font-size": "40px",
+            "line-height": "1.8",
+            "text-align": "left"
+          },
+          "event": null,
+          "target_interface_id": null,
+          "element_class": "editable"
+        },
+        {
+          "id": "btn_close",
+          "type": "button",
+          "asset_id": null,
+          "inner_text": "关闭",
+          "rect": {"x": 250, "y": 820, "width": 300, "height": 100, "z_index": 2},
+          "style": {
+            "background-color": "#37474F",
+            "color": "#FFFFFF",
+            "font-size": "36px",
+            "font-weight": "bold",
+            "border-radius": "50px",
+            "text-align": "center"
+          },
+          "event": "click",
+          "target_interface_id": null,
+          "element_class": "editable"
+        }
+      ],
+      "bg_music_asset_id": null
+    }
+  ]
+}

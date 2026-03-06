@@ -29,6 +29,20 @@ GAMES = {
     "pvz": "做一个植物大战僵尸",
     "tetris": "做一个俄罗斯方块",
     "snake": "做一个贪吃蛇",
+    "2048": "做一个2048",
+    "popstar": "做一个消灭星星",
+    "watermelon": "做一个合成大西瓜",
+    "jump": "做一个跳一跳",
+    "breakout": "做一个打砖块",
+    "minesweeper": "做一个扫雷",
+    "piano_tiles": "做一个别踩白块",
+    "fruit_ninja": "做一个切水果",
+    "whack_mole": "做一个打地鼠",
+    "match3": "做一个消消乐",
+    "space_shooter": "做一个飞机大战",
+    "sokoban": "做一个推箱子",
+    "pinball": "做一个弹球",
+    "circle_pin": "做一个见缝插针",
 }
 
 GOLDEN_DIR = os.path.join(
