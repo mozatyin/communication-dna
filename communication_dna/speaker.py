@@ -50,8 +50,8 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
         (0.60, 0.48), (0.80, 0.75), (0.90, 0.88), (0.95, 0.95), (1.0, 1.0),
     ],
     "hedging_frequency": [
-        (0.0, 0.0), (0.15, 0.05), (0.30, 0.15), (0.50, 0.35),
-        (0.70, 0.55), (0.85, 0.75), (0.95, 0.90), (1.0, 1.0),
+        (0.0, 0.0), (0.15, 0.05), (0.30, 0.15), (0.50, 0.30),
+        (0.70, 0.45), (0.85, 0.70), (0.95, 0.88), (1.0, 1.0),
     ],
     "emotion_word_density": [
         (0.0, 0.0), (0.25, 0.10), (0.40, 0.20), (0.50, 0.30),
@@ -111,7 +111,7 @@ _STRUCTURAL_CONSTRAINTS: dict[str, list[tuple[tuple[float, float], str]]] = {
         ((0.0, 0.15), "Never use ellipsis (...) or trailing-off sentences."),
         ((0.15, 0.35), "Use the '...' character at most once in the entire response. Write it as three dots explicitly."),
         ((0.35, 0.55), "Use the '...' character exactly 2-3 times. Leave 2-3 sentences trailing off or unfinished."),
-        ((0.55, 0.75), "Use the '...' character exactly 4-6 times. Write them explicitly as three dots. Several sentences should trail off with '...' or be incomplete thoughts."),
+        ((0.55, 0.75), "Use the '...' character exactly 4-5 times — NO MORE than 5. Write them explicitly as three dots. Count them carefully before finishing. A few sentences should trail off with '...' but most should be complete."),
         ((0.75, 1.01), "Use '...' frequently throughout, at least 7 times. Many sentences trail off with '...' or remain unfinished."),
     ],
     "sentence_length": [
@@ -150,7 +150,7 @@ _STRUCTURAL_CONSTRAINTS: dict[str, list[tuple[tuple[float, float], str]]] = {
         ((0.10, 0.25), "At most 1 hedge word (maybe/probably/I think) in the entire response. Casual fillers ('like', 'I mean', 'you know') are NOT hedges — avoid them unless colloquialism demands it."),
         ((0.25, 0.40), "Use exactly 2-3 hedge words total (maybe, I think, probably). Keep most statements definitive. IMPORTANT: 'like', 'I guess', 'I mean', 'kinda' are casual fillers, NOT hedges — do not count them as hedging."),
         ((0.40, 0.60), "Hedge about half of opinions. Mix definitive and tentative statements. Use: 'maybe', 'I think', 'probably', 'it seems'. Avoid casual fillers as hedge substitutes."),
-        ((0.60, 0.80), "Hedge most opinions with 'maybe', 'I think', 'probably', 'sort of', 'it seems'."),
+        ((0.60, 0.80), "Hedge MOST but NOT ALL opinions. About 65-75% of statements should have a hedge word ('maybe', 'I think', 'probably', 'it seems'). Leave 25-35% of statements as clear, unhedged assertions. Do NOT hedge every single sentence."),
         ((0.80, 1.01), "Hedge nearly every statement. Rarely assert anything definitively."),
     ],
     "feedback_signal_frequency": [
@@ -376,14 +376,17 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
             "aim for a mix of technical precision with accessible sentence structure."
         )
 
-    # High formality + moderate directness → text sounds too indirect
+    # High formality + moderate directness → text sounds too direct
+    # The LLM tends to make formal academic text assertive ("This study demonstrates...",
+    # "The evidence clearly shows...") which reads as directness 0.55-0.72 when target is 0.40.
     if fmap.get("formality", 0) > 0.80 and 0.25 <= fmap.get("directness", 0.5) <= 0.55:
         warnings.append(
-            "- CRITICAL WARNING: Formal text tends to sound very indirect. You MUST include clear, "
-            "assertive statements mixed with hedged ones. At least 40% of your sentences should make "
-            "direct claims: 'This approach is inadequate', 'The data demonstrate X', 'This conclusion "
-            "is unsupported'. Do NOT only use 'it could be argued', 'one might suggest', 'perhaps'. "
-            "Formal register does NOT mean avoiding direct assertions."
+            "- CRITICAL WARNING: Formal academic text must NOT be overly assertive. At least 50-60% "
+            "of your claims should be hedged: 'This suggests...', 'It appears that...', 'While the "
+            "evidence indicates...', 'One might argue...', 'It remains unclear whether...'. "
+            "Only 30-40% of statements should be direct assertions. The target directness is LOW-MODERATE "
+            "(0.30-0.50). Mix 'The data suggest X' (hedged) with 'This finding is significant' (direct). "
+            "Do NOT write in a commanding or declarative style throughout."
         )
 
     # High directness + low formality → text sounds less direct than intended
