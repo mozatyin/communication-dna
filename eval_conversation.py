@@ -1215,6 +1215,9 @@ def run_eval(
     detector = Detector(api_key=api_key)
     from super_brain.think_slow import ThinkSlow
     think_slow = ThinkSlow(api_key=api_key)
+    from super_brain.fact_extractor import FactExtractor
+    fact_extractor = FactExtractor(api_key=api_key)
+    from super_brain.soul_coverage import compute_soul_coverage
 
     all_results: dict[str, dict] = {}
 
@@ -1236,10 +1239,12 @@ def run_eval(
 
         # Simulate full conversation
         print(f"  Simulating {max_turns}-turn conversation...", end=" ", flush=True)
-        conversation, ts_results = simulate_conversation(
+        sim_result = simulate_conversation(
             chatter, speaker, profile, n_turns=max_turns, seed=i,
             think_slow=think_slow,
+            fact_extractor=fact_extractor,
         )
+        conversation, ts_results, soul = sim_result
         total_words = len(extract_speaker_text(conversation).split())
         print(f"done ({total_words} speaker words)")
 
@@ -1253,6 +1258,15 @@ def run_eval(
                 )
                 print(f"    ThinkSlow #{idx+1}: {n_estimated} traits estimated, "
                       f"{n_low} low-confidence, avg_conf={avg_conf:.2f}")
+
+        # Log Soul state
+        if soul is not None:
+            coverage = compute_soul_coverage(soul)
+            print(f"    Soul: {len(soul.facts)} facts, "
+                  f"reality={'yes' if soul.reality else 'no'}, "
+                  f"{len(soul.secrets)} secrets, "
+                  f"{len(soul.contradictions)} contradictions, "
+                  f"coverage={coverage:.2f}")
 
         # Show a few conversation snippets
         print(f"\n  --- Conversation sample (first 3 turns) ---")
@@ -1290,6 +1304,14 @@ def run_eval(
             profile_results[f"turns_{cp}"] = result
 
         all_results[profile_name] = profile_results
+
+        # Store Soul Coverage metrics
+        if soul is not None:
+            all_results[profile_name]["soul_coverage"] = round(compute_soul_coverage(soul), 3)
+            all_results[profile_name]["soul_facts_count"] = len(soul.facts)
+            all_results[profile_name]["soul_reality_populated"] = soul.reality is not None
+            all_results[profile_name]["soul_secrets_count"] = len(soul.secrets)
+            all_results[profile_name]["soul_contradictions_count"] = len(soul.contradictions)
 
     # ── Overall summary ──────────────────────────────────────────────────
     print(f"\n{'='*70}")
@@ -1340,6 +1362,29 @@ def run_eval(
         avg = statistics.mean(dim_all[dim])
         label = f"{dim} ({ALL_DIMENSIONS.get(dim, '?')[:35]})"
         print(f"  {label:<45} {avg:>8.3f}")
+
+    # ── Soul Coverage summary (V2.4) ────────────────────────────────────
+    coverages = [pr.get("soul_coverage", 0.0) for pr in all_results.values()
+                 if isinstance(pr.get("soul_coverage"), (int, float))]
+    if coverages:
+        avg_cov = statistics.mean(coverages)
+        fact_counts = [pr.get("soul_facts_count", 0) for pr in all_results.values()
+                       if "soul_facts_count" in pr]
+        secret_counts = [pr.get("soul_secrets_count", 0) for pr in all_results.values()
+                         if "soul_secrets_count" in pr]
+        contradiction_counts = [pr.get("soul_contradictions_count", 0)
+                                for pr in all_results.values()
+                                if "soul_contradictions_count" in pr]
+        reality_count = sum(1 for pr in all_results.values()
+                           if pr.get("soul_reality_populated"))
+        print(f"\n{'='*70}")
+        print(f"  SOUL COVERAGE (V2.4)")
+        print(f"{'='*70}")
+        print(f"\n  Avg coverage score: {avg_cov:.3f}")
+        print(f"  Avg facts per profile: {statistics.mean(fact_counts):.1f}")
+        print(f"  Reality populated: {reality_count}/{n_profiles}")
+        print(f"  Avg secrets per profile: {statistics.mean(secret_counts):.1f}")
+        print(f"  Avg contradictions per profile: {statistics.mean(contradiction_counts):.1f}")
 
     # ── Save results ─────────────────────────────────────────────────────
     output_path = Path("eval_conversation_results.json")
