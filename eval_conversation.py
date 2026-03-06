@@ -26,7 +26,10 @@ from pathlib import Path
 import anthropic
 
 from super_brain.catalog import ALL_DIMENSIONS, TRAIT_CATALOG
-from super_brain.models import ConductorAction, PersonalityDNA, ThinkFastResult
+from super_brain.models import (
+    ConductorAction, Fact, FactExtractionResult, PersonalityDNA, Reality, Soul,
+    ThinkFastResult,
+)
 from super_brain.speaker import profile_to_style_instructions
 from super_brain.detector import Detector
 from super_brain.profile_gen import generate_profile
@@ -966,19 +969,27 @@ def simulate_conversation(
     n_turns: int,
     seed: int = 0,
     think_slow: "ThinkSlow | None" = None,
-) -> "list[dict] | tuple[list[dict], list]":
+    fact_extractor: "FactExtractor | None" = None,
+) -> "list[dict] | tuple[list[dict], list] | tuple[list[dict], list, Soul]":
     """Simulate a natural conversation for n_turns exchanges.
 
     V2.3: When think_slow is provided, ThinkFast + Conductor are used to drive
     the Chatter's behavior each turn. ThinkSlow interval changed from 5 to 3.
 
+    V2.4: When fact_extractor is also provided, both ThinkSlow and FactExtractor
+    use AdaptiveFrequency (default_interval=3) instead of hardcoded modulo.
+    Results are accumulated into a Soul object.
+
     Args:
         think_slow: Optional ThinkSlow extractor. If provided, extracts every 3 turns
             and returns (conversation, think_slow_results).
+        fact_extractor: Optional FactExtractor. Requires think_slow. When provided,
+            enables adaptive frequency for both extractors and Soul accumulation.
 
     Returns:
         If think_slow is None: list of {"role": "chatter"|"speaker", "text": str}
-        If think_slow is provided: (conversation, list[ThinkSlowResult])
+        If think_slow is provided (no fact_extractor): (conversation, list[ThinkSlowResult])
+        If think_slow + fact_extractor: (conversation, list[ThinkSlowResult], Soul)
     """
     import random as _random
     rng = _random.Random(seed)
@@ -992,6 +1003,17 @@ def simulate_conversation(
     think_fast = ThinkFast() if think_slow else None
     conductor = Conductor() if think_slow else None
     last_tf: ThinkFastResult | None = None
+
+    # V2.4: Adaptive frequency + Soul accumulation when fact_extractor is provided
+    use_adaptive = fact_extractor is not None and think_slow is not None
+    ts_freq = None
+    fe_freq = None
+    soul = None
+    if use_adaptive:
+        from super_brain.adaptive_frequency import AdaptiveFrequency
+        ts_freq = AdaptiveFrequency(default_interval=3)
+        fe_freq = AdaptiveFrequency(default_interval=3)
+        soul = Soul(id=profile.id, character=profile)
 
     # Start with a random casual opener
     opener = rng.choice(CASUAL_OPENERS)
@@ -1032,18 +1054,53 @@ def simulate_conversation(
         if think_fast is not None:
             last_tf = think_fast.analyze(conversation)
 
-        # V2.3: Think Slow extraction every 3 turns (was 5 in V2.2)
-        if think_slow and (turn + 1) % 3 == 0:
-            focus = previous_ts.low_confidence_traits if previous_ts else None
-            ts_result = think_slow.extract(
-                conversation=conversation,
-                focus_traits=focus,
-                previous=previous_ts,
-            )
-            ts_results.append(ts_result)
-            previous_ts = ts_result
-            current_low_conf = ts_result.low_confidence_traits
+        # --- Extraction logic ---
+        if use_adaptive:
+            # V2.4: Adaptive frequency for ThinkSlow
+            if ts_freq.should_run(turn + 1):
+                focus = previous_ts.low_confidence_traits if previous_ts else None
+                ts_result = think_slow.extract(
+                    conversation=conversation,
+                    focus_traits=focus,
+                    previous=previous_ts,
+                )
+                ts_results.append(ts_result)
+                previous_ts = ts_result
+                current_low_conf = ts_result.low_confidence_traits
+                ts_freq.report_yield(len(ts_result.partial_profile.traits))
 
+            # V2.4: Adaptive frequency for FactExtractor
+            if fe_freq.should_run(turn + 1):
+                fe_result = fact_extractor.extract(
+                    conversation=conversation,
+                    existing_facts=soul.facts,
+                    current_turn=turn + 1,
+                )
+                soul.facts.extend(fe_result.new_facts)
+                if fe_result.reality is not None:
+                    soul.reality = fe_result.reality
+                soul.secrets.extend(fe_result.secrets)
+                soul.contradictions.extend(fe_result.contradictions)
+                fe_freq.report_yield(
+                    len(fe_result.new_facts)
+                    + len(fe_result.secrets)
+                    + len(fe_result.contradictions)
+                )
+        elif think_slow:
+            # V2.3: Think Slow extraction every 3 turns (was 5 in V2.2)
+            if (turn + 1) % 3 == 0:
+                focus = previous_ts.low_confidence_traits if previous_ts else None
+                ts_result = think_slow.extract(
+                    conversation=conversation,
+                    focus_traits=focus,
+                    previous=previous_ts,
+                )
+                ts_results.append(ts_result)
+                previous_ts = ts_result
+                current_low_conf = ts_result.low_confidence_traits
+
+    if use_adaptive:
+        return conversation, ts_results, soul
     if think_slow is not None:
         return conversation, ts_results
     return conversation
