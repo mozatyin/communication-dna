@@ -88,28 +88,28 @@ def test_conductor_default_listen():
 
 
 def test_conductor_force_probe_after_n_turns():
-    """After max_turns_without_probe, force an incisive question even over openings."""
-    conductor = Conductor(max_turns_without_probe=4)
+    """After max_turns_without_probe (past force_probe_after_turn), force an incisive question."""
+    conductor = Conductor(max_turns_without_probe=6, force_probe_after_turn=8)
     ts = _make_think_slow(
         incisive_questions=[
             IncisiveQuestion(question="Do you prefer routines?", target="order", priority=0.8),
         ],
     )
-    # Simulate 4 turns of listening (turns 4-7, after 3 trust-building turns)
-    for t in range(4, 8):
-        tf = ThinkFastResult(info_entropy=0.6)  # above threshold
+    # Simulate turns 4-9 with high entropy (no force-probe yet: turn 9 is first >8 but counter=5)
+    for t in range(4, 10):
+        tf = ThinkFastResult(info_entropy=0.6)
         conductor.decide(think_fast=tf, think_slow=ts, turn_number=t)
 
-    # On turn 8, force-probe should fire even with an opening
+    # Turn 10: past turn 8, counter=6 → force-probe fires even with an opening
     tf = ThinkFastResult(opening="travel plans", info_entropy=0.6)
-    action = conductor.decide(think_fast=tf, think_slow=ts, turn_number=8)
+    action = conductor.decide(think_fast=tf, think_slow=ts, turn_number=10)
     assert action.mode == "ask_incisive"
     assert "Force-probe" in action.context
 
 
 def test_conductor_resets_counter_after_incisive():
     """After asking an incisive question, counter resets — next turn follows opening."""
-    conductor = Conductor(max_turns_without_probe=4)
+    conductor = Conductor(max_turns_without_probe=6)
     ts = _make_think_slow(
         incisive_questions=[
             IncisiveQuestion(question="Q1", target="trust", priority=0.8),
@@ -145,15 +145,20 @@ def test_conductor_prefers_unasked_targets():
     assert action.question == "Q about order"
 
 
-def test_conductor_raised_entropy_threshold():
-    """Entropy threshold is now 0.5 (was 0.3), so moderate responses trigger ask_incisive."""
-    conductor = Conductor()
+def test_conductor_no_force_probe_before_threshold_turn():
+    """Force-probe should NOT fire before force_probe_after_turn even if counter exceeded."""
+    conductor = Conductor(max_turns_without_probe=2, force_probe_after_turn=8)
     ts = _make_think_slow(
         incisive_questions=[
             IncisiveQuestion(question="Q1", target="trust", priority=0.8),
         ],
     )
-    # 0.4 entropy — was too high for old threshold (0.3), should work now
-    tf = ThinkFastResult(info_entropy=0.4)
-    action = conductor.decide(think_fast=tf, think_slow=ts, turn_number=5)
-    assert action.mode == "ask_incisive"
+    # 3 turns of listening (turns 4-6) — exceeds max_turns_without_probe=2
+    for t in range(4, 7):
+        tf = ThinkFastResult(info_entropy=0.6)
+        conductor.decide(think_fast=tf, think_slow=ts, turn_number=t)
+
+    # Turn 7 is before force_probe_after_turn=8, so no force-probe
+    tf = ThinkFastResult(info_entropy=0.6)
+    action = conductor.decide(think_fast=tf, think_slow=ts, turn_number=7)
+    assert action.mode == "listen"

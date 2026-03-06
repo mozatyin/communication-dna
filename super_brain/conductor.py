@@ -31,20 +31,24 @@ class Conductor:
     trust_building_turns : int
         Number of initial turns dedicated to passive listening (default 3).
     max_turns_without_probe : int
-        Force an incisive question if none asked in this many turns (default 4).
+        Force an incisive question if none asked in this many turns (default 6).
     entropy_threshold : float
-        Info entropy below this triggers ask_incisive (default 0.5).
+        Info entropy below this triggers ask_incisive (default 0.3).
+    force_probe_after_turn : int
+        Only force-probe after this turn number to preserve natural flow (default 8).
     """
 
     def __init__(
         self,
         trust_building_turns: int = 3,
-        max_turns_without_probe: int = 4,
-        entropy_threshold: float = 0.5,
+        max_turns_without_probe: int = 6,
+        entropy_threshold: float = 0.3,
+        force_probe_after_turn: int = 8,
     ) -> None:
         self.trust_building_turns = trust_building_turns
         self.max_turns_without_probe = max_turns_without_probe
         self.entropy_threshold = entropy_threshold
+        self.force_probe_after_turn = force_probe_after_turn
         self._turns_since_last_incisive = 0
         self._asked_targets: set[str] = set()
 
@@ -89,9 +93,11 @@ class Conductor:
             )
 
         # Priority 0 (highest after trust): Force-probe if too long without asking
+        # Only activates after force_probe_after_turn to preserve natural flow early on
         has_questions = (think_slow is not None and think_slow.incisive_questions)
         if (
-            self._turns_since_last_incisive >= self.max_turns_without_probe
+            turn_number > self.force_probe_after_turn
+            and self._turns_since_last_incisive >= self.max_turns_without_probe
             and has_questions
         ):
             top_question = self._pick_question(think_slow)
