@@ -49,6 +49,7 @@ in the asset_table. Every page should have at least one "image" element \
 14. Target element counts per screen type: \
 Menu/title screens: 4-7 elements. \
 Gameplay screens: 7-12 elements. \
+Result/game-over screens: 6-10 elements (include score displays, medals, action buttons). \
 Popups: 3-5 elements. \
 Do NOT add decorative CSS elements beyond what is needed for visual structure.
 15. Every navigation button MUST have a target_interface_id. \
@@ -228,6 +229,8 @@ _TEXT_TO_TARGET = {
     "设置": "settings", "settings": "settings",
     "关卡选择": "level_select", "选择关卡": "level_select",
     "冒险模式": "level_select", "adventure": "level_select",
+    "下一关": "plant_select", "next level": "plant_select",
+    "返回地图": "level_select", "back to map": "level_select",
 }
 
 

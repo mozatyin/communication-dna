@@ -2,7 +2,7 @@
   "game_title": "植物大战僵尸",
   "art_style": "卡通手绘风格，明亮色彩，2D横向视角",
   "global_resolution": {"width": 1080, "height": 1920},
-  "total_interfaces": 6,
+  "total_interfaces": 7,
   "entry_interface": "main_menu",
   "interfaces": [
     {
@@ -47,10 +47,21 @@
       "description": "5行草地/泳池网格占据主要区域。顶部是植物卡片槽（已选植物，显示冷却状态）和阳光计数器。僵尸从右侧进入，植物放置在网格上。阳光随机掉落需要点击收集。底部有铲子工具。",
       "belongs_to": null,
       "navigation_from": ["plant_select"],
-      "navigation_to": ["game_over"]
+      "navigation_to": ["game_over", "level_complete"]
     },
     {
       "index": 5,
+      "id": "level_complete",
+      "name": "关卡胜利",
+      "type": "page",
+      "dimensions": {"width": 1080, "height": 1920},
+      "description": "显示'关卡胜利！'文字和奖励阳光数量。下方有下一关按钮和返回地图按钮。",
+      "belongs_to": null,
+      "navigation_from": ["gameplay"],
+      "navigation_to": ["level_select", "plant_select"]
+    },
+    {
+      "index": 6,
       "id": "leaderboard",
       "name": "排行榜",
       "type": "popup",
@@ -61,7 +72,7 @@
       "navigation_to": []
     },
     {
-      "index": 6,
+      "index": 7,
       "id": "game_over",
       "name": "游戏失败",
       "type": "page",
