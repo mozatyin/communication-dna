@@ -476,7 +476,7 @@ def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
         # formal-technical (e.g. formal_academic), so don't correct.
         if f.name == "formality":
             jargon = fmap.get("jargon_density")
-            if jargon is not None and jargon.value > 0.7 and f.value < 0.80:
+            if jargon is not None and jargon.value > 0.7 and f.value <= 0.82:
                 offset -= 0.12
 
         # When hedging is high, colloquialism gets over-estimated
@@ -488,15 +488,52 @@ def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
         # When narrative features are high, humor gets over-estimated — but only
         # correct when detected humor is elevated (>0.50), since moderate/low humor
         # with high narrative is likely accurate (e.g. storyteller profile).
+        # ALSO: don't correct in casual/colloquial text — casual humor IS real humor,
+        # not narrative conflation (fixes casual_bro regression from v2.0).
         if f.name == "humor_frequency":
+            colloquialism_f = fmap.get("colloquialism")
+            is_casual = colloquialism_f is not None and colloquialism_f.value > 0.7
             example_f = fmap.get("example_frequency")
             elaboration_f = fmap.get("response_elaboration")
             narrative_score = max(
                 example_f.value if example_f is not None else 0.0,
                 elaboration_f.value if elaboration_f is not None else 0.0,
             )
-            if narrative_score > 0.7 and f.value > 0.50:
+            if narrative_score > 0.7 and f.value > 0.50 and not is_casual:
                 offset -= 0.10
+
+        # emotional_polarity_balance: consistently under-detected when empathy is
+        # high (warm_empathetic pattern). Supportive/positive text reads as balanced
+        # rather than positively biased.
+        if f.name == "emotional_polarity_balance":
+            empathy_f = fmap.get("empathy_expression")
+            if empathy_f is not None and empathy_f.value > 0.7:
+                offset += 0.12
+
+        # jargon_density: over-detected in formal academic text where sophisticated
+        # vocabulary gets counted as jargon. Distinguish by passive_voice + very
+        # high formality (formal_academic signature, not blunt_technical).
+        if f.name == "jargon_density":
+            passive_f = fmap.get("passive_voice_preference")
+            formality_f = fmap.get("formality")
+            if (passive_f is not None and passive_f.value > 0.5
+                    and formality_f is not None and formality_f.value > 0.85):
+                offset -= 0.10
+
+        # hedging_frequency: over-detected in warm/empathetic text where supportive
+        # language ("I feel like", "maybe we could") reads as hedging but is actually
+        # empathetic engagement. Only correct when empathy is high.
+        if f.name == "hedging_frequency":
+            empathy_f = fmap.get("empathy_expression")
+            if empathy_f is not None and empathy_f.value > 0.7 and f.value > 0.7:
+                offset -= 0.10
+
+        # formality: over-detected in very casual text. Even with corrections for
+        # jargon conflation, casual_bro still reads too formal.
+        if f.name == "formality":
+            colloquialism_f = fmap.get("colloquialism")
+            if colloquialism_f is not None and colloquialism_f.value > 0.8 and f.value < 0.30:
+                offset -= 0.07
 
         if offset != 0.0:
             new_value = max(0.0, min(1.0, f.value + offset))
@@ -510,6 +547,7 @@ def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
             corrected.append(f)
 
     return corrected
+
 
 
 def _validate_consistency(features: list[Feature]) -> list[Feature]:
