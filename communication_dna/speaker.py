@@ -115,7 +115,7 @@ _STRUCTURAL_CONSTRAINTS: dict[str, list[tuple[tuple[float, float], str]]] = {
         ((0.0, 0.15), "Never use ellipsis (...) or trailing-off sentences."),
         ((0.15, 0.35), "Use the '...' character at most once in the entire response. Write it as three dots explicitly."),
         ((0.35, 0.55), "Use the '...' character exactly 2-3 times. Leave 2-3 sentences trailing off or unfinished."),
-        ((0.55, 0.75), "Use the '...' character exactly 4-5 times — NO MORE than 5. Write them explicitly as three dots. Count them carefully before finishing. A few sentences should trail off with '...' but most should be complete."),
+        ((0.55, 0.75), "Use the '...' character exactly 3-4 times — NO MORE than 4. Write them explicitly as three dots. Count them carefully before finishing. Most sentences should be COMPLETE — only a few trail off with '...'."),
         ((0.75, 1.01), "Use '...' frequently throughout, at least 7 times. Many sentences trail off with '...' or remain unfinished."),
     ],
     "sentence_length": [
@@ -406,6 +406,15 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
             "statements as COMPLETE sentences: 'I think perhaps we should consider that.' NOT "
             "'I think perhaps we should...' Count '...' strictly per the ellipsis constraint. "
             "Hedging uses WORDS (perhaps, maybe, might), not trailing punctuation."
+        )
+
+    # High hedging + moderate emotional_volatility → volatility under-expressed
+    if fmap.get("hedging_frequency", 0) > 0.80 and fmap.get("emotional_volatility", 0) >= 0.50:
+        warnings.append(
+            "- IMPORTANT: Show EMOTIONAL SHIFTS within the text. Don't maintain one flat tone. "
+            "Start uncertain, then become briefly more confident, then anxious again. "
+            "Mix emotions: 'I think it could work — actually I'm really excited about this! "
+            "But wait, what if it goes wrong...' The text must OSCILLATE between emotional states."
         )
 
     # High hedging + moderate vulnerability → vulnerability over-shoot
