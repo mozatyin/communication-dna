@@ -1,0 +1,796 @@
+{
+  "casual_bro": {
+    "mae": 0.05333333333333333,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "spearman": 0.979,
+    "features": [
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.6,
+        "detected": 0.45,
+        "error": 0.15,
+        "std": 0.115,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.15,
+        "detected": 0.25,
+        "error": 0.1,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PTX:expressive_punctuation",
+        "original": 0.8,
+        "detected": 0.87,
+        "error": 0.07,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.04"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "std": 0.046,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.02"
+      },
+      {
+        "feature": "SYN:ellipsis_frequency",
+        "original": 0.8,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.058,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.85,
+        "detected": 0.8,
+        "error": 0.05,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.8,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "ERR:grammar_deviation",
+        "original": 0.7,
+        "detected": 0.65,
+        "error": 0.05,
+        "std": 0.087,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.7,
+        "detected": 0.74,
+        "error": 0.04,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.07"
+      },
+      {
+        "feature": "SYN:sentence_complexity",
+        "original": 0.1,
+        "detected": 0.13,
+        "error": 0.03,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:colloquialism",
+        "original": 0.95,
+        "detected": 0.95,
+        "error": 0.0,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.3,
+        "detected": 0.3,
+        "error": 0.0,
+        "std": 0.076,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      }
+    ]
+  },
+  "formal_academic": {
+    "mae": 0.02666666666666666,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "spearman": 0.958,
+    "features": [
+      {
+        "feature": "LEX:vocabulary_richness",
+        "original": 0.9,
+        "detected": 0.85,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:colloquialism",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.8,
+        "detected": 0.85,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "SYN:passive_voice_preference",
+        "original": 0.7,
+        "detected": 0.65,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.4,
+        "detected": 0.45,
+        "error": 0.05,
+        "std": 0.076,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.25"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "SYN:sentence_complexity",
+        "original": 0.85,
+        "detected": 0.83,
+        "error": 0.02,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.95,
+        "detected": 0.95,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:jargon_density",
+        "original": 0.7,
+        "detected": 0.7,
+        "error": 0.0,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "DIS:argumentation_style",
+        "original": 0.85,
+        "detected": 0.85,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.0,
+        "detected": 0.0,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "ERR:grammar_deviation",
+        "original": 0.0,
+        "detected": 0.0,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "warm_empathetic": {
+    "mae": 0.03583333333333334,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "spearman": 0.9633,
+    "features": [
+      {
+        "feature": "PRA:directness",
+        "original": 0.25,
+        "detected": 0.15,
+        "error": 0.1,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:empathy_expression",
+        "original": 0.95,
+        "detected": 0.85,
+        "error": 0.1,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "AFF:emotional_polarity_balance",
+        "original": 0.75,
+        "detected": 0.82,
+        "error": 0.07,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.7,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PRA:politeness_strategy",
+        "original": 0.9,
+        "detected": 0.85,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "INT:question_frequency",
+        "original": 0.7,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.4,
+        "detected": 0.39,
+        "error": 0.01,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.20"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.35,
+        "detected": 0.35,
+        "error": 0.0,
+        "std": 0.058,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "INT:feedback_signal_frequency",
+        "original": 0.7,
+        "detected": 0.7,
+        "error": 0.0,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "DSC:vulnerability_willingness",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "DSC:disclosure_depth",
+        "original": 0.7,
+        "detected": 0.7,
+        "error": 0.0,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      }
+    ]
+  },
+  "blunt_technical": {
+    "mae": 0.04833333333333333,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "spearman": 0.9056,
+    "features": [
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.4,
+        "detected": 0.55,
+        "error": 0.15,
+        "std": 0.058,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.1,
+        "detected": 0.0,
+        "error": 0.1,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:jargon_density",
+        "original": 0.9,
+        "detected": 0.95,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "LEX:vocabulary_richness",
+        "original": 0.8,
+        "detected": 0.85,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.05,
+        "detected": 0.1,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PRA:politeness_strategy",
+        "original": 0.1,
+        "detected": 0.05,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:empathy_expression",
+        "original": 0.05,
+        "detected": 0.0,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "MET:definition_tendency",
+        "original": 0.7,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.6,
+        "detected": 0.63,
+        "error": 0.03,
+        "std": 0.164,
+        "status": "OK",
+        "unstable": true,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.95,
+        "detected": 0.95,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.05,
+        "detected": 0.05,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PTX:emoji_usage",
+        "original": 0.0,
+        "detected": 0.0,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "storyteller": {
+    "mae": 0.03916666666666666,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "spearman": 0.9108,
+    "features": [
+      {
+        "feature": "SYN:sentence_length",
+        "original": 0.6,
+        "detected": 0.7,
+        "error": 0.1,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.6,
+        "detected": 0.7,
+        "error": 0.1,
+        "std": 0.104,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "LEX:vocabulary_richness",
+        "original": 0.75,
+        "detected": 0.7,
+        "error": 0.05,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "DIS:example_frequency",
+        "original": 0.9,
+        "detected": 0.85,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "DIS:repetition_for_emphasis",
+        "original": 0.7,
+        "detected": 0.65,
+        "error": 0.05,
+        "std": 0.132,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "PRA:humor_frequency",
+        "original": 0.5,
+        "detected": 0.55,
+        "error": 0.05,
+        "std": 0.076,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "MET:metacommentary",
+        "original": 0.5,
+        "detected": 0.54,
+        "error": 0.04,
+        "std": 0.076,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "SYN:sentence_complexity",
+        "original": 0.65,
+        "detected": 0.68,
+        "error": 0.03,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.04"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.4,
+        "detected": 0.4,
+        "error": 0.0,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "DIS:topic_transition_style",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "INT:turn_length",
+        "original": 0.85,
+        "detected": 0.85,
+        "error": 0.0,
+        "std": 0.058,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "INT:response_elaboration",
+        "original": 0.9,
+        "detected": 0.9,
+        "error": 0.0,
+        "std": 0.0,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      }
+    ]
+  },
+  "anxious_hedger": {
+    "mae": 0.07625,
+    "within_025": 12,
+    "within_04": 12,
+    "total": 12,
+    "spearman": 0.8217,
+    "features": [
+      {
+        "feature": "SYN:ellipsis_frequency",
+        "original": 0.6,
+        "detected": 0.8,
+        "error": 0.2,
+        "std": 0.071,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "AFF:emotional_volatility",
+        "original": 0.6,
+        "detected": 0.4,
+        "error": 0.2,
+        "std": 0.05,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.15"
+      },
+      {
+        "feature": "AFF:emotion_word_density",
+        "original": 0.5,
+        "detected": 0.65,
+        "error": 0.15,
+        "std": 0.115,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.10"
+      },
+      {
+        "feature": "LEX:hedging_frequency",
+        "original": 0.95,
+        "detected": 0.85,
+        "error": 0.1,
+        "std": 0.071,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.05"
+      },
+      {
+        "feature": "MET:metacommentary",
+        "original": 0.65,
+        "detected": 0.74,
+        "error": 0.09,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "PRA:directness",
+        "original": 0.1,
+        "detected": 0.15,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.00"
+      },
+      {
+        "feature": "MET:self_correction_frequency",
+        "original": 0.8,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "DSC:vulnerability_willingness",
+        "original": 0.7,
+        "detected": 0.75,
+        "error": 0.05,
+        "std": 0.029,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "LEX:colloquialism",
+        "original": 0.5,
+        "detected": 0.525,
+        "error": 0.025,
+        "std": 0.035,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.03"
+      },
+      {
+        "feature": "LEX:formality",
+        "original": 0.45,
+        "detected": 0.45,
+        "error": 0.0,
+        "std": 0.058,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394+0.00"
+      },
+      {
+        "feature": "PRA:politeness_strategy",
+        "original": 0.8,
+        "detected": 0.8,
+        "error": 0.0,
+        "std": 0.058,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.05"
+      },
+      {
+        "feature": "PTX:expressive_punctuation",
+        "original": 0.65,
+        "detected": 0.65,
+        "error": 0.0,
+        "std": 0.142,
+        "status": "OK",
+        "unstable": false,
+        "delta": "  \u0394-0.23"
+      }
+    ]
+  },
+  "_overall": {
+    "mae": 0.04659722222222222,
+    "spearman": 0.9608,
+    "within_025": 72,
+    "within_04": 72,
+    "total": 72,
+    "n_samples": 3
+  },
+  "_dim_mae": {
+    "LEX": 0.030833333333333334,
+    "SYN": 0.07799999999999999,
+    "PRA": 0.05,
+    "AFF": 0.0911111111111111,
+    "PTX": 0.02,
+    "ERR": 0.024999999999999967,
+    "DIS": 0.024999999999999994,
+    "INT": 0.012500000000000011,
+    "DSC": 0.01666666666666668,
+    "MET": 0.05750000000000002
+  }
+}

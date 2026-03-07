@@ -453,7 +453,7 @@ _FLAT_BIAS_CORRECTION: dict[str, float] = {
     "sentence_complexity": -0.07,
     "metacommentary": -0.06,
     "definition_tendency": -0.10,
-    "emoji_usage": -0.04,
+    "emoji_usage": -0.06,
     "expressive_punctuation": -0.03,
     "vocabulary_richness": -0.05,
 }
@@ -534,6 +534,26 @@ def _apply_bias_correction(features: list[Feature]) -> list[Feature]:
             colloquialism_f = fmap.get("colloquialism")
             if colloquialism_f is not None and colloquialism_f.value > 0.8 and f.value < 0.30:
                 offset -= 0.07
+
+        # directness: over-detected in formal academic text. The detector reads
+        # assertive scholarly claims ("The evidence demonstrates...") as high
+        # directness, but formal register + hedging style = moderate directness.
+        if f.name == "directness":
+            formality_f = fmap.get("formality")
+            passive_f = fmap.get("passive_voice_preference")
+            if (formality_f is not None and formality_f.value > 0.85
+                    and passive_f is not None and passive_f.value > 0.45
+                    and f.value > 0.50):
+                offset -= 0.15
+
+        # expressive_punctuation: under-detected in hedging text. Anxious text
+        # uses question marks, exclamation points, and emphasis markers that
+        # the detector misses. Don't apply flat negative correction when hedging
+        # is high; instead boost slightly.
+        if f.name == "expressive_punctuation":
+            hedging_f = fmap.get("hedging_frequency")
+            if hedging_f is not None and hedging_f.value > 0.80:
+                offset += 0.03  # counteract -0.03 flat + boost slightly
 
         if offset != 0.0:
             new_value = max(0.0, min(1.0, f.value + offset))
