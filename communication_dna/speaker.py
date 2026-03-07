@@ -47,7 +47,7 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
     ],
     "directness": [
         (0.0, 0.0), (0.25, 0.15), (0.40, 0.25), (0.50, 0.35),
-        (0.60, 0.48), (0.80, 0.75), (0.90, 0.88), (0.95, 0.95), (1.0, 1.0),
+        (0.60, 0.48), (0.80, 0.80), (0.90, 0.92), (0.95, 0.98), (1.0, 1.0),
     ],
     "hedging_frequency": [
         (0.0, 0.0), (0.15, 0.05), (0.30, 0.15), (0.50, 0.30),
@@ -66,8 +66,12 @@ CALIBRATION_OFFSETS: dict[str, list[tuple[float, float]]] = {
         (0.75, 0.80), (0.85, 0.92), (1.0, 1.0),
     ],
     "empathy_expression": [
-        (0.0, 0.0), (0.50, 0.40), (0.70, 0.65), (0.85, 0.85),
-        (0.95, 0.98), (1.0, 1.0),
+        (0.0, 0.0), (0.50, 0.40), (0.70, 0.65), (0.85, 0.88),
+        (0.95, 1.00), (1.0, 1.0),
+    ],
+    "question_frequency": [
+        (0.0, 0.0), (0.30, 0.15), (0.50, 0.35), (0.70, 0.55),
+        (0.85, 0.75), (1.0, 1.0),
     ],
 }
 
@@ -391,8 +395,25 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
     if fmap.get("directness", 0) > 0.75 and fmap.get("formality", 0.5) < 0.20:
         warnings.append(
             "- WARNING: Very casual text can sound less direct because bro-speak uses hedging-like "
-            "fillers. Make BLUNT assertions: 'That's wrong.' 'Just do X.' 'Nah, not happening.' "
-            "Casual directness = short, assertive, no room for debate."
+            "fillers. Make EVERY statement assertive. 'That's facts.' 'Nah.' 'Just do it.' 'Wrong.' "
+            "Even amid casual language, be BLUNT. No 'kinda' or 'maybe' before opinions."
+        )
+
+    # High hedging + moderate-high ellipsis → ellipsis over-production
+    if fmap.get("hedging_frequency", 0) > 0.80 and fmap.get("ellipsis_frequency", 0) >= 0.50:
+        warnings.append(
+            "- CRITICAL: High hedging MUST NOT create extra trailing patterns. Write hedged "
+            "statements as COMPLETE sentences: 'I think perhaps we should consider that.' NOT "
+            "'I think perhaps we should...' Count '...' strictly per the ellipsis constraint. "
+            "Hedging uses WORDS (perhaps, maybe, might), not trailing punctuation."
+        )
+
+    # High hedging + moderate vulnerability → vulnerability over-shoot
+    if fmap.get("hedging_frequency", 0) > 0.80 and 0.55 <= fmap.get("vulnerability_willingness", 0.5) <= 0.75:
+        warnings.append(
+            "- WARNING: With high hedging, vulnerability easily over-shoots. Keep vulnerability "
+            "at MODERATE-HIGH: share concerns but maintain composure. 'I'm a bit worried about...' "
+            "YES. 'I'm genuinely terrified that...' NO. Stay in thoughtful-concern territory."
         )
 
     return "\n".join(warnings)
