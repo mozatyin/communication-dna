@@ -272,6 +272,33 @@ def _check_css_reference_integrity(html: str, css: str) -> QualityMetric:
     )
 
 
+# ── Canvas Element Counting ──────────────────────────────────────────────────
+
+
+def _count_canvas_elements(js: str) -> int:
+    """Count distinct visual elements drawn on canvas in JS code.
+
+    Heuristic: each fillStyle/strokeStyle assignment or drawImage/fillText call
+    represents a visual element. Divides by 2 to account for loop duplication,
+    capped at 20 to avoid inflation.
+    """
+    if not js.strip():
+        return 0
+
+    count = 0
+    # Each fillStyle/strokeStyle assignment = potential element
+    count += len(re.findall(r"(?:fillStyle|strokeStyle)\s*=", js))
+    # Each drawImage call = 1 element
+    count += len(re.findall(r"drawImage\s*\(", js))
+    # Each fillText/strokeText call = 1 element
+    count += len(re.findall(r"(?:fillText|strokeText)\s*\(", js))
+
+    # Heuristic: divide by 2 for loop duplication, minimum 1 if any found
+    adjusted = max(1, count // 2) if count > 0 else 0
+    # Cap at 20 to avoid inflation
+    return min(adjusted, 20)
+
+
 # ── Layer 2: Wireframe Fidelity ─────────────────────────────────────────────
 
 
@@ -326,11 +353,12 @@ def _check_screen_coverage(html: str, wireframe: dict[str, Any]) -> QualityMetri
 
 
 def _check_element_coverage(
-    html: str, wireframe: dict[str, Any],
+    html: str, wireframe: dict[str, Any], js: str = "",
 ) -> QualityMetric:
     """Per-screen: wireframe elements → HTML elements.
 
     Asymmetric penalty: 0.5x for over-generation.
+    For screens with <canvas>, adds canvas-drawn element count from JS.
     """
     interfaces = wireframe.get("interfaces", [])
     if not interfaces:
@@ -349,6 +377,8 @@ def _check_element_coverage(
         sid = el.get("screen_id", "")
         if sid:
             screen_elements.setdefault(sid, []).append(el)
+
+    canvas_count = _count_canvas_elements(js) if js else 0
 
     scores = []
     details = []
@@ -374,6 +404,11 @@ def _check_element_coverage(
             el for el in screen_html
             if el.get("id") != iface_id  # don't count the screen div itself
         ])
+
+        # If screen has a <canvas>, add canvas-drawn elements from JS
+        has_canvas = any(el.get("tag") == "canvas" for el in screen_html)
+        if has_canvas and canvas_count > 0:
+            screen_html_count += canvas_count
 
         # If no screen-specific elements found, fall back to total distribution
         gold_count = len(wf_elems)
@@ -561,11 +596,103 @@ def evaluate(
 
     # Layer 2: Wireframe Fidelity
     report.metrics.append(_check_screen_coverage(html_content, wireframe))
-    report.metrics.append(_check_element_coverage(html_content, wireframe))
+    report.metrics.append(_check_element_coverage(html_content, wireframe, js=js_content))
     report.metrics.append(_check_style_fidelity(css_content, html_content, wireframe))
     report.metrics.append(_check_navigation_integrity(html_content, js_content, wireframe))
 
     return report
+
+
+# ── JS Summary Extraction ─────────────────────────────────────────────────
+
+
+def _extract_js_summary(js: str, max_chars: int = 4000) -> str:
+    """Extract a structural summary of JS code for LLM evaluation.
+
+    Pulls out function signatures, canvas drawing calls, event listeners,
+    and state variables so the LLM judge sees game structure rather than
+    truncated raw code.
+    """
+    if not js.strip():
+        return "(empty JS)"
+
+    sections: list[str] = []
+
+    # 1. Function signatures (named functions + arrow functions)
+    func_names: list[str] = []
+    # Named functions with first 2 lines of body
+    func_pattern = re.compile(
+        r"(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{([^}]*)",
+        re.DOTALL,
+    )
+    func_details: list[str] = []
+    for m in func_pattern.finditer(js):
+        name = m.group(1)
+        params = m.group(2).strip()
+        body_preview = m.group(3).strip().split("\n")[:2]
+        body_str = " | ".join(line.strip() for line in body_preview if line.strip())
+        func_names.append(name)
+
+        # Check if function contains canvas calls
+        func_body_start = m.start()
+        # Find matching closing brace (simple heuristic: next 500 chars)
+        func_body = js[func_body_start:func_body_start + 500]
+        canvas_in_func = re.findall(
+            r"ctx\.(fillRect|clearRect|strokeRect|fillText|strokeText|drawImage|arc|beginPath|moveTo|lineTo|stroke|fill)\b",
+            func_body,
+        )
+        canvas_note = f" [canvas: {', '.join(set(canvas_in_func))}]" if canvas_in_func else ""
+        func_details.append(f"- {name}({params}){canvas_note}: {body_str[:80]}")
+
+    # Arrow function assignments
+    arrow_pattern = re.compile(
+        r"(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:\([^)]*\)|(\w+))\s*=>"
+    )
+    for m in arrow_pattern.finditer(js):
+        name = m.group(1)
+        if name not in func_names:
+            func_names.append(name)
+            func_details.append(f"- {name} (arrow)")
+
+    if func_details:
+        sections.append(f"## Functions ({len(func_details)} total)\n" + "\n".join(func_details))
+
+    # 2. Canvas drawing calls grouped by context
+    canvas_calls = re.findall(
+        r"ctx\.(fillRect|clearRect|strokeRect|fillText|strokeText|drawImage|arc|beginPath|moveTo|lineTo|stroke|fill)\b",
+        js,
+    )
+    if canvas_calls:
+        unique_calls = sorted(set(canvas_calls))
+        sections.append(f"## Canvas Calls\n{', '.join(unique_calls)}")
+
+    # 3. Event listeners
+    event_types: list[str] = []
+    for m in re.finditer(r"addEventListener\s*\(\s*['\"](\w+)['\"]", js):
+        event_types.append(m.group(1))
+    if event_types:
+        sections.append(f"## Event Listeners\n{', '.join(sorted(set(event_types)))}")
+
+    # 4. State variables (top-level let/var/const declarations)
+    state_vars: list[str] = []
+    for m in re.finditer(
+        r"^(?:let|var|const)\s+(\w+)\s*=\s*(.+?);\s*$",
+        js,
+        re.MULTILINE,
+    ):
+        name = m.group(1)
+        value = m.group(2).strip()[:60]
+        state_vars.append(f"{name} = {value}")
+    if state_vars:
+        sections.append(f"## State Variables\n{', '.join(state_vars)}")
+
+    summary = "\n\n".join(sections)
+
+    # Fallback: if summary is too short, use raw JS
+    if len(summary) < 200:
+        summary = js[:max_chars]
+
+    return summary[:max_chars]
 
 
 # ── Layer 3: LLM-as-Judge ────────────────────────────────────────────────────
@@ -603,6 +730,8 @@ def semantic_evaluate(
         wf_screens.append(f"  [{iid}] {elems} elements, nav→{children}")
     wf_summary = "\n".join(wf_screens)
 
+    js_summary = _extract_js_summary(js)
+
     response = client.messages.create(
         model=model,
         max_tokens=1024,
@@ -610,6 +739,8 @@ def semantic_evaluate(
         system=(
             "You are a game code quality evaluator. Given game code (HTML/CSS/JS), "
             "a wireframe spec, and a PRD, evaluate the implementation quality.\n"
+            "The JS is provided as a structural summary showing functions, canvas calls, "
+            "event listeners, and state variables.\n"
             "Score on 3 dimensions (each 0-10):\n"
             "1. mechanics_completeness: Are the PRD's game rules implemented in JS?\n"
             "2. state_management: Are game states (menu→playing→game_over) properly handled?\n"
@@ -624,7 +755,7 @@ def semantic_evaluate(
                     f"## Wireframe Screens\n{wf_summary}\n\n"
                     f"## HTML (first 3000 chars)\n```html\n{html[:3000]}\n```\n\n"
                     f"## CSS (first 2000 chars)\n```css\n{css[:2000]}\n```\n\n"
-                    f"## JS (first 4000 chars)\n```js\n{js[:4000]}\n```\n\n"
+                    f"## JS (structural summary)\n```\n{js_summary}\n```\n\n"
                     "Score JSON:\n"
                     '{"mechanics_completeness": <0-10>, "state_management": <0-10>, '
                     '"interaction_quality": <0-10>, "issues": ["<list any problems>"]}'

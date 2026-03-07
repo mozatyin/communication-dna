@@ -91,10 +91,69 @@ All 3 games score perfectly on code structure:
 
 Tetris generates the most JS (11KB) due to piece rotation and line-clearing logic.
 
-## Next Steps (PDCA Act phase)
+---
 
-1. **Prompt iteration:** Add explicit instruction for complete game loop implementation
-2. **Best-of-N:** Run with `--best-of-n 3` to improve output quality
-3. **Canvas metric:** Adjust element_coverage to account for canvas-rendered sprites
-4. **Style normalization:** Enhance color/size matching in style_fidelity
-5. **Browser testing:** Manual verification that generated games are playable
+## Cycle 2: Post-Improvement Re-evaluation
+
+**Date:** 2026-03-07
+**Changes applied:** P0 (JS summary for semantic eval), P1 (canvas-aware element coverage), P2 (Playwright browser smoke tests), P3 (generator prompt completeness requirements)
+**Config:** `--best-of-n 3 --semantic --browser`
+
+### Cycle 2 Summary
+
+| Game | Structural | Semantic | Browser | Time |
+|------|-----------|----------|---------|------|
+| Flappy Bird | **93%** (was 84%) | **87%** (was 77%) | **80%** (new) | 181s |
+| Snake | **94%** (was 91%) | **83%** (new) | **100%** (new) | 172s |
+| Tetris | **97%** (was 90%) | **80%** (new) | **100%** (new) | 251s |
+
+### Before/After Comparison
+
+| Metric | Cycle 1 Avg | Cycle 2 Avg | Delta |
+|--------|------------|------------|-------|
+| Structural overall | 88% | **95%** | +7% |
+| element_coverage | 78% | **82%** | +4% |
+| style_fidelity | 52% | **100%** | +48% |
+| css_reference_integrity | 76% | **75%** | -1% |
+| Semantic combined | 77%* | **83%** | +6% |
+| Browser smoke | N/A | **93%** | new |
+
+*Cycle 1 semantic was only measured for Flappy Bird.
+
+### Cycle 2 Detailed Structural Metrics
+
+| Metric | Flappy | Snake | Tetris |
+|--------|--------|-------|--------|
+| file_completeness | 100% | 100% | 100% |
+| html_validity | 100% | 100% | 100% |
+| js_syntax | 100% | 100% | 100% |
+| css_reference_integrity | 59% | 75% | 91% |
+| screen_coverage | 100% | 100% | 100% |
+| element_coverage | 84% | 76% | 85% |
+| style_fidelity | 100% | 100% | 100% |
+| navigation_integrity | 100% | 100% | 100% |
+
+### Key Improvements
+
+1. **Style fidelity: 52% → 100%** — Biggest gain. The improved generator prompt with explicit style requirements eliminated all style mismatches.
+
+2. **Element coverage: 78% → 82%** — Canvas-aware counting (P1) adds credit for canvas-rendered sprites. The gameplay screen now correctly counts fillStyle/drawImage calls as visual elements.
+
+3. **Semantic eval: 77% → 83%** — JS structural summary (P0) eliminates false negatives from truncation. The LLM judge now sees function signatures, canvas calls, and event listeners instead of cut-off raw JS.
+
+4. **Browser smoke: 93% avg** — New metric confirms games actually load and render in a real browser. Flappy Bird scored 80% (navigation_works=FAIL — button uses `startGame()` instead of `showScreen()` directly). Snake and Tetris score 100%.
+
+### Remaining Issues
+
+1. **Flappy Bird navigation_works: FAIL** — The Play button calls `startGame()` which internally calls `showScreen()`. The browser test only detects `onclick="showScreen(...)"` patterns. This is a test heuristic limitation, not a real bug.
+
+2. **Element coverage still ~82%** — Gameplay screens show slight over-generation penalty. The canvas counting adds elements but some screens also have extra DOM elements beyond the wireframe spec.
+
+3. **Semantic issues** are now more nuanced — the LLM judge notes missing details in the summary rather than the code itself (e.g., "Snake collision detection not visible in summary"). This suggests the summary could include more body context.
+
+## Next Steps (PDCA Cycle 3)
+
+1. **Browser test navigation heuristic:** Also detect buttons with `onclick` calling any function that internally calls `showScreen()`
+2. **JS summary depth:** Include more function body lines for key game functions (update, draw, collision)
+3. **Style normalization:** Add hex↔rgb color matching in style_fidelity (currently not needed since scores are 100%, but would make metric more robust)
+4. **Edge case games:** Expand to remaining 5 games (2048, Breakout, Match3, Minesweeper, Space Shooter)

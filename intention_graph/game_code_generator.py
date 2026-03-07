@@ -75,6 +75,36 @@ not absolute pixel positions.
 - Score display must update during gameplay
 - Game over must trigger automatically on loss condition
 - Retry/restart must reset game state completely
+
+## Game Implementation Completeness (CRITICAL)
+
+### render() / draw() function
+- Clear canvas each frame with clearRect
+- Draw EVERY game object with distinct fillStyle colors
+- Draw score/HUD text using fillText
+- Handle drawing for ALL game states
+
+### update() function
+- Update positions of ALL moving objects
+- Implement collision detection
+- Increment score during gameplay
+- Check boundary conditions
+- Trigger game over on collision/boundary
+
+### startGame() / restartGame()
+- Reset ALL state variables to initial values
+- Clear obstacle/collectible arrays
+- Reset score to 0, reset player position
+- Set state to 'playing', start game loop
+
+### Game over flow
+- Stop game loop, update final score display
+- Transition to game_over screen
+- Retry button fully resets state
+
+### Input handling
+- Correct input type for game (keyboard/touch/click)
+- Only process when state is 'playing'
 """
 
 

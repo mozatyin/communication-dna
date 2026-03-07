@@ -12,6 +12,8 @@ from intention_graph.game_code_quality import (
     _check_style_fidelity,
     _check_navigation_integrity,
     _extract_html_elements,
+    _extract_js_summary,
+    _count_canvas_elements,
 )
 
 
@@ -416,3 +418,83 @@ def test_evaluate_report_has_critical_metrics():
     metric_names = [m.name for m in report.metrics]
     assert "file_completeness" in metric_names
     assert "screen_coverage" in metric_names
+
+
+# ── JS Summary Extraction ─────────────────────────────────────────────────
+
+
+def test_extract_js_summary_captures_functions():
+    summary = _extract_js_summary(_SAMPLE_JS)
+    for name in ["showScreen", "startGame", "gameLoop", "update", "draw", "gameOver"]:
+        assert name in summary, f"Missing function: {name}"
+
+
+def test_extract_js_summary_captures_canvas():
+    summary = _extract_js_summary(_SAMPLE_JS)
+    assert "fillRect" in summary
+    assert "clearRect" in summary
+
+
+def test_extract_js_summary_captures_events():
+    summary = _extract_js_summary(_SAMPLE_JS)
+    assert "keydown" in summary
+    assert "click" in summary
+
+
+def test_extract_js_summary_captures_state():
+    summary = _extract_js_summary(_SAMPLE_JS)
+    assert "bird" in summary
+    assert "pipes" in summary
+    assert "score" in summary
+
+
+def test_extract_js_summary_max_chars():
+    big_js = "function f() { return 1; }\n" * 500
+    summary = _extract_js_summary(big_js, max_chars=2000)
+    assert len(summary) <= 2000
+
+
+def test_extract_js_summary_empty():
+    summary = _extract_js_summary("")
+    assert len(summary) > 0  # returns "(empty JS)"
+    summary2 = _extract_js_summary("   ")
+    assert len(summary2) > 0
+
+
+# ── Canvas Element Counting ───────────────────────────────────────────────
+
+
+def test_count_canvas_elements_basic():
+    js = """
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(10, 10, 40, 40);
+    ctx.fillStyle = '#00FF00';
+    ctx.fillRect(100, 100, 20, 20);
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(200, 200, 30, 30);
+    ctx.fillText('Score: 0', 10, 30);
+    """
+    count = _count_canvas_elements(js)
+    assert count >= 2
+
+
+def test_count_canvas_elements_draw_image():
+    js = """
+    ctx.drawImage(birdImg, 10, 10);
+    ctx.drawImage(pipeImg, 50, 50);
+    """
+    count = _count_canvas_elements(js)
+    assert count >= 1
+
+
+def test_count_canvas_elements_empty():
+    assert _count_canvas_elements("") == 0
+    assert _count_canvas_elements("let x = 1;") == 0
+
+
+def test_element_coverage_with_canvas():
+    """Gameplay screen should get higher count when JS canvas elements are included."""
+    result_without = _check_element_coverage(_SAMPLE_HTML, _SAMPLE_WIREFRAME, js="")
+    result_with = _check_element_coverage(_SAMPLE_HTML, _SAMPLE_WIREFRAME, js=_SAMPLE_JS)
+    # With JS, gameplay canvas elements are counted, so score should be >= without
+    assert result_with.score >= result_without.score

@@ -6,7 +6,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from intention_graph.game_code_generator import GameCodeGenerator, _parse_code_response
+from intention_graph.game_code_generator import (
+    GameCodeGenerator,
+    _parse_code_response,
+    _GAME_CODE_SYSTEM_PROMPT,
+)
 
 
 def _mock_stream(text: str) -> MagicMock:
@@ -301,6 +305,16 @@ def game_code_generator():
     if not api_key:
         pytest.skip("ANTHROPIC_API_KEY not set")
     return GameCodeGenerator(api_key=api_key)
+
+
+def test_system_prompt_has_completeness_requirements():
+    """Verify the system prompt includes game completeness guidance."""
+    prompt = _GAME_CODE_SYSTEM_PROMPT.lower()
+    assert "render" in prompt or "draw" in prompt
+    assert "update" in prompt
+    assert "startgame" in prompt or "restartgame" in prompt or "start game" in prompt
+    assert "collision" in prompt
+    assert "score" in prompt
 
 
 @pytest.mark.slow

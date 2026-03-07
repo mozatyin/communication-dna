@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from intention_graph.game_code_generator import GameCodeGenerator
 from intention_graph.game_code_quality import evaluate, semantic_evaluate
+from intention_graph.game_code_browser_test import browser_smoke_test
 
 GOLDEN_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -57,6 +58,7 @@ def run_game_code_eval(
     game: str = "flappy_bird",
     api_key: str = "",
     with_semantic: bool = False,
+    with_browser: bool = False,
     best_of_n: int = 1,
 ) -> dict:
     """Run full Stage 4 PDCA pipeline and return metrics."""
@@ -150,6 +152,23 @@ def run_game_code_eval(
               f"{'PASS' if sem.passed else 'FAIL'} — {sem.detail}")
         results["semantic"] = {"score": sem.score, "detail": sem.detail}
 
+    # Layer 4: Browser smoke test (optional)
+    if with_browser:
+        print(f"\n--- Browser Smoke Test ---")
+        browser_result = browser_smoke_test(
+            code.get("index.html", ""),
+            code.get("style.css", ""),
+            code.get("core.js", ""),
+            wireframe,
+        )
+        print(f"  Browser: {browser_result.score:.0%} "
+              f"{'PASS' if browser_result.passed else 'FAIL'} — {browser_result.detail}")
+        results["browser"] = {
+            "score": browser_result.score,
+            "passed": browser_result.passed,
+            "detail": browser_result.detail,
+        }
+
     # Save generated files
     output_dir = os.path.join(os.path.dirname(__file__), "output", game)
     os.makedirs(output_dir, exist_ok=True)
@@ -172,6 +191,7 @@ if __name__ == "__main__":
         help="Game to evaluate",
     )
     parser.add_argument("--semantic", action="store_true", help="Run Layer 3 LLM judge")
+    parser.add_argument("--browser", action="store_true", help="Run Playwright browser smoke tests")
     parser.add_argument("--best-of-n", type=int, default=1, help="Generate N candidates")
     args = parser.parse_args()
 
@@ -182,6 +202,7 @@ if __name__ == "__main__":
                 r = run_game_code_eval(
                     game=g,
                     with_semantic=args.semantic,
+                    with_browser=args.browser,
                     best_of_n=args.best_of_n,
                 )
                 all_results[g] = r
@@ -206,5 +227,6 @@ if __name__ == "__main__":
         run_game_code_eval(
             game=args.game,
             with_semantic=args.semantic,
+            with_browser=args.browser,
             best_of_n=args.best_of_n,
         )
