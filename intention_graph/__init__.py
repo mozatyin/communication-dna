@@ -7,3 +7,5 @@ from intention_graph.interface_plan_generator import InterfacePlanGenerator  # n
 from intention_graph.asset_analyzer import AssetAnalyzer  # noqa: F401
 from intention_graph.wireframe_generator import WireframeGenerator  # noqa: F401
 from intention_graph.wireframe_quality import evaluate as evaluate_wireframe  # noqa: F401
+from intention_graph.game_code_generator import GameCodeGenerator  # noqa: F401
+from intention_graph.game_code_quality import evaluate as evaluate_game_code  # noqa: F401
