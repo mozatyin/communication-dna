@@ -142,28 +142,40 @@ def _run_checks(
             else:
                 results["screens_exist"] = True  # No screens to check
 
-            # Check 3: Navigation works — find a button with showScreen() and click it
+            # Check 3: Navigation works — click a button and check if
+            # a different screen becomes visible (not just showScreen pattern)
             errors_before_nav = len(console_errors)
+
+            # Snapshot which screens are visible before clicking
+            visible_before: set[str] = set()
+            for sid in screen_ids:
+                el = page.query_selector(f"#{sid}")
+                if el and el.is_visible():
+                    visible_before.add(sid)
+
+            # Find any clickable button on the currently visible screen
+            # Try onclick buttons first, then any visible button
             nav_button = page.query_selector(
-                "button[onclick*='showScreen'], [onclick*='showScreen']"
+                "button[onclick], [onclick]"
             )
-            if nav_button:
-                # Extract target from onclick
-                onclick = nav_button.get_attribute("onclick") or ""
-                import re
-                target_match = re.search(r"showScreen\(['\"](\w+)['\"]\)", onclick)
-                if target_match:
-                    target_id = target_match.group(1)
-                    nav_button.click()
-                    page.wait_for_timeout(300)
-                    target_el = page.query_selector(f"#{target_id}")
-                    results["navigation_works"] = (
-                        target_el is not None and target_el.is_visible()
-                    )
-                else:
+            if not nav_button or not nav_button.is_visible():
+                nav_button = page.query_selector("button")
+            if nav_button and nav_button.is_visible():
+                try:
+                    nav_button.click(timeout=5000)
+                    page.wait_for_timeout(500)
+
+                    # Check if visibility changed — a new screen appeared
+                    visible_after: set[str] = set()
+                    for sid in screen_ids:
+                        el = page.query_selector(f"#{sid}")
+                        if el and el.is_visible():
+                            visible_after.add(sid)
+
+                    results["navigation_works"] = visible_after != visible_before
+                except Exception:
                     results["navigation_works"] = False
             else:
-                # Try clicking any button and see if something changes
                 results["navigation_works"] = False
 
             # Check 4: Canvas exists in a gameplay-like screen

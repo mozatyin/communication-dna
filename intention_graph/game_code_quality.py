@@ -606,6 +606,25 @@ def evaluate(
 # ── JS Summary Extraction ─────────────────────────────────────────────────
 
 
+def _extract_function_body(js: str, body_start: int) -> str:
+    """Extract function body text by counting matching braces from body_start.
+
+    body_start should be the position right after the opening '{'.
+    Returns the body text (excluding outer braces), capped at 1000 chars.
+    """
+    depth = 1
+    pos = body_start
+    limit = min(len(js), body_start + 2000)
+    while pos < limit and depth > 0:
+        ch = js[pos]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        pos += 1
+    return js[body_start : pos - 1][:1000]
+
+
 def _extract_js_summary(js: str, max_chars: int = 4000) -> str:
     """Extract a structural summary of JS code for LLM evaluation.
 
@@ -618,31 +637,44 @@ def _extract_js_summary(js: str, max_chars: int = 4000) -> str:
 
     sections: list[str] = []
 
+    # Key game functions that need deeper body context for semantic eval
+    _KEY_FUNCTIONS = {
+        "update", "draw", "render", "gameLoop", "game_loop",
+        "startGame", "start_game", "restartGame", "restart_game",
+        "gameOver", "game_over", "checkCollision", "check_collision",
+        "handleInput", "handle_input", "moveSnake", "move_snake",
+        "spawnPipe", "spawn_pipe", "clearLines", "clear_lines",
+    }
+
     # 1. Function signatures (named functions + arrow functions)
     func_names: list[str] = []
-    # Named functions with first 2 lines of body
     func_pattern = re.compile(
-        r"(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{([^}]*)",
-        re.DOTALL,
+        r"(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{",
     )
     func_details: list[str] = []
     for m in func_pattern.finditer(js):
         name = m.group(1)
         params = m.group(2).strip()
-        body_preview = m.group(3).strip().split("\n")[:2]
-        body_str = " | ".join(line.strip() for line in body_preview if line.strip())
         func_names.append(name)
 
+        # Extract function body by counting braces
+        body_start = m.end()  # position after opening {
+        func_body = _extract_function_body(js, body_start)
+
+        # Key functions get more context (8 lines), others get 2
+        is_key = name in _KEY_FUNCTIONS
+        max_lines = 8 if is_key else 2
+        body_lines = func_body.strip().split("\n")[:max_lines]
+        body_str = " | ".join(line.strip() for line in body_lines if line.strip())
+
         # Check if function contains canvas calls
-        func_body_start = m.start()
-        # Find matching closing brace (simple heuristic: next 500 chars)
-        func_body = js[func_body_start:func_body_start + 500]
         canvas_in_func = re.findall(
             r"ctx\.(fillRect|clearRect|strokeRect|fillText|strokeText|drawImage|arc|beginPath|moveTo|lineTo|stroke|fill)\b",
             func_body,
         )
-        canvas_note = f" [canvas: {', '.join(set(canvas_in_func))}]" if canvas_in_func else ""
-        func_details.append(f"- {name}({params}){canvas_note}: {body_str[:80]}")
+        canvas_note = f" [canvas: {', '.join(sorted(set(canvas_in_func)))}]" if canvas_in_func else ""
+        max_body = 200 if is_key else 80
+        func_details.append(f"- {name}({params}){canvas_note}: {body_str[:max_body]}")
 
     # Arrow function assignments
     arrow_pattern = re.compile(
