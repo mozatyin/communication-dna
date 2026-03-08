@@ -10,18 +10,20 @@ const EventBus = {
     }
 };
 
+// Make EventBus globally available
+window.eventBus = EventBus;
+
 // Global constants
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
-const PLAYER_SPEED = 5;
-const BULLET_SPEED = 8;
-const ENEMY_SPEED = 2;
+const PLAYER_SPEED = 8;
+const BULLET_SPEED = 12;
+const ENEMY_SPEED = 3;
 
 // Shared state objects
 const GameState = {
     gameStatus: 'menu',
     score: 0,
-    lives: 3,
     level: 1,
     highScore: 0
 };
@@ -29,7 +31,7 @@ const GameState = {
 const PlayerShip = {
     x: 540,
     y: 1700,
-    health: 100,
+    health: 3,
     width: 60,
     height: 80
 };
@@ -51,7 +53,6 @@ const GameStateModule = (function() {
     function init() {
         GameState.gameStatus = 'menu';
         GameState.score = 0;
-        GameState.lives = 3;
         GameState.level = 1;
         GameState.highScore = parseInt(localStorage.getItem('spaceShooterHighScore')) || 0;
         
@@ -71,7 +72,6 @@ const GameStateModule = (function() {
         if (GameState.gameStatus === 'menu') {
             GameState.gameStatus = 'playing';
             GameState.score = 0;
-            GameState.lives = 3;
             GameState.level = 1;
         }
     }
@@ -117,47 +117,39 @@ const GameStateModule = (function() {
     }
     
     function update(dt) {
-        if (GameState.gameStatus === 'playing') {
-            const newLevel = Math.floor(GameState.score / 1000) + 1;
-            if (newLevel > GameState.level) {
-                GameState.level = newLevel;
-            }
-        }
+        // Game state update logic if needed
     }
     
     // Event handlers
-    function handleGameStart() {
+    function handleGameStart(event) {
         startGame();
     }
     
-    function handleGamePause() {
+    function handleGamePause(event) {
         pauseGame();
     }
     
-    function handleGameResume() {
+    function handleGameResume(event) {
         resumeGame();
     }
     
-    function handlePlayerDied() {
-        GameState.lives--;
-        if (GameState.lives <= 0) {
-            gameOver();
-        }
+    function handlePlayerDied(event) {
+        gameOver();
     }
     
-    function handleRetry() {
+    function handleRetry(event) {
         startGame();
     }
     
-    function handleReturnMenu() {
+    function handleReturnMenu(event) {
         returnToMenu();
     }
     
-    function handleShowLeaderboard() {
+    function handleShowLeaderboard(event) {
         showLeaderboard();
     }
     
-    function handleCloseLeaderboard() {
+    function handleCloseLeaderboard(event) {
         returnToMenu();
     }
     
@@ -178,27 +170,22 @@ const GameStateModule = (function() {
     };
 })();
 
-const PlayerShipModule = (function() {
+const player_ship = (function() {
     let lastShotTime = 0;
-    const SHOT_COOLDOWN = 200;
+    const SHOT_COOLDOWN = 200; // milliseconds between shots
 
     function init() {
         PlayerShip.x = 540;
         PlayerShip.y = 1700;
-        PlayerShip.health = 100;
+        PlayerShip.health = 3;
         PlayerShip.width = 60;
         PlayerShip.height = 80;
-        
         PlayerBullets.bullets = [];
-        
-        EventBus.on('PLAYER_MOVE_LEFT', moveLeft);
-        EventBus.on('PLAYER_MOVE_RIGHT', moveRight);
-        EventBus.on('PLAYER_SHOOT', shoot);
+        lastShotTime = 0;
     }
 
     function moveLeft() {
         if (GameState.gameStatus !== 'playing') return;
-        
         PlayerShip.x -= PLAYER_SPEED;
         if (PlayerShip.x < 0) {
             PlayerShip.x = 0;
@@ -207,7 +194,6 @@ const PlayerShipModule = (function() {
 
     function moveRight() {
         if (GameState.gameStatus !== 'playing') return;
-        
         PlayerShip.x += PLAYER_SPEED;
         if (PlayerShip.x > CANVAS_WIDTH - PlayerShip.width) {
             PlayerShip.x = CANVAS_WIDTH - PlayerShip.width;
@@ -221,12 +207,11 @@ const PlayerShipModule = (function() {
         if (currentTime - lastShotTime < SHOT_COOLDOWN) return;
         
         const bullet = {
-            id: 'bullet_' + currentTime + '_' + Math.random(),
             x: PlayerShip.x + PlayerShip.width / 2 - 2,
             y: PlayerShip.y,
+            speed: BULLET_SPEED,
             width: 4,
-            height: 10,
-            speed: BULLET_SPEED
+            height: 10
         };
         
         PlayerBullets.bullets.push(bullet);
@@ -252,66 +237,111 @@ const PlayerShipModule = (function() {
 
     function update(dt) {
         if (GameState.gameStatus !== 'playing') return;
-        
+
+        // Update player bullets
         for (let i = PlayerBullets.bullets.length - 1; i >= 0; i--) {
             const bullet = PlayerBullets.bullets[i];
             bullet.y -= bullet.speed;
             
-            if (bullet.y + bullet.height < 0) {
+            // Remove bullets that are off screen
+            if (bullet.y < -bullet.height) {
                 PlayerBullets.bullets.splice(i, 1);
                 continue;
             }
-            
+
+            // Check collision with enemies
             for (let j = Enemies.enemies.length - 1; j >= 0; j--) {
                 const enemy = Enemies.enemies[j];
                 if (checkBoundingBoxOverlap(bullet, enemy)) {
+                    // Remove bullet
                     PlayerBullets.bullets.splice(i, 1);
                     
-                    enemy.health -= 25;
+                    // Damage enemy
+                    enemy.health -= 1;
+                    
+                    // Check if enemy is destroyed
                     if (enemy.health <= 0) {
+                        const points = enemy.type === 'basic' ? 100 : 200;
                         EventBus.emit('ENEMY_DESTROYED', {
                             enemyId: enemy.id,
-                            points: enemy.points || 100
+                            points: points
                         });
                     }
                     break;
                 }
             }
         }
-        
+
+        // Check collision with enemy bullets
         for (let i = EnemyBullets.bullets.length - 1; i >= 0; i--) {
             const bullet = EnemyBullets.bullets[i];
-            if (checkBoundingBoxOverlap(bullet, PlayerShip)) {
+            const playerRect = {
+                x: PlayerShip.x,
+                y: PlayerShip.y,
+                width: PlayerShip.width,
+                height: PlayerShip.height
+            };
+            
+            if (checkBoundingBoxOverlap(bullet, playerRect)) {
+                // Remove bullet
                 EnemyBullets.bullets.splice(i, 1);
-                takeDamage(10);
-                break;
+                // Damage player
+                takeDamage(1);
             }
         }
-        
+
+        // Check collision with enemies
         for (let i = 0; i < Enemies.enemies.length; i++) {
             const enemy = Enemies.enemies[i];
-            if (checkBoundingBoxOverlap(enemy, PlayerShip)) {
-                takeDamage(20);
-                break;
+            const playerRect = {
+                x: PlayerShip.x,
+                y: PlayerShip.y,
+                width: PlayerShip.width,
+                height: PlayerShip.height
+            };
+            
+            if (checkBoundingBoxOverlap(enemy, playerRect)) {
+                takeDamage(1);
+                break; // Only take damage once per frame
             }
         }
     }
 
     function render(ctx) {
-        if (!ctx) return;
-        
+        if (GameState.gameStatus !== 'playing') return;
+
+        // Render player ship
         ctx.fillStyle = '#00ff00';
         ctx.fillRect(PlayerShip.x, PlayerShip.y, PlayerShip.width, PlayerShip.height);
         
+        // Draw a simple ship shape
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(PlayerShip.x + 25, PlayerShip.y + 10, 10, 30);
-        ctx.fillRect(PlayerShip.x + 10, PlayerShip.y + 50, 40, 20);
-        
+        ctx.beginPath();
+        ctx.moveTo(PlayerShip.x + PlayerShip.width / 2, PlayerShip.y);
+        ctx.lineTo(PlayerShip.x + 10, PlayerShip.y + PlayerShip.height);
+        ctx.lineTo(PlayerShip.x + PlayerShip.width - 10, PlayerShip.y + PlayerShip.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Render player bullets
         ctx.fillStyle = '#ffff00';
         for (const bullet of PlayerBullets.bullets) {
             ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
         }
     }
+
+    // Listen for events
+    EventBus.on('PLAYER_MOVE', (data) => {
+        if (data.direction === 'left') {
+            moveLeft();
+        } else if (data.direction === 'right') {
+            moveRight();
+        }
+    });
+
+    EventBus.on('PLAYER_SHOOT', (data) => {
+        shoot();
+    });
 
     return {
         init,
@@ -324,36 +354,32 @@ const PlayerShipModule = (function() {
     };
 })();
 
-const EnemySystemModule = (function() {
+const EnemySystem = (function() {
     let spawnTimer = 0;
-    let nextEnemyId = 1;
+    let spawnInterval = 2000; // milliseconds
+    let enemyIdCounter = 0;
     
     function init() {
         Enemies.enemies = [];
         EnemyBullets.bullets = [];
         spawnTimer = 0;
-        nextEnemyId = 1;
-        
-        EventBus.on('ENEMY_DESTROYED', function(event) {
-            destroyEnemy(event.enemyId);
-        });
+        enemyIdCounter = 0;
     }
     
     function spawnEnemy(x, y, type) {
         if (GameState.gameStatus !== 'playing') return;
         
         const enemy = {
-            id: 'enemy_' + nextEnemyId++,
+            id: 'enemy_' + (enemyIdCounter++),
             x: x,
             y: y,
             type: type,
-            width: type === 'small' ? 40 : type === 'medium' ? 60 : 80,
-            height: type === 'small' ? 40 : type === 'medium' ? 60 : 80,
-            health: type === 'small' ? 1 : type === 'medium' ? 3 : 5,
-            speed: type === 'small' ? ENEMY_SPEED * 1.5 : type === 'medium' ? ENEMY_SPEED : ENEMY_SPEED * 0.7,
+            health: type === 'basic' ? 1 : type === 'heavy' ? 3 : 1,
+            width: type === 'heavy' ? 80 : 60,
+            height: type === 'heavy' ? 100 : 80,
+            speed: type === 'fast' ? ENEMY_SPEED * 1.5 : ENEMY_SPEED,
             shootTimer: 0,
-            shootInterval: type === 'small' ? 120 : type === 'medium' ? 90 : 60,
-            points: type === 'small' ? 10 : type === 'medium' ? 25 : 50
+            shootInterval: type === 'shooter' ? 1500 : 3000
         };
         
         Enemies.enemies.push(enemy);
@@ -371,84 +397,61 @@ const EnemySystemModule = (function() {
     function update(dt) {
         if (GameState.gameStatus !== 'playing') return;
         
-        spawnTimer++;
-        const spawnRate = Math.max(60 - (GameState.level * 5), 20);
-        if (spawnTimer >= spawnRate) {
+        // Spawn enemies periodically
+        spawnTimer += dt * 1000;
+        if (spawnTimer >= spawnInterval) {
             spawnTimer = 0;
+            
+            // Spawn random enemy type at random x position
             const x = Math.random() * (CANVAS_WIDTH - 80);
-            const types = ['small', 'medium', 'large'];
-            const weights = [0.6, 0.3, 0.1];
-            let rand = Math.random();
-            let type = 'small';
-            if (rand > weights[0]) {
-                type = rand > weights[0] + weights[1] ? 'large' : 'medium';
-            }
-            spawnEnemy(x, -80, type);
+            const types = ['basic', 'fast', 'heavy', 'shooter'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            spawnEnemy(x, -100, type);
+            
+            // Decrease spawn interval slightly each level
+            spawnInterval = Math.max(800, 2000 - (GameState.level * 100));
         }
         
+        // Update enemies
         for (let i = Enemies.enemies.length - 1; i >= 0; i--) {
             const enemy = Enemies.enemies[i];
             
+            // Move enemy down
             enemy.y += enemy.speed;
             
-            if (enemy.y > CANVAS_HEIGHT + 50) {
+            // Remove enemies that are off screen
+            if (enemy.y > CANVAS_HEIGHT + 100) {
                 Enemies.enemies.splice(i, 1);
                 continue;
             }
             
-            enemy.shootTimer++;
-            if (enemy.shootTimer >= enemy.shootInterval) {
-                enemy.shootTimer = 0;
-                shootEnemyBullet(enemy.x + enemy.width / 2, enemy.y + enemy.height);
+            // Enemy shooting logic
+            if (enemy.type === 'shooter' || enemy.type === 'heavy') {
+                enemy.shootTimer += dt * 1000;
+                if (enemy.shootTimer >= enemy.shootInterval) {
+                    enemy.shootTimer = 0;
+                    
+                    // Create enemy bullet
+                    const bullet = {
+                        x: enemy.x + enemy.width / 2,
+                        y: enemy.y + enemy.height,
+                        speed: BULLET_SPEED * 0.7,
+                        width: 8,
+                        height: 16
+                    };
+                    EnemyBullets.bullets.push(bullet);
+                }
             }
         }
         
+        // Update enemy bullets
         for (let i = EnemyBullets.bullets.length - 1; i >= 0; i--) {
             const bullet = EnemyBullets.bullets[i];
-            bullet.y += BULLET_SPEED;
+            bullet.y += bullet.speed;
             
-            if (bullet.y > CANVAS_HEIGHT + 10) {
+            // Remove bullets that are off screen
+            if (bullet.y > CANVAS_HEIGHT + 50) {
                 EnemyBullets.bullets.splice(i, 1);
-            }
-        }
-        
-        checkPlayerBulletCollisions();
-    }
-    
-    function shootEnemyBullet(x, y) {
-        EnemyBullets.bullets.push({
-            x: x - 2,
-            y: y,
-            width: 4,
-            height: 10
-        });
-    }
-    
-    function checkPlayerBulletCollisions() {
-        for (let i = PlayerBullets.bullets.length - 1; i >= 0; i--) {
-            const bullet = PlayerBullets.bullets[i];
-            
-            for (let j = Enemies.enemies.length - 1; j >= 0; j--) {
-                const enemy = Enemies.enemies[j];
-                
-                if (bullet.x < enemy.x + enemy.width &&
-                    bullet.x + bullet.width > enemy.x &&
-                    bullet.y < enemy.y + enemy.height &&
-                    bullet.y + bullet.height > enemy.y) {
-                    
-                    PlayerBullets.bullets.splice(i, 1);
-                    
-                    enemy.health--;
-                    
-                    if (enemy.health <= 0) {
-                        EventBus.emit('ENEMY_DESTROYED', {
-                            enemyId: enemy.id,
-                            points: enemy.points
-                        });
-                    }
-                    
-                    break;
-                }
             }
         }
     }
@@ -456,26 +459,45 @@ const EnemySystemModule = (function() {
     function render(ctx) {
         if (GameState.gameStatus !== 'playing') return;
         
-        ctx.fillStyle = '#ff4444';
-        for (const enemy of Enemies.enemies) {
+        // Render enemies
+        Enemies.enemies.forEach(enemy => {
+            ctx.fillStyle = getEnemyColor(enemy.type);
             ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
             
-            if (enemy.type === 'small') {
-                ctx.fillStyle = '#ff6666';
-            } else if (enemy.type === 'medium') {
-                ctx.fillStyle = '#ff4444';
-            } else {
-                ctx.fillStyle = '#ff2222';
+            // Draw enemy outline
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            
+            // Draw health indicator for heavy enemies
+            if (enemy.type === 'heavy' && enemy.health > 1) {
+                ctx.fillStyle = '#ff0000';
+                const healthBarWidth = (enemy.width * enemy.health) / 3;
+                ctx.fillRect(enemy.x, enemy.y - 10, healthBarWidth, 4);
             }
-            ctx.fillRect(enemy.x + 2, enemy.y + 2, enemy.width - 4, enemy.height - 4);
-            ctx.fillStyle = '#ff4444';
-        }
+        });
         
-        ctx.fillStyle = '#ffaa00';
-        for (const bullet of EnemyBullets.bullets) {
+        // Render enemy bullets
+        ctx.fillStyle = '#ff4444';
+        EnemyBullets.bullets.forEach(bullet => {
             ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        });
+    }
+    
+    function getEnemyColor(type) {
+        switch (type) {
+            case 'basic': return '#ff6666';
+            case 'fast': return '#ffaa66';
+            case 'heavy': return '#aa6666';
+            case 'shooter': return '#ff66aa';
+            default: return '#ff6666';
         }
     }
+    
+    // Listen for ENEMY_DESTROYED events
+    EventBus.on('ENEMY_DESTROYED', function(data) {
+        destroyEnemy(data.enemyId);
+    });
     
     return {
         init,
@@ -486,68 +508,59 @@ const EnemySystemModule = (function() {
     };
 })();
 
-const UIManagerModule = (function() {
-    let keysPressed = {};
-    
+const UIManager = (function() {
     function init() {
-        setupEventListeners();
-    }
-    
-    function setupEventListeners() {
-        document.addEventListener('keydown', (e) => {
-            keysPressed[e.key] = true;
-            handleKeyPress(e.key);
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            keysPressed[e.key] = false;
-        });
-        
-        document.addEventListener('click', (e) => {
-            const rect = e.target.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            handleClick(x, y);
-        });
-        
-        document.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const rect = e.target.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-            handleClick(x, y);
-        });
+        // UI manager initialized
     }
     
     function handleClick(x, y) {
-        if (GameState.gameStatus === 'playing') {
-            EventBus.emit('PLAYER_SHOOT', {});
+        if (GameState.gameStatus === 'menu') {
+            // Start button area (center of screen)
+            if (x >= 390 && x <= 690 && y >= 900 && y <= 1000) {
+                EventBus.emit('GAME_START', {});
+            }
+        } else if (GameState.gameStatus === 'paused') {
+            // Resume button
+            if (x >= 390 && x <= 690 && y >= 800 && y <= 900) {
+                EventBus.emit('GAME_RESUME', {});
+            }
+            // Return to menu button
+            if (x >= 390 && x <= 690 && y >= 1000 && y <= 1100) {
+                EventBus.emit('RETURN_MENU', {});
+            }
+        } else if (GameState.gameStatus === 'game_over') {
+            // Retry button
+            if (x >= 290 && x <= 490 && y >= 1200 && y <= 1300) {
+                EventBus.emit('RETRY', {});
+            }
+            // Menu button
+            if (x >= 590 && x <= 790 && y >= 1200 && y <= 1300) {
+                EventBus.emit('RETURN_MENU', {});
+            }
+            // Leaderboard button
+            if (x >= 390 && x <= 690 && y >= 1350 && y <= 1450) {
+                EventBus.emit('SHOW_LEADERBOARD', {});
+            }
+        } else if (GameState.gameStatus === 'leaderboard') {
+            // Back button
+            if (x >= 390 && x <= 690 && y >= 1600 && y <= 1700) {
+                EventBus.emit('CLOSE_LEADERBOARD', {});
+            }
+        } else if (GameState.gameStatus === 'playing') {
+            EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
         }
     }
     
     function handleKeyPress(key) {
         if (GameState.gameStatus === 'playing') {
-            switch(key) {
-                case 'ArrowLeft':
-                case 'a':
-                case 'A':
-                    EventBus.emit('PLAYER_MOVE_LEFT', {});
-                    break;
-                case 'ArrowRight':
-                case 'd':
-                case 'D':
-                    EventBus.emit('PLAYER_MOVE_RIGHT', {});
-                    break;
-                case ' ':
-                case 'Enter':
-                    EventBus.emit('PLAYER_SHOOT', {});
-                    break;
-                case 'Escape':
-                case 'p':
-                case 'P':
-                    EventBus.emit('GAME_PAUSE', {});
-                    break;
+            if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+                EventBus.emit('PLAYER_MOVE', { direction: 'left' });
+            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+                EventBus.emit('PLAYER_MOVE', { direction: 'right' });
+            } else if (key === ' ' || key === 'Enter') {
+                EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
+            } else if (key === 'Escape' || key === 'p' || key === 'P') {
+                EventBus.emit('GAME_PAUSE', {});
             }
         } else if (GameState.gameStatus === 'paused') {
             if (key === 'Escape' || key === 'p' || key === 'P') {
@@ -557,52 +570,40 @@ const UIManagerModule = (function() {
             if (key === 'Enter' || key === ' ') {
                 EventBus.emit('GAME_START', {});
             }
+        } else if (GameState.gameStatus === 'game_over') {
+            if (key === 'r' || key === 'R') {
+                EventBus.emit('RETRY', {});
+            } else if (key === 'm' || key === 'M') {
+                EventBus.emit('RETURN_MENU', {});
+            }
         }
     }
     
     function update(dt) {
-        if (GameState.gameStatus === 'playing') {
-            if (keysPressed['ArrowLeft'] || keysPressed['a'] || keysPressed['A']) {
-                EventBus.emit('PLAYER_MOVE_LEFT', {});
-            }
-            if (keysPressed['ArrowRight'] || keysPressed['d'] || keysPressed['D']) {
-                EventBus.emit('PLAYER_MOVE_RIGHT', {});
-            }
-        }
-        
         // Update UI elements
-        updateUIElements();
-    }
-    
-    function updateUIElements() {
         const scoreDisplay = document.getElementById('score_display');
         if (scoreDisplay) {
-            scoreDisplay.textContent = `得分: ${GameState.score}`;
-        }
-        
-        const livesDisplay = document.getElementById('lives');
-        if (livesDisplay) {
-            livesDisplay.textContent = '❤'.repeat(Math.max(0, GameState.lives));
+            scoreDisplay.textContent = '得分: ' + GameState.score;
         }
         
         const finalScore = document.getElementById('final_score');
         if (finalScore) {
-            finalScore.textContent = `最终得分: ${GameState.score}`;
+            finalScore.textContent = '最终得分: ' + GameState.score;
         }
         
-        const highScoreDisplay = document.getElementById('high_score_display');
-        if (highScoreDisplay) {
-            highScoreDisplay.textContent = `最高分: ${GameState.highScore}`;
+        const lives = document.getElementById('lives');
+        if (lives) {
+            lives.textContent = '❤'.repeat(Math.max(0, PlayerShip.health));
         }
         
-        const leaderboardHighScore = document.getElementById('leaderboard_high_score');
-        if (leaderboardHighScore) {
-            leaderboardHighScore.textContent = GameState.highScore;
+        const scoreList = document.getElementById('score_list');
+        if (scoreList) {
+            scoreList.innerHTML = `1. ${GameState.highScore}<br>2. 0<br>3. 0<br>4. 0<br>5. 0`;
         }
     }
     
     function render(ctx) {
-        // UI rendering is handled by HTML/CSS
+        // UI rendering handled by HTML/CSS
     }
     
     return {
@@ -635,141 +636,129 @@ function gameLoop(timestamp) {
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     
-    // Update modules in order
-    UIManagerModule.update(dt);
-    PlayerShipModule.update(dt);
-    EnemySystemModule.update(dt);
+    // Update modules in update_order
+    UIManager.update(dt);
+    player_ship.update(dt);
+    EnemySystem.update(dt);
     GameStateModule.update(dt);
     
-    // Render only if playing
+    // Render modules in render_order
     if (GameState.gameStatus === 'playing' && ctx) {
-        // Clear canvas
-        ctx.fillStyle = 'linear-gradient(180deg, #000033 0%, #000066 100%)';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        
-        // Render modules in order
-        EnemySystemModule.render(ctx);
-        PlayerShipModule.render(ctx);
-        UIManagerModule.render(ctx);
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        player_ship.render(ctx);
+        EnemySystem.render(ctx);
+        UIManager.render(ctx);
     }
     
-    if (GameState.gameStatus === 'playing') {
-        requestAnimationFrame(gameLoop);
+    // Handle screen transitions
+    if (GameState.gameStatus === 'menu') {
+        showScreen('main_menu');
+    } else if (GameState.gameStatus === 'playing') {
+        showScreen('gameplay');
+    } else if (GameState.gameStatus === 'game_over') {
+        showScreen('game_over');
+    } else if (GameState.gameStatus === 'leaderboard') {
+        showScreen('leaderboard');
     }
-}
-
-// State transition functions
-function startGameTransition() {
-    GameStateModule.startGame();
-    EventBus.emit('GAME_START', {});
-    showScreen('gameplay');
     
-    // Reset player and enemies
-    PlayerShipModule.init();
-    EnemySystemModule.init();
-    
-    // Start game loop
     requestAnimationFrame(gameLoop);
 }
 
-function gameOverTransition() {
-    GameStateModule.gameOver();
+// State transition functions
+function startGame() {
+    GameState.gameStatus = 'playing';
+    EventBus.emit('GAME_START', {});
+    showScreen('gameplay');
+}
+
+function gameOver() {
+    GameState.gameStatus = 'game_over';
     EventBus.emit('PLAYER_DIED', {});
     showScreen('game_over');
 }
 
-function retryTransition() {
-    GameStateModule.startGame();
+function retry() {
+    GameState.gameStatus = 'playing';
     EventBus.emit('RETRY', {});
     showScreen('gameplay');
-    
-    // Reset player and enemies
-    PlayerShipModule.init();
-    EnemySystemModule.init();
-    
-    // Start game loop
-    requestAnimationFrame(gameLoop);
 }
 
-function returnToMenuTransition() {
-    GameStateModule.returnToMenu();
+function returnToMenu() {
+    GameState.gameStatus = 'menu';
     EventBus.emit('RETURN_MENU', {});
     showScreen('main_menu');
 }
 
-function showLeaderboardTransition() {
-    GameStateModule.showLeaderboard();
+function showLeaderboard() {
+    GameState.gameStatus = 'leaderboard';
     EventBus.emit('SHOW_LEADERBOARD', {});
     showScreen('leaderboard');
 }
 
-function closeLeaderboardTransition() {
-    GameStateModule.returnToMenu();
-    EventBus.emit('CLOSE_LEADERBOARD', {});
-    showScreen('main_menu');
-}
+// Input handlers
+document.addEventListener('keydown', (e) => {
+    UIManager.handleKeyPress(e.key);
+});
 
-// Initialize game
-window.addEventListener('DOMContentLoaded', function() {
-    // Get canvas and context
+document.addEventListener('click', (e) => {
+    const rect = document.body.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    UIManager.handleClick(x, y);
+});
+
+// Touch support
+document.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const rect = document.body.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    UIManager.handleClick(x, y);
+});
+
+// Button event handlers
+document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('gameCanvas');
-    if (canvas) {
-        ctx = canvas.getContext('2d');
-    }
+    ctx = canvas.getContext('2d');
     
-    // Initialize modules in order
+    // Initialize modules in init_order
     GameStateModule.init();
-    PlayerShipModule.init();
-    EnemySystemModule.init();
-    UIManagerModule.init();
+    player_ship.init();
+    EnemySystem.init();
+    UIManager.init();
     
-    // Set up button event listeners
-    const btnPlay = document.getElementById('btn_play');
-    if (btnPlay) {
-        btnPlay.addEventListener('click', startGameTransition);
-    }
+    // Button event listeners
+    document.getElementById('btn_play').addEventListener('click', () => {
+        EventBus.emit('GAME_START', {});
+    });
     
-    const btnLeaderboard = document.getElementById('btn_leaderboard');
-    if (btnLeaderboard) {
-        btnLeaderboard.addEventListener('click', showLeaderboardTransition);
-    }
+    document.getElementById('btn_leaderboard').addEventListener('click', () => {
+        EventBus.emit('SHOW_LEADERBOARD', {});
+    });
     
-    const btnRetry = document.getElementById('btn_retry');
-    if (btnRetry) {
-        btnRetry.addEventListener('click', retryTransition);
-    }
+    document.getElementById('btn_retry').addEventListener('click', () => {
+        EventBus.emit('RETRY', {});
+    });
     
-    const btnLeaderboardGo = document.getElementById('btn_leaderboard_go');
-    if (btnLeaderboardGo) {
-        btnLeaderboardGo.addEventListener('click', showLeaderboardTransition);
-    }
+    document.getElementById('btn_menu').addEventListener('click', () => {
+        EventBus.emit('RETURN_MENU', {});
+    });
     
-    const btnMenu = document.getElementById('btn_menu');
-    if (btnMenu) {
-        btnMenu.addEventListener('click', returnToMenuTransition);
-    }
+    document.getElementById('btn_leaderboard_go').addEventListener('click', () => {
+        EventBus.emit('SHOW_LEADERBOARD', {});
+    });
     
-    const btnBack = document.getElementById('btn_back');
-    if (btnBack) {
-        btnBack.addEventListener('click', closeLeaderboardTransition);
-    }
+    document.getElementById('btn_close').addEventListener('click', () => {
+        EventBus.emit('CLOSE_LEADERBOARD', {});
+    });
     
-    const tapArea = document.getElementById('tap_area');
-    if (tapArea) {
-        tapArea.addEventListener('click', function() {
-            if (GameState.gameStatus === 'playing') {
-                EventBus.emit('PLAYER_SHOOT', {});
-            }
-        });
-    }
-    
-    // Listen for game over condition
-    EventBus.on('PLAYER_DIED', function() {
-        if (GameState.lives <= 0) {
-            setTimeout(gameOverTransition, 1000);
+    document.getElementById('tap_area').addEventListener('click', () => {
+        if (GameState.gameStatus === 'playing') {
+            EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
         }
     });
     
-    // Show initial screen
-    showScreen('main_menu');
+    // Start game loop
+    requestAnimationFrame(gameLoop);
 });

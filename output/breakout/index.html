@@ -9,48 +9,38 @@ index.html
 </head>
 <body>
     <div id="main_menu" class="screen">
-        <div class="bg"></div>
-        <div class="title">打砖块</div>
-        <button id="btn_play" class="btn-primary">开始游戏</button>
-        <button id="btn_leaderboard" class="btn-secondary">排行榜</button>
+        <div id="bg"></div>
+        <div id="title">打砖块</div>
+        <button id="btn_play">开始游戏</button>
+        <button id="btn_leaderboard">排行榜</button>
     </div>
 
     <div id="gameplay" class="screen" style="display:none;">
-        <div class="bg"></div>
-        <div id="score_display" class="hud-text">得分: 0</div>
-        <div id="lives_display" class="hud-text" style="top: 120px;">生命: 3</div>
-        <div id="level_display" class="hud-text" style="top: 180px;">关卡: 1</div>
+        <div id="bg"></div>
+        <div id="score_display">得分: 0</div>
+        <div id="lives_display">生命: 3</div>
         <canvas id="gameCanvas" width="1080" height="1920"></canvas>
-        <div id="tap_area" class="tap-area"></div>
+        <div id="paddle"></div>
+        <div id="ball"></div>
+        <div id="bricks_area"></div>
+        <button id="tap_area"></button>
     </div>
 
     <div id="game_over" class="screen" style="display:none;">
-        <div class="bg dimmed"></div>
-        <div class="game-over-content">
-            <div class="gameover-text">游戏结束</div>
-            <div class="final-score">最终得分: <span id="final_score">0</span></div>
-            <div class="game-over-buttons">
-                <button id="btn_retry" class="btn-primary">重新开始</button>
-                <button id="btn_save_score" class="btn-secondary">保存分数</button>
-                <button id="btn_show_leaderboard" class="btn-secondary">排行榜</button>
-                <button id="btn_return_menu" class="btn-secondary">返回菜单</button>
-            </div>
-            <div id="name_input_area" class="name-input" style="display:none;">
-                <div class="input-label">输入姓名:</div>
-                <input type="text" id="player_name" maxlength="10" placeholder="输入姓名">
-                <button id="btn_confirm_name" class="btn-primary">确认</button>
-            </div>
-        </div>
+        <div id="bg"></div>
+        <div id="gameover_text">游戏结束</div>
+        <div id="final_score">最终得分: 0</div>
+        <button id="btn_retry">重新开始</button>
+        <button id="btn_menu">返回菜单</button>
+        <button id="btn_leaderboard_gameover">排行榜</button>
     </div>
 
     <div id="leaderboard" class="screen" style="display:none;">
-        <div class="bg"></div>
-        <div class="leaderboard-content">
-            <div class="leaderboard-title">排行榜</div>
-            <div id="leaderboard_list" class="leaderboard-list">
-                <div class="no-scores">暂无记录</div>
-            </div>
-            <button id="btn_back_to_menu" class="btn-primary">返回菜单</button>
+        <div id="bg"></div>
+        <div id="panel_bg">
+            <div id="title">排行榜</div>
+            <div id="score_list"></div>
+            <button id="btn_close">关闭</button>
         </div>
     </div>
 

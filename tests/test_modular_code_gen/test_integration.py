@@ -238,7 +238,7 @@ def test_full_pipeline_mocked():
     mock_decomp.return_value.decompose.assert_called_once()
     mock_arch_cls.return_value.design.assert_called_once()
     mock_gen_cls.return_value.generate_all_parallel.assert_called_once()
-    mock_asm_cls.return_value.assemble.assert_called_once()
+    assert mock_asm_cls.return_value.assemble.call_count == 2  # best-of-2 assembly
 
 
 # ── Real API integration test ────────────────────────────────────────────────

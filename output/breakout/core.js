@@ -10,6 +10,9 @@ const EventBus = {
     }
 };
 
+// Make EventBus globally available
+window.eventBus = EventBus;
+
 // Global constants
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
@@ -36,9 +39,6 @@ const GameState = {
     activeBricks: 0,
     inputX: 0
 };
-
-// Make EventBus globally available
-window.eventBus = EventBus;
 
 // Module code
 const game_state = (function() {
@@ -68,18 +68,12 @@ const game_state = (function() {
     }
 
     function startGame() {
-        if (GameState.gameStatus === 'menu' || GameState.gameStatus === 'game_over') {
+        if (GameState.gameStatus === 'menu') {
             GameState.gameStatus = 'playing';
             GameState.score = 0;
             GameState.lives = 3;
             GameState.level = 1;
-            GameState.ballX = 540;
-            GameState.ballY = 1500;
-            GameState.ballVelX = 300;
-            GameState.ballVelY = -300;
-            GameState.paddleX = 490;
-            GameState.paddleY = 1800;
-            GameState.inputX = 0;
+            resetGameObjects();
         }
     }
 
@@ -103,7 +97,7 @@ const game_state = (function() {
     }
 
     function returnToMenu() {
-        if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'leaderboard') {
+        if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'menu';
         }
     }
@@ -120,7 +114,7 @@ const game_state = (function() {
             if (GameState.lives <= 0) {
                 endGame();
             } else {
-                physics_engine.resetBall();
+                resetBallPosition();
             }
         }
     }
@@ -128,16 +122,27 @@ const game_state = (function() {
     function nextLevel() {
         if (GameState.gameStatus === 'playing') {
             GameState.level += 1;
-            game_objects.resetLevel();
-            physics_engine.resetBall();
+            resetBallPosition();
         }
     }
 
-    function update(dt) {
-        // Game state update logic runs regardless of game status
+    function resetGameObjects() {
+        GameState.ballX = 540;
+        GameState.ballY = 1500;
+        GameState.ballVelX = 300;
+        GameState.ballVelY = -300;
+        GameState.paddleX = 490;
+        GameState.paddleY = 1800;
+        GameState.inputX = 0;
     }
 
-    // Event handlers
+    function resetBallPosition() {
+        GameState.ballX = 540;
+        GameState.ballY = 1500;
+        GameState.ballVelX = 300;
+        GameState.ballVelY = -300;
+    }
+
     function handleGameStart(event) {
         startGame();
     }
@@ -151,7 +156,13 @@ const game_state = (function() {
     }
 
     function handleRetry(event) {
-        startGame();
+        if (GameState.gameStatus === 'game_over') {
+            GameState.gameStatus = 'playing';
+            GameState.score = 0;
+            GameState.lives = 3;
+            GameState.level = 1;
+            resetGameObjects();
+        }
     }
 
     function handleReturnMenu(event) {
@@ -159,16 +170,26 @@ const game_state = (function() {
     }
 
     function handleBrickDestroyed(event) {
-        const { points } = event;
-        addScore(points);
+        if (GameState.gameStatus === 'playing') {
+            addScore(event.points);
+        }
     }
 
     function handleBallLost(event) {
-        loseLife();
+        if (GameState.gameStatus === 'playing') {
+            loseLife();
+        }
     }
 
     function handleLevelComplete(event) {
-        nextLevel();
+        if (GameState.gameStatus === 'playing') {
+            nextLevel();
+        }
+    }
+
+    function update(dt) {
+        // Game state logic runs regardless of game status
+        // Most state changes are event-driven
     }
 
     return {
@@ -188,10 +209,20 @@ const game_state = (function() {
 const game_objects = (function() {
     let paddle;
     let ball;
-    let bricks = [];
-    let brickIdCounter = 0;
+    let bricks = new Map();
+    let eventBus;
 
     function init() {
+        // Initialize event bus
+        if (typeof window !== 'undefined' && window.eventBus) {
+            eventBus = window.eventBus;
+        } else {
+            eventBus = {
+                emit: function() {},
+                on: function() {}
+            };
+        }
+
         // Initialize paddle
         paddle = {
             x: GameState.paddleX,
@@ -207,84 +238,94 @@ const game_objects = (function() {
             radius: BALL_RADIUS
         };
 
-        // Initialize bricks
+        // Initialize bricks for level 1
         resetLevel();
+
+        // Listen for BRICK_DESTROYED events to update our brick collection
+        eventBus.on('BRICK_DESTROYED', function(data) {
+            if (bricks.has(data.brickId)) {
+                bricks.delete(data.brickId);
+                GameState.activeBricks = bricks.size;
+                
+                // Check if level is complete
+                if (bricks.size === 0) {
+                    eventBus.emit('LEVEL_COMPLETE', {});
+                }
+            }
+        });
     }
 
     function updatePaddle(inputX) {
         if (GameState.gameStatus !== 'playing') return;
         
         // Update paddle position based on input, keeping it within screen bounds
-        let newX = inputX;
-        newX = Math.max(0, Math.min(CANVAS_WIDTH - PADDLE_WIDTH, newX));
+        paddle.x = Math.max(0, Math.min(CANVAS_WIDTH - PADDLE_WIDTH, inputX));
         
-        GameState.paddleX = newX;
-        paddle.x = newX;
+        // Update shared state
+        GameState.paddleX = paddle.x;
     }
 
     function destroyBrick(brickId) {
-        const brickIndex = bricks.findIndex(brick => brick.id === brickId);
-        if (brickIndex === -1) return 0;
+        if (!bricks.has(brickId)) return 0;
         
-        const brick = bricks[brickIndex];
+        const brick = bricks.get(brickId);
         const points = brick.points;
         
-        // Remove brick from array
-        bricks.splice(brickIndex, 1);
-        
-        // Update active brick count
-        GameState.activeBricks = bricks.length;
+        bricks.delete(brickId);
+        GameState.activeBricks = bricks.size;
         
         // Check if level is complete
-        if (bricks.length === 0) {
-            EventBus.emit('LEVEL_COMPLETE', {});
+        if (bricks.size === 0) {
+            eventBus.emit('LEVEL_COMPLETE', {});
         }
         
         return points;
     }
 
     function resetLevel() {
-        bricks = [];
-        brickIdCounter = 0;
+        bricks.clear();
         
-        // Create brick grid based on current level
-        const startY = 300;
-        const startX = (CANVAS_WIDTH - (BRICK_COLS * BRICK_WIDTH)) / 2;
+        // Create brick layout based on current level
+        const level = GameState.level;
+        const startY = 100;
+        const brickSpacing = 5;
+        const totalBrickWidth = BRICK_COLS * BRICK_WIDTH + (BRICK_COLS - 1) * brickSpacing;
+        const startX = (CANVAS_WIDTH - totalBrickWidth) / 2;
         
         for (let row = 0; row < BRICK_ROWS; row++) {
             for (let col = 0; col < BRICK_COLS; col++) {
+                const brickId = `brick_${row}_${col}`;
                 const brick = {
-                    id: `brick_${brickIdCounter++}`,
-                    x: startX + col * BRICK_WIDTH,
-                    y: startY + row * BRICK_HEIGHT,
+                    id: brickId,
+                    x: startX + col * (BRICK_WIDTH + brickSpacing),
+                    y: startY + row * (BRICK_HEIGHT + brickSpacing),
                     width: BRICK_WIDTH,
                     height: BRICK_HEIGHT,
-                    points: (BRICK_ROWS - row) * 10,
-                    color: getBrickColor(row),
-                    active: true
+                    points: (BRICK_ROWS - row) * 10 * level, // Higher rows worth more points, scaled by level
+                    color: getColorForRow(row)
                 };
-                bricks.push(brick);
+                bricks.set(brickId, brick);
             }
         }
         
-        GameState.activeBricks = bricks.length;
+        GameState.activeBricks = bricks.size;
     }
 
-    function getBrickColor(row) {
+    function getColorForRow(row) {
         const colors = ['#ff0000', '#ff8800', '#ffff00', '#88ff00', '#00ff00', '#00ff88', '#0088ff', '#0000ff'];
         return colors[row % colors.length];
     }
 
     function getAllBricks() {
-        return bricks.slice();
+        return Array.from(bricks.values());
     }
 
     function getPaddle() {
         return {
-            x: GameState.paddleX,
-            y: GameState.paddleY,
-            width: PADDLE_WIDTH,
-            height: PADDLE_HEIGHT
+            x: paddle.x,
+            y: paddle.y,
+            width: paddle.width,
+            height: paddle.height
         };
     }
 
@@ -292,23 +333,21 @@ const game_objects = (function() {
         return {
             x: GameState.ballX,
             y: GameState.ballY,
-            radius: BALL_RADIUS
+            radius: ball.radius
         };
     }
 
     function update(dt) {
-        // Update paddle position from input
-        if (GameState.gameStatus === 'playing') {
-            updatePaddle(GameState.inputX);
-        }
-        
-        // Update paddle position from GameState
+        // Update paddle position from shared state
         paddle.x = GameState.paddleX;
         paddle.y = GameState.paddleY;
         
-        // Update ball position from GameState
+        // Update ball position from shared state
         ball.x = GameState.ballX;
         ball.y = GameState.ballY;
+        
+        // Update paddle based on input
+        updatePaddle(GameState.inputX);
     }
 
     return {
@@ -324,26 +363,46 @@ const game_objects = (function() {
 })();
 
 const physics_engine = (function() {
+    let eventBus;
+    
     function init() {
-        // Physics engine initialized
+        eventBus = window.eventBus || {
+            emit: function(eventName, payload) {
+                console.log('Event emitted:', eventName, payload);
+            }
+        };
     }
-
+    
+    function update(deltaTime) {
+        if (GameState.gameStatus === 'playing') {
+            updateBallPosition(deltaTime);
+            checkCollisions();
+        }
+    }
+    
     function updateBallPosition(deltaTime) {
         if (GameState.gameStatus !== 'playing') return;
         
         GameState.ballX += GameState.ballVelX * deltaTime;
         GameState.ballY += GameState.ballVelY * deltaTime;
     }
-
+    
     function checkCollisions() {
         if (GameState.gameStatus !== 'playing') return;
         
+        // Check wall collisions
         checkWallCollisions();
+        
+        // Check bottom boundary
         checkBottomBoundary();
+        
+        // Check paddle collision
         checkPaddleCollision();
+        
+        // Check brick collisions
         checkBrickCollisions();
     }
-
+    
     function checkWallCollisions() {
         // Left wall
         if (GameState.ballX - BALL_RADIUS <= 0) {
@@ -363,43 +422,44 @@ const physics_engine = (function() {
             GameState.ballVelY = Math.abs(GameState.ballVelY);
         }
     }
-
+    
     function checkBottomBoundary() {
         if (GameState.ballY > CANVAS_HEIGHT) {
-            EventBus.emit('BALL_LOST', {});
+            eventBus.emit('BALL_LOST', {});
         }
     }
-
+    
     function checkPaddleCollision() {
         const paddle = game_objects.getPaddle();
         
-        // Check if ball is in paddle area
-        if (GameState.ballY + BALL_RADIUS >= paddle.y &&
+        // Check if ball overlaps with paddle
+        if (GameState.ballX + BALL_RADIUS >= paddle.x &&
+            GameState.ballX - BALL_RADIUS <= paddle.x + PADDLE_WIDTH &&
+            GameState.ballY + BALL_RADIUS >= paddle.y &&
             GameState.ballY - BALL_RADIUS <= paddle.y + PADDLE_HEIGHT &&
-            GameState.ballX + BALL_RADIUS >= paddle.x &&
-            GameState.ballX - BALL_RADIUS <= paddle.x + PADDLE_WIDTH) {
+            GameState.ballVelY > 0) {
             
             // Reverse Y direction
             GameState.ballVelY = -Math.abs(GameState.ballVelY);
             
             // Adjust X direction based on hit position
             const hitPosition = (GameState.ballX - paddle.x) / PADDLE_WIDTH;
-            const angle = (hitPosition - 0.5) * Math.PI / 3;
+            const angle = (hitPosition - 0.5) * Math.PI / 3; // Max 60 degrees
             const speed = Math.sqrt(GameState.ballVelX * GameState.ballVelX + GameState.ballVelY * GameState.ballVelY);
             
-            GameState.ballVelX = speed * Math.sin(angle);
-            GameState.ballVelY = -Math.abs(speed * Math.cos(angle));
+            GameState.ballVelX = Math.sin(angle) * speed;
+            GameState.ballVelY = -Math.abs(Math.cos(angle) * speed);
             
             // Ensure ball is above paddle
             GameState.ballY = paddle.y - BALL_RADIUS;
         }
     }
-
+    
     function checkBrickCollisions() {
         const bricks = game_objects.getAllBricks();
         
         for (let brick of bricks) {
-            if (!brick.active) continue;
+            if (brick.destroyed) continue;
             
             // Check bounding box overlap
             if (GameState.ballX + BALL_RADIUS >= brick.x &&
@@ -421,46 +481,59 @@ const physics_engine = (function() {
                 
                 // Reverse ball direction based on collision side
                 if (overlapX < overlapY) {
+                    // Hit from left or right
                     GameState.ballVelX = -GameState.ballVelX;
                 } else {
+                    // Hit from top or bottom
                     GameState.ballVelY = -GameState.ballVelY;
                 }
                 
                 // Destroy brick and emit event
                 const points = game_objects.destroyBrick(brick.id);
-                EventBus.emit('BRICK_DESTROYED', { brickId: brick.id, points: points });
+                eventBus.emit('BRICK_DESTROYED', {
+                    brickId: brick.id,
+                    points: points
+                });
                 
-                break;
+                break; // Only handle one collision per frame
             }
         }
     }
-
+    
     function resetBall() {
         GameState.ballX = 540;
         GameState.ballY = 1500;
         GameState.ballVelX = 300;
         GameState.ballVelY = -300;
     }
-
-    function update(deltaTime) {
-        if (GameState.gameStatus === 'playing') {
-            updateBallPosition(deltaTime);
-            checkCollisions();
-        }
-    }
-
+    
     return {
         init,
+        update,
         updateBallPosition,
         checkCollisions,
-        resetBall,
-        update
+        resetBall
     };
 })();
 
 const ui_manager = (function() {
     let leaderboard = [];
+    let currentScreen = 'menu';
+    let menuSelection = 0;
+    let gameOverSelection = 0;
+    let leaderboardSelection = 0;
+    let nameInput = '';
+    let enteringName = false;
     let canvas, ctx;
+    
+    const eventBus = window.eventBus || {
+        emit: function(event, payload) {
+            console.log('Event emitted:', event, payload);
+        },
+        on: function(event, callback) {
+            console.log('Event listener added:', event);
+        }
+    };
 
     function init() {
         canvas = document.getElementById('gameCanvas');
@@ -472,121 +545,189 @@ const ui_manager = (function() {
             leaderboard = JSON.parse(savedLeaderboard);
         }
         
-        setupEventListeners();
-        
         // Listen for game events
-        EventBus.on('GAME_OVER', handleGameOver);
+        eventBus.on('GAME_OVER', handleGameOver);
+        eventBus.on('SHOW_LEADERBOARD', showLeaderboard);
+        eventBus.on('CLOSE_LEADERBOARD', hideLeaderboard);
     }
 
-    function setupEventListeners() {
-        // Mouse/touch input for paddle control
-        const tapArea = document.getElementById('tap_area');
-        
-        tapArea.addEventListener('mousemove', (e) => {
-            if (GameState.gameStatus === 'playing') {
-                const rect = tapArea.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const normalizedX = (mouseX / rect.width) * CANVAS_WIDTH;
-                GameState.inputX = normalizedX - PADDLE_WIDTH / 2;
-            }
-        });
-
-        tapArea.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (GameState.gameStatus === 'playing') {
-                const rect = tapArea.getBoundingClientRect();
-                const touch = e.touches[0];
-                const touchX = touch.clientX - rect.left;
-                const normalizedX = (touchX / rect.width) * CANVAS_WIDTH;
-                GameState.inputX = normalizedX - PADDLE_WIDTH / 2;
-            }
-        });
-
-        // Keyboard input
-        document.addEventListener('keydown', (e) => {
-            if (GameState.gameStatus === 'playing') {
-                switch(e.key) {
-                    case 'ArrowLeft':
-                        GameState.inputX = Math.max(0, GameState.paddleX - 50);
-                        break;
-                    case 'ArrowRight':
-                        GameState.inputX = Math.min(CANVAS_WIDTH - PADDLE_WIDTH, GameState.paddleX + 50);
-                        break;
-                }
-            }
-        });
+    function handleGameOver() {
+        enteringName = true;
+        nameInput = '';
+        gameOverSelection = 0;
     }
 
     function handleInput(inputType, inputValue) {
-        if (inputType === 'mouse_x' && GameState.gameStatus === 'playing') {
-            GameState.inputX = Math.max(0, Math.min(CANVAS_WIDTH - PADDLE_WIDTH, inputValue - PADDLE_WIDTH / 2));
+        if (inputType === 'mouse_x') {
+            GameState.inputX = inputValue;
+            return;
+        }
+
+        if (GameState.gameStatus === 'menu') {
+            handleMenuInput(inputType, inputValue);
+        } else if (GameState.gameStatus === 'playing') {
+            handleGameInput(inputType, inputValue);
+        } else if (GameState.gameStatus === 'paused') {
+            handlePausedInput(inputType, inputValue);
+        } else if (GameState.gameStatus === 'game_over') {
+            handleGameOverInput(inputType, inputValue);
+        } else if (GameState.gameStatus === 'leaderboard') {
+            handleLeaderboardInput(inputType, inputValue);
+        }
+    }
+
+    function handleMenuInput(inputType, inputValue) {
+        if (inputType === 'key_down') {
+            if (inputValue === 38) { // Up arrow
+                menuSelection = Math.max(0, menuSelection - 1);
+            } else if (inputValue === 40) { // Down arrow
+                menuSelection = Math.min(2, menuSelection + 1);
+            } else if (inputValue === 13 || inputValue === 32) { // Enter or Space
+                if (menuSelection === 0) {
+                    eventBus.emit('GAME_START', {});
+                } else if (menuSelection === 1) {
+                    showLeaderboard();
+                } else if (menuSelection === 2) {
+                    // Quit - could close window or show quit confirmation
+                }
+            }
+        }
+    }
+
+    function handleGameInput(inputType, inputValue) {
+        if (inputType === 'key_down') {
+            if (inputValue === 27) { // Escape
+                eventBus.emit('GAME_PAUSE', {});
+            }
+        }
+    }
+
+    function handlePausedInput(inputType, inputValue) {
+        if (inputType === 'key_down') {
+            if (inputValue === 27 || inputValue === 13 || inputValue === 32) { // Escape, Enter, or Space
+                eventBus.emit('GAME_RESUME', {});
+            }
+        }
+    }
+
+    function handleGameOverInput(inputType, inputValue) {
+        if (enteringName) {
+            if (inputType === 'key_down') {
+                if (inputValue === 13) { // Enter
+                    if (nameInput.trim().length > 0) {
+                        saveScore(nameInput.trim(), GameState.score);
+                        enteringName = false;
+                    }
+                } else if (inputValue === 8) { // Backspace
+                    nameInput = nameInput.slice(0, -1);
+                } else if (inputValue >= 32 && inputValue <= 126 && nameInput.length < 10) {
+                    nameInput += String.fromCharCode(inputValue);
+                }
+            }
+        } else {
+            if (inputType === 'key_down') {
+                if (inputValue === 38) { // Up arrow
+                    gameOverSelection = Math.max(0, gameOverSelection - 1);
+                } else if (inputValue === 40) { // Down arrow
+                    gameOverSelection = Math.min(2, gameOverSelection + 1);
+                } else if (inputValue === 13 || inputValue === 32) { // Enter or Space
+                    if (gameOverSelection === 0) {
+                        eventBus.emit('RETRY', {});
+                    } else if (gameOverSelection === 1) {
+                        showLeaderboard();
+                    } else if (gameOverSelection === 2) {
+                        eventBus.emit('RETURN_MENU', {});
+                    }
+                }
+            }
+        }
+    }
+
+    function handleLeaderboardInput(inputType, inputValue) {
+        if (inputType === 'key_down') {
+            if (inputValue === 27 || inputValue === 13 || inputValue === 32) { // Escape, Enter, or Space
+                hideLeaderboard();
+            }
         }
     }
 
     function showLeaderboard() {
         if (GameState.gameStatus === 'menu' || GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'leaderboard';
-            updateLeaderboardDisplay();
-            EventBus.emit('SHOW_LEADERBOARD', {});
+            currentScreen = 'leaderboard';
         }
     }
 
     function hideLeaderboard() {
         if (GameState.gameStatus === 'leaderboard') {
             GameState.gameStatus = 'menu';
-            EventBus.emit('CLOSE_LEADERBOARD', {});
+            currentScreen = 'menu';
         }
     }
 
     function saveScore(playerName, score) {
-        if (playerName && score > 0) {
-            const newEntry = { 
-                name: playerName, 
-                score: score, 
-                date: new Date().toLocaleDateString() 
-            };
+        if (GameState.gameStatus === 'game_over') {
+            const newEntry = { name: playerName, score: score, date: new Date().toLocaleDateString() };
             leaderboard.push(newEntry);
             leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 10);
+            leaderboard = leaderboard.slice(0, 10); // Keep top 10
             
             localStorage.setItem('breakout_leaderboard', JSON.stringify(leaderboard));
-            updateLeaderboardDisplay();
         }
     }
 
-    function updateLeaderboardDisplay() {
-        const listElement = document.getElementById('leaderboard_list');
-        if (leaderboard.length === 0) {
-            listElement.innerHTML = '<div class="no-scores">暂无记录</div>';
-        } else {
-            listElement.innerHTML = leaderboard.map((entry, index) => 
-                `<div class="leaderboard-entry">
-                    <span class="leaderboard-rank">${index + 1}.</span>
-                    <span class="leaderboard-name">${entry.name}</span>
-                    <span class="leaderboard-score">${entry.score}</span>
-                </div>`
-            ).join('');
+    function update(deltaTime) {
+        // Update UI elements
+        updateScoreDisplay();
+        updateLivesDisplay();
+        updateBallPosition();
+        updatePaddlePosition();
+    }
+
+    function updateScoreDisplay() {
+        const scoreDisplay = document.getElementById('score_display');
+        if (scoreDisplay) {
+            scoreDisplay.textContent = `得分: ${GameState.score}`;
         }
     }
 
-    function handleGameOver() {
-        document.getElementById('final_score').textContent = GameState.score;
+    function updateLivesDisplay() {
+        const livesDisplay = document.getElementById('lives_display');
+        if (livesDisplay) {
+            livesDisplay.textContent = `生命: ${GameState.lives}`;
+        }
     }
 
-    function update(dt) {
-        // Update HUD
-        document.getElementById('score_display').textContent = `得分: ${GameState.score}`;
-        document.getElementById('lives_display').textContent = `生命: ${GameState.lives}`;
-        document.getElementById('level_display').textContent = `关卡: ${GameState.level}`;
+    function updateBallPosition() {
+        const ball = document.getElementById('ball');
+        if (ball) {
+            ball.style.left = `${(GameState.ballX / CANVAS_WIDTH) * 100}vw`;
+            ball.style.top = `${(GameState.ballY / CANVAS_HEIGHT) * 100}vh`;
+        }
+    }
+
+    function updatePaddlePosition() {
+        const paddle = document.getElementById('paddle');
+        if (paddle) {
+            paddle.style.left = `${(GameState.paddleX / CANVAS_WIDTH) * 100}vw`;
+        }
     }
 
     function render(ctx) {
-        if (GameState.gameStatus !== 'playing') return;
+        if (!ctx) return;
         
-        // Clear canvas
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+        if (GameState.gameStatus === 'playing') {
+            renderGame(ctx);
+        } else if (GameState.gameStatus === 'paused') {
+            renderGame(ctx);
+            renderPauseOverlay(ctx);
+        }
+    }
+
+    function renderGame(ctx) {
         // Render game objects
         renderBall(ctx);
         renderPaddle(ctx);
@@ -594,7 +735,7 @@ const ui_manager = (function() {
     }
 
     function renderBall(ctx) {
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(GameState.ballX, GameState.ballY, BALL_RADIUS, 0, Math.PI * 2);
         ctx.fill();
@@ -607,16 +748,25 @@ const ui_manager = (function() {
 
     function renderBricks(ctx) {
         const bricks = game_objects.getAllBricks();
-        for (const brick of bricks) {
-            if (brick.active) {
-                ctx.fillStyle = brick.color || '#FF0000';
-                ctx.fillRect(brick.x, brick.y, BRICK_WIDTH, BRICK_HEIGHT);
-                
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(brick.x, brick.y, BRICK_WIDTH, BRICK_HEIGHT);
-            }
+        for (let brick of bricks) {
+            ctx.fillStyle = brick.color || '#f80';
+            ctx.fillRect(brick.x, brick.y, BRICK_WIDTH, BRICK_HEIGHT);
+            ctx.strokeStyle = '#000';
+            ctx.strokeRect(brick.x, brick.y, BRICK_WIDTH, BRICK_HEIGHT);
         }
+    }
+
+    function renderPauseOverlay(ctx) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = '48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+        
+        ctx.font = '24px Arial';
+        ctx.fillText('Press ESC or ENTER to resume', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 80);
     }
 
     return {
@@ -643,49 +793,10 @@ function showScreen(screenId) {
     }
 }
 
-// State transition functions
-function startGame() {
-    GameState.gameStatus = 'playing';
-    EventBus.emit('GAME_START', {});
-    showScreen('gameplay');
-}
-
-function gameOver() {
-    GameState.gameStatus = 'game_over';
-    EventBus.emit('GAME_OVER', {});
-    showScreen('game_over');
-}
-
-function retry() {
-    GameState.gameStatus = 'playing';
-    EventBus.emit('RETRY', {});
-    showScreen('gameplay');
-}
-
-function returnToMenu() {
-    GameState.gameStatus = 'menu';
-    EventBus.emit('RETURN_MENU', {});
-    showScreen('main_menu');
-}
-
-function showLeaderboardScreen() {
-    GameState.gameStatus = 'leaderboard';
-    ui_manager.showLeaderboard();
-    showScreen('leaderboard');
-}
-
-function hideLeaderboardScreen() {
-    GameState.gameStatus = 'menu';
-    ui_manager.hideLeaderboard();
-    showScreen('main_menu');
-}
-
 // Game loop
 let lastTime = 0;
-let gameLoopId;
-
 function gameLoop(timestamp) {
-    const dt = Math.min((timestamp - lastTime) / 1000, 0.016);
+    const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     
     // Update modules in order
@@ -699,62 +810,131 @@ function gameLoop(timestamp) {
     const ctx = canvas.getContext('2d');
     ui_manager.render(ctx);
     
-    // Continue loop if playing
-    if (GameState.gameStatus === 'playing') {
-        gameLoopId = requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
+}
+
+// State transitions
+function startGame() {
+    GameState.gameStatus = 'playing';
+    EventBus.emit('GAME_START', {});
+    showScreen('gameplay');
+    game_objects.resetLevel();
+}
+
+function gameOver() {
+    GameState.gameStatus = 'game_over';
+    EventBus.emit('GAME_OVER', {});
+    showScreen('game_over');
+    document.getElementById('final_score').textContent = `最终得分: ${GameState.score}`;
+}
+
+function retry() {
+    GameState.gameStatus = 'playing';
+    EventBus.emit('RETRY', {});
+    showScreen('gameplay');
+    game_objects.resetLevel();
+}
+
+function returnToMenu() {
+    GameState.gameStatus = 'menu';
+    EventBus.emit('RETURN_MENU', {});
+    showScreen('main_menu');
+}
+
+function showLeaderboardScreen() {
+    GameState.gameStatus = 'leaderboard';
+    EventBus.emit('SHOW_LEADERBOARD', {});
+    showScreen('leaderboard');
+    updateLeaderboardDisplay();
+}
+
+function hideLeaderboardScreen() {
+    GameState.gameStatus = 'menu';
+    EventBus.emit('CLOSE_LEADERBOARD', {});
+    showScreen('main_menu');
+}
+
+function updateLeaderboardDisplay() {
+    const scoreList = document.getElementById('score_list');
+    const savedLeaderboard = localStorage.getItem('breakout_leaderboard');
+    let leaderboard = [];
+    
+    if (savedLeaderboard) {
+        leaderboard = JSON.parse(savedLeaderboard);
+    }
+    
+    if (leaderboard.length === 0) {
+        scoreList.innerHTML = '暂无记录';
+    } else {
+        let html = '';
+        for (let i = 0; i < Math.min(10, leaderboard.length); i++) {
+            const entry = leaderboard[i];
+            html += `<div>${i + 1}. ${entry.name} - ${entry.score}</div>`;
+        }
+        scoreList.innerHTML = html;
     }
 }
 
-// Initialize game
+// Input handlers
+let mouseX = 0;
+document.addEventListener('mousemove', (e) => {
+    const rect = document.body.getBoundingClientRect();
+    mouseX = (e.clientX / rect.width) * CANVAS_WIDTH;
+    GameState.inputX = mouseX - PADDLE_WIDTH / 2;
+});
+
+document.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const rect = document.body.getBoundingClientRect();
+    const touch = e.touches[0];
+    mouseX = (touch.clientX / rect.width) * CANVAS_WIDTH;
+    GameState.inputX = mouseX - PADDLE_WIDTH / 2;
+});
+
+document.addEventListener('keydown', (e) => {
+    if (GameState.gameStatus === 'playing') {
+        if (e.key === 'ArrowLeft') {
+            GameState.inputX = Math.max(0, GameState.inputX - 20);
+        } else if (e.key === 'ArrowRight') {
+            GameState.inputX = Math.min(CANVAS_WIDTH - PADDLE_WIDTH, GameState.inputX + 20);
+        }
+    }
+});
+
+// Event listeners
+EventBus.on('GAME_OVER', gameOver);
+
+// Button event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize modules in order
+    // Main menu buttons
+    document.getElementById('btn_play').addEventListener('click', startGame);
+    document.getElementById('btn_leaderboard').addEventListener('click', showLeaderboardScreen);
+    
+    // Game over buttons
+    document.getElementById('btn_retry').addEventListener('click', retry);
+    document.getElementById('btn_menu').addEventListener('click', returnToMenu);
+    document.getElementById('btn_leaderboard_gameover').addEventListener('click', showLeaderboardScreen);
+    
+    // Leaderboard button
+    document.getElementById('btn_close').addEventListener('click', hideLeaderboardScreen);
+    
+    // Tap area for mobile
+    document.getElementById('tap_area').addEventListener('click', (e) => {
+        const rect = e.target.getBoundingClientRect();
+        mouseX = (e.clientX / rect.width) * CANVAS_WIDTH;
+        GameState.inputX = mouseX - PADDLE_WIDTH / 2;
+    });
+});
+
+// Initialize modules
+document.addEventListener('DOMContentLoaded', () => {
     game_state.init();
     game_objects.init();
     physics_engine.init();
     ui_manager.init();
     
-    // Set up button event listeners
-    document.getElementById('btn_play').addEventListener('click', startGame);
-    document.getElementById('btn_leaderboard').addEventListener('click', showLeaderboardScreen);
-    document.getElementById('btn_retry').addEventListener('click', retry);
-    document.getElementById('btn_return_menu').addEventListener('click', returnToMenu);
-    document.getElementById('btn_show_leaderboard').addEventListener('click', showLeaderboardScreen);
-    document.getElementById('btn_back_to_menu').addEventListener('click', hideLeaderboardScreen);
-    
-    // Save score functionality
-    document.getElementById('btn_save_score').addEventListener('click', () => {
-        document.getElementById('name_input_area').style.display = 'block';
-    });
-    
-    document.getElementById('btn_confirm_name').addEventListener('click', () => {
-        const playerName = document.getElementById('player_name').value.trim();
-        if (playerName) {
-            ui_manager.saveScore(playerName, GameState.score);
-            document.getElementById('name_input_area').style.display = 'none';
-            document.getElementById('player_name').value = '';
-        }
-    });
-    
-    // Listen for game state changes to manage game loop
-    EventBus.on('GAME_START', () => {
-        if (gameLoopId) cancelAnimationFrame(gameLoopId);
-        lastTime = performance.now();
-        gameLoopId = requestAnimationFrame(gameLoop);
-    });
-    
-    EventBus.on('RETRY', () => {
-        if (gameLoopId) cancelAnimationFrame(gameLoopId);
-        lastTime = performance.now();
-        gameLoopId = requestAnimationFrame(gameLoop);
-    });
-    
-    EventBus.on('GAME_OVER', () => {
-        if (gameLoopId) {
-            cancelAnimationFrame(gameLoopId);
-            gameLoopId = null;
-        }
-        setTimeout(() => showScreen('game_over'), 1000);
-    });
+    // Start game loop
+    requestAnimationFrame(gameLoop);
     
     // Show initial screen
     showScreen('main_menu');

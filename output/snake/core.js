@@ -10,13 +10,7 @@ const EventBus = {
     }
 };
 
-// Global Constants
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
-const GRID_SIZE = 20;
-const INITIAL_SNAKE_LENGTH = 3;
-
-// Shared State Objects
+// Shared state objects
 const GameState = {
     gameStatus: 'main_menu',
     score: 0,
@@ -32,29 +26,25 @@ const SnakeState = {
     gridHeight: 20
 };
 
-// Module: game_state
+// Global constants
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+const GRID_SIZE = 20;
+const INITIAL_SNAKE_LENGTH = 3;
+
+// Game State Module
 const game_state = (function() {
     function init() {
         GameState.gameStatus = 'main_menu';
         GameState.score = 0;
-        GameState.highScore = 0;
+        GameState.highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
         GameState.gameSpeed = 200;
         
         // Listen for events from other modules
-        document.addEventListener('GAME_OVER', handleGameOver);
-        document.addEventListener('FOOD_EATEN', handleFoodEaten);
-    }
-    
-    function handleGameOver(event) {
-        if (GameState.gameStatus === 'gameplay') {
-            endGame();
-        }
-    }
-    
-    function handleFoodEaten(event) {
-        if (GameState.gameStatus === 'gameplay') {
-            addScore(event.detail.points);
-        }
+        EventBus.on('GAME_OVER', handleGameOver);
+        EventBus.on('FOOD_EATEN', handleFoodEaten);
+        
+        updateHighScoreDisplay();
     }
     
     function startGame() {
@@ -62,9 +52,8 @@ const game_state = (function() {
             GameState.gameStatus = 'gameplay';
             GameState.score = 0;
             
-            // Emit GAME_START event
-            const event = new CustomEvent('GAME_START', { detail: {} });
-            document.dispatchEvent(event);
+            EventBus.emit('GAME_START', {});
+            showScreen('gameplay');
         }
     }
     
@@ -75,7 +64,11 @@ const game_state = (function() {
             // Update high score if needed
             if (GameState.score > GameState.highScore) {
                 GameState.highScore = GameState.score;
+                localStorage.setItem('snakeHighScore', GameState.highScore);
             }
+            
+            updateFinalScore();
+            showScreen('game_over');
         }
     }
     
@@ -84,9 +77,8 @@ const game_state = (function() {
             GameState.gameStatus = 'gameplay';
             GameState.score = 0;
             
-            // Emit RETRY event
-            const event = new CustomEvent('RETRY', { detail: {} });
-            document.dispatchEvent(event);
+            EventBus.emit('RETRY', {});
+            showScreen('gameplay');
         }
     }
     
@@ -94,9 +86,8 @@ const game_state = (function() {
         if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'leaderboard') {
             GameState.gameStatus = 'main_menu';
             
-            // Emit RETURN_MENU event
-            const event = new CustomEvent('RETURN_MENU', { detail: {} });
-            document.dispatchEvent(event);
+            EventBus.emit('RETURN_MENU', {});
+            showScreen('main_menu');
         }
     }
     
@@ -104,15 +95,54 @@ const game_state = (function() {
         if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'leaderboard';
             
-            // Emit SHOW_LEADERBOARD event
-            const event = new CustomEvent('SHOW_LEADERBOARD', { detail: {} });
-            document.dispatchEvent(event);
+            EventBus.emit('SHOW_LEADERBOARD', {});
+            updateLeaderboard();
+            showScreen('leaderboard');
         }
     }
     
     function addScore(points) {
         if (GameState.gameStatus === 'gameplay') {
             GameState.score += points;
+            updateScoreDisplay();
+        }
+    }
+    
+    function handleGameOver(event) {
+        endGame();
+    }
+    
+    function handleFoodEaten(event) {
+        addScore(event.points);
+    }
+    
+    function updateScoreDisplay() {
+        const scoreDisplay = document.getElementById('score_display');
+        const bestDisplay = document.getElementById('best_display');
+        if (scoreDisplay) scoreDisplay.textContent = `分数: ${GameState.score}`;
+        if (bestDisplay) bestDisplay.textContent = `最高: ${GameState.highScore}`;
+    }
+    
+    function updateHighScoreDisplay() {
+        const highScore = document.getElementById('high_score');
+        if (highScore) highScore.textContent = `最高分: ${GameState.highScore}`;
+    }
+    
+    function updateFinalScore() {
+        const finalScore = document.getElementById('final_score');
+        if (finalScore) finalScore.textContent = `最终得分: ${GameState.score}`;
+    }
+    
+    function updateLeaderboard() {
+        const scoreList = document.getElementById('score_list');
+        if (scoreList) {
+            scoreList.innerHTML = `
+                1. 最高分: ${GameState.highScore}<br>
+                2. ---<br>
+                3. ---<br>
+                4. ---<br>
+                5. ---
+            `;
         }
     }
     
@@ -127,8 +157,8 @@ const game_state = (function() {
     };
 })();
 
-// Module: snake_game
-const SnakeGame = (function() {
+// Snake Game Module
+const snake_game = (function() {
     let lastMoveTime = 0;
     let nextDirection = null;
     
@@ -136,9 +166,9 @@ const SnakeGame = (function() {
         resetGame();
         
         // Listen for events
-        document.addEventListener('GAME_START', handleGameStart);
-        document.addEventListener('RETRY', handleRetry);
-        document.addEventListener('DIRECTION_CHANGE', handleDirectionChange);
+        EventBus.on('GAME_START', handleGameStart);
+        EventBus.on('RETRY', handleRetry);
+        EventBus.on('DIRECTION_CHANGE', handleDirectionChange);
     }
     
     function handleGameStart() {
@@ -150,7 +180,7 @@ const SnakeGame = (function() {
     }
     
     function handleDirectionChange(event) {
-        changeDirection(event.detail.direction);
+        changeDirection(event.direction);
     }
     
     function update() {
@@ -197,15 +227,14 @@ const SnakeGame = (function() {
         // Add new head
         SnakeState.snakeBody.unshift(head);
         
-        // Check if food was eaten
+        // Check if food eaten
         if (head.x === SnakeState.foodPosition.x && head.y === SnakeState.foodPosition.y) {
-            // Food eaten - don't remove tail, spawn new food, emit event
+            // Don't remove tail (snake grows)
             spawnFood();
-            document.dispatchEvent(new CustomEvent('FOOD_EATEN', {
-                detail: { points: 10 }
-            }));
+            const points = 10;
+            EventBus.emit('FOOD_EATEN', { points });
         } else {
-            // No food eaten - remove tail
+            // Remove tail (normal movement)
             SnakeState.snakeBody.pop();
         }
     }
@@ -222,8 +251,7 @@ const SnakeGame = (function() {
         
         // Check self collision
         for (let i = 1; i < SnakeState.snakeBody.length; i++) {
-            if (head.x === SnakeState.snakeBody[i].x && 
-                head.y === SnakeState.snakeBody[i].y) {
+            if (head.x === SnakeState.snakeBody[i].x && head.y === SnakeState.snakeBody[i].y) {
                 gameOver();
                 return;
             }
@@ -231,9 +259,7 @@ const SnakeGame = (function() {
     }
     
     function gameOver() {
-        document.dispatchEvent(new CustomEvent('GAME_OVER', {
-            detail: { finalScore: GameState.score }
-        }));
+        EventBus.emit('GAME_OVER', { finalScore: GameState.score });
     }
     
     function spawnFood() {
@@ -246,9 +272,9 @@ const SnakeGame = (function() {
                 y: Math.floor(Math.random() * SnakeState.gridHeight)
             };
             
-            // Check if position is not occupied by snake
+            // Check if position overlaps with snake
             validPosition = true;
-            for (let segment of SnakeState.snakeBody) {
+            for (const segment of SnakeState.snakeBody) {
                 if (segment.x === newPosition.x && segment.y === newPosition.y) {
                     validPosition = false;
                     break;
@@ -287,7 +313,7 @@ const SnakeGame = (function() {
     }
     
     function resetGame() {
-        // Initialize snake in center of grid
+        // Initialize snake in center
         const centerX = Math.floor(SnakeState.gridWidth / 2);
         const centerY = Math.floor(SnakeState.gridHeight / 2);
         
@@ -314,110 +340,58 @@ const SnakeGame = (function() {
     };
 })();
 
-// Module: input_controls
-const InputControls = (function() {
+// Input Controls Module
+const input_controls = (function() {
     let keysPressed = {};
-    let lastDirectionSent = null;
-    let directionBuffer = null;
-
+    let lastDirectionSent = '';
+    
     function init() {
-        // Register keyboard event listeners
         document.addEventListener('keydown', handleKeyDown);
         document.addEventListener('keyup', handleKeyUp);
-        
-        // Register touch/mouse events for mobile d-pad
-        const dpadButtons = document.querySelectorAll('.dpad-btn');
-        dpadButtons.forEach(btn => {
-            btn.addEventListener('click', handleDpadClick);
-            btn.addEventListener('touchstart', handleDpadTouch);
-        });
     }
-
+    
     function handleKeyDown(event) {
-        keysPressed[event.code] = true;
-        
-        // Prevent default behavior for arrow keys
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) {
-            event.preventDefault();
-        }
+        keysPressed[event.key] = true;
+        event.preventDefault();
     }
-
+    
     function handleKeyUp(event) {
-        keysPressed[event.code] = false;
-    }
-
-    function handleDpadClick(event) {
+        keysPressed[event.key] = false;
         event.preventDefault();
-        const direction = getDpadDirection(event.target.id);
-        if (direction) {
-            directionBuffer = direction;
-        }
     }
-
-    function handleDpadTouch(event) {
-        event.preventDefault();
-        const direction = getDpadDirection(event.target.id);
-        if (direction) {
-            directionBuffer = direction;
-        }
-    }
-
-    function getDpadDirection(buttonId) {
-        switch (buttonId) {
-            case 'btn_up': return 'up';
-            case 'btn_down': return 'down';
-            case 'btn_left': return 'left';
-            case 'btn_right': return 'right';
-            default: return null;
-        }
-    }
-
+    
     function update() {
-        if (GameState.gameStatus !== 'gameplay') return;
-
-        let newDirection = null;
-
-        // Check keyboard input
-        if (keysPressed['ArrowUp'] || keysPressed['KeyW']) {
+        if (GameState.gameStatus !== 'gameplay') {
+            return;
+        }
+        
+        let newDirection = '';
+        
+        // Check arrow keys and WASD
+        if (keysPressed['ArrowUp'] || keysPressed['w'] || keysPressed['W']) {
             newDirection = 'up';
-        } else if (keysPressed['ArrowDown'] || keysPressed['KeyS']) {
+        } else if (keysPressed['ArrowDown'] || keysPressed['s'] || keysPressed['S']) {
             newDirection = 'down';
-        } else if (keysPressed['ArrowLeft'] || keysPressed['KeyA']) {
+        } else if (keysPressed['ArrowLeft'] || keysPressed['a'] || keysPressed['A']) {
             newDirection = 'left';
-        } else if (keysPressed['ArrowRight'] || keysPressed['KeyD']) {
+        } else if (keysPressed['ArrowRight'] || keysPressed['d'] || keysPressed['D']) {
             newDirection = 'right';
         }
-
-        // Check buffered direction from touch/click
-        if (directionBuffer) {
-            newDirection = directionBuffer;
-            directionBuffer = null;
-        }
-
-        // Send direction change if we have a new direction and it's different from last sent
+        
+        // Only send direction change if it's different from last sent direction
         if (newDirection && newDirection !== lastDirectionSent) {
-            // Emit DIRECTION_CHANGE event
-            const event = new CustomEvent('DIRECTION_CHANGE', {
-                detail: { direction: newDirection }
-            });
-            document.dispatchEvent(event);
-            
-            // Also call snake_game.changeDirection directly
-            if (typeof SnakeGame !== 'undefined' && SnakeGame.changeDirection) {
-                SnakeGame.changeDirection(newDirection);
-            }
-            
+            EventBus.emit('DIRECTION_CHANGE', { direction: newDirection });
             lastDirectionSent = newDirection;
         }
     }
-
+    
     return {
         init,
         update
     };
 })();
 
-// Module: ui_screens
+// UI Screens Module
 const ui_screens = (function() {
     let canvas;
     let ctx;
@@ -430,184 +404,189 @@ const ui_screens = (function() {
     }
 
     function render() {
-        updateUI();
-        
-        if (!canvas || !ctx) return;
-
-        // Clear canvas
-        ctx.fillStyle = '#111';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-        if (GameState.gameStatus === 'gameplay') {
+        if (GameState.gameStatus === 'gameplay' && canvas && ctx) {
             renderGameplay();
         }
     }
 
-    function updateUI() {
-        // Update score displays
-        const scoreDisplay = document.getElementById('score_display');
-        const bestDisplay = document.getElementById('best_display');
-        const highScore = document.getElementById('high_score');
-        const finalScore = document.getElementById('final_score');
-        const finalBest = document.getElementById('final_best');
-
-        if (scoreDisplay) scoreDisplay.textContent = `分数: ${GameState.score}`;
-        if (bestDisplay) bestDisplay.textContent = `最高: ${GameState.highScore}`;
-        if (highScore) highScore.textContent = `最高分: ${GameState.highScore}`;
-        if (finalScore) finalScore.textContent = `最终分数: ${GameState.score}`;
-        if (finalBest) finalBest.textContent = `最高分: ${GameState.highScore}`;
-    }
-
     function renderGameplay() {
-        if (!ctx) return;
+        // Clear canvas
+        ctx.fillStyle = '#1A1A1A';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Grid lines
-        ctx.strokeStyle = '#333';
+        const cellWidth = canvas.width / SnakeState.gridWidth;
+        const cellHeight = canvas.height / SnakeState.gridHeight;
+
+        // Draw grid
+        ctx.strokeStyle = '#333333';
         ctx.lineWidth = 1;
-        for (let i = 0; i <= SnakeState.gridWidth; i++) {
+        for (let x = 0; x <= SnakeState.gridWidth; x++) {
             ctx.beginPath();
-            ctx.moveTo(i * GRID_SIZE, 0);
-            ctx.lineTo(i * GRID_SIZE, SnakeState.gridHeight * GRID_SIZE);
+            ctx.moveTo(x * cellWidth, 0);
+            ctx.lineTo(x * cellWidth, canvas.height);
             ctx.stroke();
         }
-        for (let i = 0; i <= SnakeState.gridHeight; i++) {
+        for (let y = 0; y <= SnakeState.gridHeight; y++) {
             ctx.beginPath();
-            ctx.moveTo(0, i * GRID_SIZE);
-            ctx.lineTo(SnakeState.gridWidth * GRID_SIZE, i * GRID_SIZE);
+            ctx.moveTo(0, y * cellHeight);
+            ctx.lineTo(canvas.width, y * cellHeight);
             ctx.stroke();
         }
 
-        // Snake
+        // Draw snake
         ctx.fillStyle = '#4CAF50';
         for (let i = 0; i < SnakeState.snakeBody.length; i++) {
             const segment = SnakeState.snakeBody[i];
             ctx.fillRect(
-                segment.x * GRID_SIZE + 1,
-                segment.y * GRID_SIZE + 1,
-                GRID_SIZE - 2,
-                GRID_SIZE - 2
+                segment.x * cellWidth + 1,
+                segment.y * cellHeight + 1,
+                cellWidth - 2,
+                cellHeight - 2
             );
         }
 
-        // Snake head (different color)
-        if (SnakeState.snakeBody.length > 0) {
-            const head = SnakeState.snakeBody[0];
-            ctx.fillStyle = '#8BC34A';
-            ctx.fillRect(
-                head.x * GRID_SIZE + 1,
-                head.y * GRID_SIZE + 1,
-                GRID_SIZE - 2,
-                GRID_SIZE - 2
-            );
-        }
-
-        // Food
+        // Draw food
         ctx.fillStyle = '#F44336';
         ctx.fillRect(
-            SnakeState.foodPosition.x * GRID_SIZE + 1,
-            SnakeState.foodPosition.y * GRID_SIZE + 1,
-            GRID_SIZE - 2,
-            GRID_SIZE - 2
+            SnakeState.foodPosition.x * cellWidth + 1,
+            SnakeState.foodPosition.y * cellHeight + 1,
+            cellWidth - 2,
+            cellHeight - 2
         );
-    }
-
-    function handleClick(x, y) {
-        // Handled by individual button event listeners
     }
 
     return {
         init,
-        render,
-        handleClick
+        render
     };
 })();
 
-// Screen Management
-function showScreen(screenId) {
+// Screen management
+function showScreen(id) {
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
         screen.style.display = 'none';
     });
     
-    const targetScreen = document.getElementById(screenId);
+    const targetScreen = document.getElementById(id);
     if (targetScreen) {
         targetScreen.style.display = 'block';
     }
 }
 
-// Game Loop
+// Game loop
 let lastTime = 0;
 function gameLoop(timestamp) {
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     
     // Update functions in order
-    InputControls.update();
-    SnakeGame.update();
+    input_controls.update();
+    snake_game.update();
     
     // Render functions in order
     ui_screens.render();
     
     if (GameState.gameStatus === 'playing' || GameState.gameStatus === 'gameplay') {
         requestAnimationFrame(gameLoop);
-    } else {
-        // Continue loop for other states too
-        requestAnimationFrame(gameLoop);
     }
 }
 
-// State Transition Functions
+// State transition functions
 function startGame() {
     game_state.startGame();
-    showScreen('gameplay');
+    requestAnimationFrame(gameLoop);
 }
 
 function gameOver() {
-    showScreen('game_over');
+    game_state.endGame();
 }
 
-function retryGame() {
+function retry() {
     game_state.retryGame();
-    showScreen('gameplay');
+    requestAnimationFrame(gameLoop);
 }
 
 function returnToMenu() {
     game_state.returnToMenu();
-    showScreen('main_menu');
 }
 
-// Input Handlers and Screen Navigation
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize modules in order
-    game_state.init();
-    SnakeGame.init();
-    InputControls.init();
-    ui_screens.init();
-    
-    // Set up button event listeners
+function showLeaderboard() {
+    game_state.showLeaderboard();
+}
+
+// Input handlers
+function setupInputHandlers() {
+    // Main menu
     const btnStart = document.getElementById('btn_start');
-    const btnRetry = document.getElementById('btn_retry');
-    const btnMenu = document.getElementById('btn_menu');
-    
     if (btnStart) {
         btnStart.addEventListener('click', startGame);
     }
     
+    // Game over screen
+    const btnRetry = document.getElementById('btn_retry');
     if (btnRetry) {
-        btnRetry.addEventListener('click', retryGame);
+        btnRetry.addEventListener('click', retry);
     }
     
+    const btnMenu = document.getElementById('btn_menu');
     if (btnMenu) {
         btnMenu.addEventListener('click', returnToMenu);
     }
     
-    // Listen for state changes to update screens
-    document.addEventListener('GAME_START', () => showScreen('gameplay'));
-    document.addEventListener('GAME_OVER', () => showScreen('game_over'));
-    document.addEventListener('RETRY', () => showScreen('gameplay'));
-    document.addEventListener('RETURN_MENU', () => showScreen('main_menu'));
+    const btnLeaderboard = document.getElementById('btn_leaderboard');
+    if (btnLeaderboard) {
+        btnLeaderboard.addEventListener('click', showLeaderboard);
+    }
     
-    // Start with main menu
+    // Leaderboard screen
+    const btnClose = document.getElementById('btn_close');
+    if (btnClose) {
+        btnClose.addEventListener('click', returnToMenu);
+    }
+    
+    // D-pad controls
+    const btnUp = document.getElementById('btn_up');
+    if (btnUp) {
+        btnUp.addEventListener('click', () => {
+            EventBus.emit('DIRECTION_CHANGE', { direction: 'up' });
+        });
+    }
+    
+    const btnDown = document.getElementById('btn_down');
+    if (btnDown) {
+        btnDown.addEventListener('click', () => {
+            EventBus.emit('DIRECTION_CHANGE', { direction: 'down' });
+        });
+    }
+    
+    const btnLeft = document.getElementById('btn_left');
+    if (btnLeft) {
+        btnLeft.addEventListener('click', () => {
+            EventBus.emit('DIRECTION_CHANGE', { direction: 'left' });
+        });
+    }
+    
+    const btnRight = document.getElementById('btn_right');
+    if (btnRight) {
+        btnRight.addEventListener('click', () => {
+            EventBus.emit('DIRECTION_CHANGE', { direction: 'right' });
+        });
+    }
+}
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modules in order
+    game_state.init();
+    snake_game.init();
+    input_controls.init();
+    ui_screens.init();
+    
+    // Setup input handlers
+    setupInputHandlers();
+    
+    // Show initial screen
     showScreen('main_menu');
     
     // Start game loop

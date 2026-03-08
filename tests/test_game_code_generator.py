@@ -374,7 +374,7 @@ def test_modular_generate_mocked():
     mock_decomp.return_value.decompose.assert_called_once()
     mock_arch.return_value.design.assert_called_once()
     mock_gen.return_value.generate_all_parallel.assert_called_once()
-    mock_asm.return_value.assemble.assert_called_once()
+    assert mock_asm.return_value.assemble.call_count == 2  # best-of-2 assembly
 
 
 def test_modular_fallback_on_failure():

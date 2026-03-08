@@ -227,10 +227,12 @@ class GameCodeGenerator:
         core_systems: list[str] | None = None,
         complexity: str = "arcade",
         reference_code: str | None = None,
+        assembly_attempts: int = 2,
     ) -> dict[str, str]:
-        """Multi-agent modular generation with fallback to single-shot.
+        """Multi-agent modular generation with best-of-N assembly.
 
-        Stages: A (decompose) → B (architecture) → C (parallel generate) → D (assemble).
+        Stages: A (decompose) → B (architecture) → C (parallel generate)
+                → D (assemble × N, pick best by L1+L2).
         Falls back to single-shot generate() on failure.
         """
         try:
@@ -265,8 +267,42 @@ class GameCodeGenerator:
                 file=sys.stderr,
             )
 
-            # Stage D: Assembly
+            # Stage D: Assembly (best-of-N)
             assembler = AssemblyAgent(api_key, self._model)
+
+            if assembly_attempts <= 1:
+                return assembler.assemble(modules, arch, wireframe, prd_document)
+
+            best_code: dict[str, str] | None = None
+            best_score = -1.0
+
+            for i in range(assembly_attempts):
+                try:
+                    code = assembler.assemble(modules, arch, wireframe, prd_document)
+                    report = evaluate(
+                        code.get("index.html", ""),
+                        code.get("style.css", ""),
+                        code.get("core.js", ""),
+                        wireframe,
+                    )
+                    score = report.overall_score
+                    print(
+                        f"  [Modular] Assembly {i + 1}/{assembly_attempts}: {score:.0%}",
+                        file=sys.stderr,
+                    )
+                    if score > best_score:
+                        best_score = score
+                        best_code = code
+                except Exception as e:
+                    print(
+                        f"  [Modular] Assembly {i + 1}/{assembly_attempts} failed: {e}",
+                        file=sys.stderr,
+                    )
+
+            if best_code is not None:
+                return best_code
+
+            # All assembly attempts failed, try once more without scoring
             return assembler.assemble(modules, arch, wireframe, prd_document)
 
         except Exception as e:

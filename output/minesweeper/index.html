@@ -39,10 +39,13 @@ index.html
 
     <!-- Leaderboard Screen -->
     <div id="leaderboard" class="screen">
-        <div id="panel_bg"></div>
-        <div id="title">排行榜</div>
-        <div id="score_list">1. 9999<br>2. 7500<br>3. 5000<br>4. 2500<br>5. 1000</div>
-        <button id="btn_close" onclick="showScreen('main_menu')">关闭</button>
+        <div class="leaderboard-overlay" onclick="hideLeaderboard()"></div>
+        <div class="leaderboard-panel">
+            <div id="panel_bg"></div>
+            <div id="title">排行榜</div>
+            <div id="score_list">1. 9999<br>2. 7500<br>3. 5000<br>4. 2500<br>5. 1000</div>
+            <button id="btn_close" onclick="hideLeaderboard()">关闭</button>
+        </div>
     </div>
 
     <script src="core.js"></script>

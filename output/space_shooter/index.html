@@ -1,6 +1,6 @@
 index.html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,39 +9,42 @@ index.html
 </head>
 <body>
     <div id="main_menu" class="screen">
-        <div id="bg" class="bg-image"></div>
+        <div id="bg"></div>
         <div id="title">飞机大战</div>
         <button id="btn_play">开始游戏</button>
         <button id="btn_leaderboard">排行榜</button>
     </div>
 
     <div id="gameplay" class="screen" style="display:none;">
-        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+        <div id="bg"></div>
         <div id="score_display">得分: 0</div>
         <div id="lives">❤❤❤</div>
+        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
         <div id="tap_area"></div>
     </div>
 
     <div id="game_over" class="screen" style="display:none;">
-        <div id="bg" class="bg-image dimmed"></div>
+        <div id="bg"></div>
         <div id="gameover_text">游戏结束</div>
         <div id="final_score">最终得分: 0</div>
-        <div id="high_score_display">最高分: 0</div>
         <button id="btn_retry">重新开始</button>
-        <button id="btn_leaderboard_go">排行榜</button>
         <button id="btn_menu">返回菜单</button>
+        <button id="btn_leaderboard_go">排行榜</button>
     </div>
 
     <div id="leaderboard" class="screen" style="display:none;">
-        <div id="bg" class="bg-image"></div>
-        <div id="leaderboard_title">排行榜</div>
-        <div id="leaderboard_content">
-            <div class="score-entry">
-                <span class="rank">1st</span>
-                <span class="score" id="leaderboard_high_score">0</span>
+        <div id="bg"></div>
+        <div id="panel_bg">
+            <div id="title">排行榜</div>
+            <div id="score_list">
+                1. 0<br>
+                2. 0<br>
+                3. 0<br>
+                4. 0<br>
+                5. 0
             </div>
+            <button id="btn_close">关闭</button>
         </div>
-        <button id="btn_back">返回</button>
     </div>
 
     <script src="core.js"></script>

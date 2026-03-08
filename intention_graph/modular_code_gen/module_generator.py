@@ -62,6 +62,194 @@ Return ONLY the JavaScript code for this module. No markdown fences, no \
 explanations — just the raw JavaScript.
 """
 
+# ── Domain-specific implementation guides ─────────────────────────────────
+
+_DOMAIN_PHYSICS = """\
+
+## Domain: Physics-Based Game
+
+Your module likely deals with moving objects. Implementation requirements:
+
+### Collision Detection
+- Use bounding-box overlap: `(ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by)`
+- Add 1-2px tolerance margin for better feel
+- Check EVERY frame in update(), not just on events
+
+### Movement & Physics
+- Use velocity vectors: `obj.x += obj.vx * dt; obj.y += obj.vy * dt`
+- Apply gravity as acceleration: `obj.vy += GRAVITY * dt`
+- Bounce: reverse velocity component and multiply by restitution (0.8-1.0)
+- Clamp positions to canvas bounds after movement
+
+### Paddle/Player Deflection
+- Deflection angle based on hit position: `angle = (hitX - paddleCenterX) / paddleHalfWidth * maxAngle`
+- Convert angle to velocity: `vx = speed * Math.sin(angle); vy = -speed * Math.cos(angle)`
+
+### Rendering
+- Clear canvas with `ctx.clearRect(0, 0, canvas.width, canvas.height)` each frame
+- Draw each object with distinct `ctx.fillStyle` color
+- Draw score/HUD with `ctx.fillText()`
+"""
+
+_DOMAIN_GRID = """\
+
+## Domain: Grid-Based Game
+
+Your module likely manages a grid/board. Implementation requirements:
+
+### Grid System
+- Store grid as 2D array: `grid[row][col]`
+- Convert pixel↔grid: `col = Math.floor(pixelX / cellSize); row = Math.floor(pixelY / cellSize)`
+- Draw cells: `ctx.fillRect(col * cellSize, row * cellSize, cellSize - gap, cellSize - gap)`
+
+### Grid Operations
+- Check bounds before access: `if (row >= 0 && row < rows && col >= 0 && col < cols)`
+- For flood fill (minesweeper, mine reveal): use BFS queue, not recursion
+  ```
+  const queue = [[startRow, startCol]];
+  while (queue.length > 0) {
+      const [r, c] = queue.shift();
+      // process cell, add neighbors if condition met
+  }
+  ```
+
+### Match Detection (Match-3, 2048)
+- Scan rows then columns for 3+ consecutive same-type tiles
+- After removing matches, apply gravity (shift tiles down, fill empty from top)
+- Re-scan for cascading matches until no new matches found
+
+### Tile Merging (2048)
+- Process each row/column as 1D array in swipe direction
+- Compact non-zero values, merge adjacent equals, compact again
+- Track if any tile moved to determine valid move
+"""
+
+_DOMAIN_PIECE = """\
+
+## Domain: Piece/Block Game (Tetris-like)
+
+Your module likely handles falling pieces. Implementation requirements:
+
+### Piece Definitions
+- Define all pieces as 2D arrays of coordinates relative to pivot
+- Store all 4 rotation states, or compute rotation:
+  `rotated[r][c] = original[cols-1-c][r]`
+
+### Piece Movement
+- Move: translate all block positions by delta
+- Rotate: apply rotation matrix, check collision, wall-kick if needed
+- Drop: move down until collision, then lock piece to grid
+- Gravity: auto-drop every N frames (decrease N for speed increase)
+
+### Collision Detection
+- For each block in piece, check: within bounds AND grid cell is empty
+- Wall kick: if rotation collides, try shifting left/right by 1-2 cells
+
+### Line Clear
+- After locking piece: scan all rows from bottom
+- Full row = all cells filled → remove row, shift above rows down
+- Award points per lines cleared (1=100, 2=300, 3=500, 4=800)
+"""
+
+_DOMAIN_ACTION = """\
+
+## Domain: Action Game (Shooter/Runner)
+
+Your module likely handles player, enemies, or projectiles. Implementation requirements:
+
+### Player Movement
+- Smooth movement: track velocity, apply acceleration, cap at max speed
+- Boundary clamping: `player.x = Math.max(0, Math.min(canvasW - player.w, player.x))`
+- Input: set velocity flags on keydown/keyup, apply in update()
+
+### Projectile System
+- Store bullets as array of {x, y, vx, vy, active}
+- In update: move all bullets, remove off-screen ones
+- Fire rate: track lastFireTime, enforce cooldown
+- Collision with enemies: iterate both arrays, check overlap
+
+### Enemy System
+- Spawn enemies at intervals: `if (now - lastSpawn > spawnInterval) { ... }`
+- Move patterns: straight-line, sine-wave, or toward player
+- Increase difficulty over time: faster spawn rate, faster movement
+
+### Rendering
+- Layer order: background → enemies → bullets → player → HUD
+- Use distinct colors for player (green), enemies (red), bullets (yellow)
+- Draw health/lives as icons or text
+"""
+
+_DOMAIN_PUZZLE = """\
+
+## Domain: Puzzle/Logic Game
+
+Your module likely handles board state and logic. Implementation requirements:
+
+### Board Rendering
+- Draw grid lines, then cell contents on top
+- Use distinct colors per cell state/value (define a color map)
+- Highlight selected/active cells with border or background
+
+### Input Handling
+- Canvas click → grid coordinate: `col = Math.floor((e.offsetX - gridOffsetX) / cellSize)`
+- For swipe: track touchstart position, calculate delta on touchend
+  `dx = endX - startX; dy = endY - startY`
+  Direction = largest absolute component: `if (Math.abs(dx) > Math.abs(dy)) { horizontal }`
+
+### State Validation
+- Before applying move: check if it's legal (would result in valid state change)
+- After applying move: check win condition AND game over condition
+- If no valid moves remain → game over
+
+### Score & Leaderboard
+- Track score in shared state, update display each frame
+- On game over: save to localStorage
+  ```
+  const scores = JSON.parse(localStorage.getItem('scores') || '[]');
+  scores.push({score, date: Date.now()});
+  scores.sort((a,b) => b.score - a.score);
+  localStorage.setItem('scores', JSON.stringify(scores.slice(0, 10)));
+  ```
+"""
+
+# Map game keywords to domain prompts
+_DOMAIN_KEYWORDS: dict[str, str] = {
+    # Physics-based
+    "flappy": _DOMAIN_PHYSICS,
+    "breakout": _DOMAIN_PHYSICS,
+    "pinball": _DOMAIN_PHYSICS,
+    "pong": _DOMAIN_PHYSICS,
+    # Grid-based
+    "minesweeper": _DOMAIN_GRID,
+    "match3": _DOMAIN_GRID,
+    "match 3": _DOMAIN_GRID,
+    "2048": _DOMAIN_GRID,
+    "sudoku": _DOMAIN_GRID,
+    "sokoban": _DOMAIN_GRID,
+    # Piece/block
+    "tetris": _DOMAIN_PIECE,
+    "block": _DOMAIN_PIECE,
+    # Action
+    "shooter": _DOMAIN_ACTION,
+    "space": _DOMAIN_ACTION,
+    "runner": _DOMAIN_ACTION,
+    "ninja": _DOMAIN_ACTION,
+    "whack": _DOMAIN_ACTION,
+    # Puzzle (fallback for grid-ish games)
+    "puzzle": _DOMAIN_PUZZLE,
+    "snake": _DOMAIN_PUZZLE,
+    "popstar": _DOMAIN_PUZZLE,
+}
+
+
+def _detect_domain(game_title: str, prd_document: str) -> str:
+    """Detect game domain from title and PRD, return domain-specific prompt."""
+    text = (game_title + " " + prd_document[:500]).lower()
+    for keyword, prompt in _DOMAIN_KEYWORDS.items():
+        if keyword in text:
+            return prompt
+    return ""  # No domain-specific guidance
+
 
 def _to_camel(snake: str) -> str:
     """Convert snake_case to CamelCase."""
@@ -117,10 +305,14 @@ class ModuleGenerator:
 
         module_json = json.dumps(module.model_dump(), indent=2, ensure_ascii=False)
 
+        # Detect domain and add specific guidance
+        domain_prompt = _detect_domain(architecture.game_title, prd_document)
+
         user_msg = (
             f"## Architecture Document\n{arch_json}\n\n"
             f"## Your Module Interface\n{module_json}\n\n"
             f"## PRD (for context)\n{prd_document[:3000]}\n\n"
+            f"{domain_prompt}\n\n"
             f"Generate the JavaScript code for module '{module.module_id}'."
         )
 
