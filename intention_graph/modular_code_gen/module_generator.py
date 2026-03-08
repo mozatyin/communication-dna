@@ -42,6 +42,19 @@ this specific module.
    exported functions as documented in the architecture.
 7. Implement complete, working game logic — not stubs or placeholders.
 
+## Architecture Guidance
+
+- **State Machine**: Check `state_machine` in the architecture. Your update/render \
+functions should respect `GameState.gameStatus` — only run game logic when status \
+matches your function's precondition (usually "playing").
+- **Data Ownership**: Check `writers`/`readers` on shared_data fields. Only WRITE \
+to fields where your module_id is listed as a writer. You may READ any field listed \
+in your state_access.
+- **Function Contracts**: Each export has a precondition and postcondition. \
+Ensure your implementation satisfies the postcondition when the precondition holds.
+- **Interactions**: If your module owns an interaction rule, implement the collision \
+detection described in the `condition` field and the `effect` when triggered.
+
 ## Output
 
 Return ONLY the JavaScript code for this module. No markdown fences, no \

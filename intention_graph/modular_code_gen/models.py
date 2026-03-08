@@ -9,12 +9,27 @@ class FieldDef(BaseModel):
     name: str
     type: str
     default: str = ""
+    writers: list[str] = []  # module_ids that write this field
+    readers: list[str] = []  # module_ids that read this field
 
 
 class SharedDataStructure(BaseModel):
     name: str
     fields: list[FieldDef]
     description: str = ""
+
+
+class StateTransition(BaseModel):
+    from_state: str
+    to_state: str
+    trigger: str  # event name or action that causes transition
+    triggered_by: str = ""  # module_id responsible
+
+
+class StateMachine(BaseModel):
+    states: list[str]
+    initial: str
+    transitions: list[StateTransition]
 
 
 class EventDef(BaseModel):
@@ -34,6 +49,16 @@ class FunctionSig(BaseModel):
     params: list[ParamDef]
     returns: str = "void"
     description: str = ""
+    precondition: str = ""  # what must be true before calling
+    postcondition: str = ""  # what is guaranteed after calling
+
+
+class InteractionRule(BaseModel):
+    subject: str  # e.g. "bullet"
+    object: str  # e.g. "enemy"
+    condition: str  # e.g. "bounding box overlap"
+    effect: str  # e.g. "destroy both, emit ENEMY_DESTROYED"
+    module: str  # module_id responsible for detection
 
 
 class ModuleSpec(BaseModel):
@@ -62,6 +87,8 @@ class ArchitectureDoc(BaseModel):
     update_order: list[str]
     render_order: list[str]
     global_constants: dict[str, str] = {}
+    state_machine: StateMachine | None = None
+    interactions: list[InteractionRule] = []
 
     @model_validator(mode="after")
     def _validate_order_refs(self) -> ArchitectureDoc:

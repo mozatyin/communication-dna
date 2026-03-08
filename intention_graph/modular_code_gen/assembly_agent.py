@@ -74,7 +74,7 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
     // Call update functions in update_order
     // Call render functions in render_order
-    if (gameState.gameStatus === 'playing') {
+    if (GameState.gameStatus === 'playing') {
         requestAnimationFrame(gameLoop);
     }
 }
@@ -82,9 +82,15 @@ function gameLoop(timestamp) {
 
 6. **Module initialization** in init_order sequence
 
-7. **Input handlers** (keyboard, mouse, touch as appropriate)
+7. **State transitions** — implement functions for each transition in the \
+state_machine (e.g., startGame, gameOver, retry). Each transition function:
+   - Updates GameState.gameStatus to the target state
+   - Emits the trigger event via EventBus
+   - Calls showScreen() for the corresponding screen
 
-8. **Screen navigation** wired to wireframe buttons
+8. **Input handlers** (keyboard, mouse, touch as appropriate)
+
+9. **Screen navigation** wired to wireframe buttons
 
 ## CRITICAL Rules
 
