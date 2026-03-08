@@ -10,15 +10,15 @@ const EventBus = {
     }
 };
 
-// Global constants
+// Global Constants
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
 const GRID_SIZE = 8;
-const TILE_SIZE = 100;
+const TILE_SIZE = 120;
 const TILE_TYPES = 6;
 const MIN_MATCH_SIZE = 3;
 
-// Shared state objects
+// Shared State Objects
 const GameState = {
     gameStatus: 'main_menu',
     score: 0,
@@ -30,13 +30,12 @@ const GameState = {
 
 const GridState = {
     grid: [],
-    selectedTile: null,
+    selectedTile: 'none',
     animating: false,
-    gridWidth: 8,
-    gridHeight: 8
+    lastMatchCount: 0
 };
 
-// Module code
+// Game State Module
 const game_state = (function() {
     function init() {
         GameState.gameStatus = 'main_menu';
@@ -45,7 +44,8 @@ const game_state = (function() {
         GameState.level = 1;
         GameState.movesRemaining = 30;
         GameState.targetScore = 1000;
-
+        
+        // Set up event listeners
         EventBus.on('START_GAME', handleStartGame);
         EventBus.on('RETRY_GAME', handleRetryGame);
         EventBus.on('RETURN_MENU', handleReturnMenu);
@@ -54,7 +54,7 @@ const game_state = (function() {
         EventBus.on('MATCH_FOUND', handleMatchFound);
         EventBus.on('NO_MOVES_AVAILABLE', handleNoMovesAvailable);
     }
-
+    
     function startGame() {
         if (GameState.gameStatus === 'main_menu') {
             GameState.gameStatus = 'gameplay';
@@ -67,27 +67,37 @@ const game_state = (function() {
             EventBus.emit('GAME_START', {});
         }
     }
-
+    
     function endGame() {
         if (GameState.gameStatus === 'gameplay') {
             GameState.gameStatus = 'game_over';
-            EventBus.emit('GAME_OVER', { finalScore: GameState.score });
+            
+            EventBus.emit('GAME_OVER', { 
+                finalScore: GameState.score,
+                reason: GameState.lives <= 0 ? 'no_lives' : 'no_moves'
+            });
         }
     }
-
+    
     function addScore(points) {
         if (GameState.gameStatus === 'gameplay') {
             GameState.score += points;
             
             if (GameState.score >= GameState.targetScore) {
+                const bonus = GameState.movesRemaining * 100;
+                GameState.score += bonus;
                 GameState.level++;
-                GameState.targetScore = Math.floor(GameState.targetScore * 1.5);
                 GameState.movesRemaining = 30;
-                EventBus.emit('LEVEL_COMPLETE', { newLevel: GameState.level });
+                GameState.targetScore = Math.floor(GameState.targetScore * 1.5);
+                
+                EventBus.emit('LEVEL_COMPLETE', { 
+                    level: GameState.level - 1,
+                    bonus: bonus
+                });
             }
         }
     }
-
+    
     function decrementLives() {
         if (GameState.gameStatus === 'gameplay') {
             GameState.lives--;
@@ -95,60 +105,60 @@ const game_state = (function() {
         }
         return false;
     }
-
+    
     function showLeaderboard() {
         if (GameState.gameStatus === 'main_menu' || GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'leaderboard';
         }
     }
-
-    function returnToMenu() {
-        if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'leaderboard') {
+    
+    function hideLeaderboard() {
+        if (GameState.gameStatus === 'leaderboard') {
             GameState.gameStatus = 'main_menu';
         }
     }
-
-    function handleStartGame() {
+    
+    // Event handlers
+    function handleStartGame(event) {
         startGame();
     }
-
-    function handleRetryGame() {
+    
+    function handleRetryGame(event) {
         if (GameState.gameStatus === 'game_over') {
+            GameState.gameStatus = 'main_menu';
             startGame();
         }
     }
-
-    function handleReturnMenu() {
-        returnToMenu();
+    
+    function handleReturnMenu(event) {
+        if (GameState.gameStatus === 'game_over') {
+            GameState.gameStatus = 'main_menu';
+        }
     }
-
-    function handleShowLeaderboard() {
+    
+    function handleShowLeaderboard(event) {
         showLeaderboard();
     }
-
-    function handleCloseLeaderboard() {
-        returnToMenu();
+    
+    function handleCloseLeaderboard(event) {
+        hideLeaderboard();
     }
-
-    function handleMatchFound(payload) {
-        if (GameState.gameStatus === 'gameplay') {
-            addScore(payload.points);
-            GameState.movesRemaining--;
-            
-            if (GameState.movesRemaining <= 0) {
-                endGame();
-            }
+    
+    function handleMatchFound(event) {
+        const { points } = event;
+        addScore(points);
+        GameState.movesRemaining--;
+        if (GameState.movesRemaining <= 0 && GameState.score < GameState.targetScore) {
+            endGame();
         }
     }
-
-    function handleNoMovesAvailable() {
-        if (GameState.gameStatus === 'gameplay') {
-            if (decrementLives()) {
-                endGame();
-            }
+    
+    function handleNoMovesAvailable(event) {
+        if (decrementLives()) {
+            endGame();
         }
     }
-
+    
     return {
         init,
         startGame,
@@ -156,31 +166,56 @@ const game_state = (function() {
         addScore,
         decrementLives,
         showLeaderboard,
-        returnToMenu
+        hideLeaderboard
     };
 })();
 
+// Match Engine Module
 const match_engine = (function() {
     function init() {
-        GridState.gridWidth = GRID_SIZE;
-        GridState.gridHeight = GRID_SIZE;
-        GridState.animating = false;
-        GridState.grid = createInitialGrid();
-        
-        while (findAllMatches().length > 0) {
-            GridState.grid = createInitialGrid();
-        }
-    }
-    
-    function createInitialGrid() {
-        const grid = [];
-        for (let y = 0; y < GRID_SIZE; y++) {
-            grid[y] = [];
-            for (let x = 0; x < GRID_SIZE; x++) {
-                grid[y][x] = Math.floor(Math.random() * TILE_TYPES) + 1;
+        GridState.grid = [];
+        for (let row = 0; row < GRID_SIZE; row++) {
+            GridState.grid[row] = [];
+            for (let col = 0; col < GRID_SIZE; col++) {
+                GridState.grid[row][col] = generateSafeTile(row, col);
             }
         }
-        return grid;
+        
+        GridState.selectedTile = 'none';
+        GridState.animating = false;
+        GridState.lastMatchCount = 0;
+    }
+    
+    function generateSafeTile(row, col) {
+        let attempts = 0;
+        let tileType;
+        
+        do {
+            tileType = Math.floor(Math.random() * TILE_TYPES);
+            attempts++;
+        } while (attempts < 50 && wouldCreateMatch(row, col, tileType));
+        
+        return tileType;
+    }
+    
+    function wouldCreateMatch(row, col, tileType) {
+        let horizontalCount = 1;
+        for (let c = col - 1; c >= 0 && GridState.grid[row] && GridState.grid[row][c] === tileType; c--) {
+            horizontalCount++;
+        }
+        for (let c = col + 1; c < GRID_SIZE && GridState.grid[row] && GridState.grid[row][c] === tileType; c++) {
+            horizontalCount++;
+        }
+        
+        let verticalCount = 1;
+        for (let r = row - 1; r >= 0 && GridState.grid[r] && GridState.grid[r][col] === tileType; r--) {
+            verticalCount++;
+        }
+        for (let r = row + 1; r < GRID_SIZE && GridState.grid[r] && GridState.grid[r][col] === tileType; r++) {
+            verticalCount++;
+        }
+        
+        return horizontalCount >= MIN_MATCH_SIZE || verticalCount >= MIN_MATCH_SIZE;
     }
     
     function swapTiles(x1, y1, x2, y2) {
@@ -191,21 +226,96 @@ const match_engine = (function() {
         const dx = Math.abs(x2 - x1);
         const dy = Math.abs(y2 - y1);
         if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-            const temp = GridState.grid[y1][x1];
-            GridState.grid[y1][x1] = GridState.grid[y2][x2];
-            GridState.grid[y2][x2] = temp;
-            
-            const matches = findAllMatches();
-            if (matches.length > 0) {
-                processMatches();
-                return true;
-            } else {
-                GridState.grid[y2][x2] = GridState.grid[y1][x1];
-                GridState.grid[y1][x1] = temp;
-                return false;
+            if (x1 >= 0 && x1 < GRID_SIZE && y1 >= 0 && y1 < GRID_SIZE &&
+                x2 >= 0 && x2 < GRID_SIZE && y2 >= 0 && y2 < GRID_SIZE) {
+                
+                const temp = GridState.grid[y1][x1];
+                GridState.grid[y1][x1] = GridState.grid[y2][x2];
+                GridState.grid[y2][x2] = temp;
+                
+                const matchesFound = findMatches().length > 0;
+                
+                if (matchesFound) {
+                    GridState.selectedTile = 'none';
+                    processMatches();
+                    return true;
+                } else {
+                    GridState.grid[y2][x2] = GridState.grid[y1][x1];
+                    GridState.grid[y1][x1] = temp;
+                    return false;
+                }
             }
         }
         return false;
+    }
+    
+    function findMatches() {
+        const matches = [];
+        const visited = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false));
+        
+        for (let row = 0; row < GRID_SIZE; row++) {
+            let count = 1;
+            let currentType = GridState.grid[row][0];
+            
+            for (let col = 1; col < GRID_SIZE; col++) {
+                if (GridState.grid[row][col] === currentType) {
+                    count++;
+                } else {
+                    if (count >= MIN_MATCH_SIZE) {
+                        for (let c = col - count; c < col; c++) {
+                            if (!visited[row][c]) {
+                                matches.push({row: row, col: c, type: currentType});
+                                visited[row][c] = true;
+                            }
+                        }
+                    }
+                    count = 1;
+                    currentType = GridState.grid[row][col];
+                }
+            }
+            
+            if (count >= MIN_MATCH_SIZE) {
+                for (let c = GRID_SIZE - count; c < GRID_SIZE; c++) {
+                    if (!visited[row][c]) {
+                        matches.push({row: row, col: c, type: currentType});
+                        visited[row][c] = true;
+                    }
+                }
+            }
+        }
+        
+        for (let col = 0; col < GRID_SIZE; col++) {
+            let count = 1;
+            let currentType = GridState.grid[0][col];
+            
+            for (let row = 1; row < GRID_SIZE; row++) {
+                if (GridState.grid[row][col] === currentType) {
+                    count++;
+                } else {
+                    if (count >= MIN_MATCH_SIZE) {
+                        for (let r = row - count; r < row; r++) {
+                            if (!visited[r][col]) {
+                                matches.push({row: r, col: col, type: currentType});
+                                visited[r][col] = true;
+                            }
+                        }
+                    }
+                    count = 1;
+                    currentType = GridState.grid[row][col];
+                }
+            }
+            
+            if (count >= MIN_MATCH_SIZE) {
+                for (let r = GRID_SIZE - count; r < GRID_SIZE; r++) {
+                    if (!visited[r][col]) {
+                        matches.push({row: r, col: col, type: currentType});
+                        visited[r][col] = true;
+                    }
+                }
+            }
+        }
+        
+        return matches;
     }
     
     function processMatches() {
@@ -213,20 +323,40 @@ const match_engine = (function() {
             return 0;
         }
         
-        GridState.animating = true;
         let totalMatches = 0;
-        let matches;
+        let cascadeCount = 0;
         
         do {
-            matches = findAllMatches();
+            const matches = findMatches();
+            if (matches.length === 0) break;
+            
+            matches.forEach(match => {
+                GridState.grid[match.row][match.col] = -1;
+            });
+            
             if (matches.length > 0) {
-                totalMatches += matches.length;
-                removeMatches(matches);
-                dropTiles();
-                fillEmptySpaces();
+                const matchCount = matches.length;
+                const tileType = matches[0].type;
+                const basePoints = matchCount * 10;
+                const cascadeBonus = cascadeCount * 5;
+                const points = basePoints + cascadeBonus;
+                
+                EventBus.emit('MATCH_FOUND', {
+                    matchCount: matchCount,
+                    tileType: tileType.toString(),
+                    points: points
+                });
+                
+                totalMatches += matchCount;
             }
-        } while (matches.length > 0);
+            
+            applyGravity();
+            fillEmptySpaces();
+            cascadeCount++;
+            
+        } while (true);
         
+        GridState.lastMatchCount = totalMatches;
         GridState.animating = false;
         
         if (!hasValidMoves()) {
@@ -236,110 +366,30 @@ const match_engine = (function() {
         return totalMatches;
     }
     
-    function findAllMatches() {
-        const matches = [];
-        const grid = GridState.grid;
-        
-        for (let y = 0; y < GRID_SIZE; y++) {
-            let count = 1;
-            let currentTile = grid[y][0];
+    function applyGravity() {
+        for (let col = 0; col < GRID_SIZE; col++) {
+            const column = [];
+            for (let row = GRID_SIZE - 1; row >= 0; row--) {
+                if (GridState.grid[row][col] !== -1) {
+                    column.push(GridState.grid[row][col]);
+                }
+            }
             
-            for (let x = 1; x < GRID_SIZE; x++) {
-                if (grid[y][x] === currentTile && currentTile !== 0) {
-                    count++;
+            for (let row = GRID_SIZE - 1; row >= 0; row--) {
+                if (column.length > 0) {
+                    GridState.grid[row][col] = column.shift();
                 } else {
-                    if (count >= MIN_MATCH_SIZE) {
-                        for (let i = x - count; i < x; i++) {
-                            matches.push({x: i, y: y, type: currentTile});
-                        }
-                    }
-                    count = 1;
-                    currentTile = grid[y][x];
-                }
-            }
-            
-            if (count >= MIN_MATCH_SIZE) {
-                for (let i = GRID_SIZE - count; i < GRID_SIZE; i++) {
-                    matches.push({x: i, y: y, type: currentTile});
-                }
-            }
-        }
-        
-        for (let x = 0; x < GRID_SIZE; x++) {
-            let count = 1;
-            let currentTile = grid[0][x];
-            
-            for (let y = 1; y < GRID_SIZE; y++) {
-                if (grid[y][x] === currentTile && currentTile !== 0) {
-                    count++;
-                } else {
-                    if (count >= MIN_MATCH_SIZE) {
-                        for (let i = y - count; i < y; i++) {
-                            matches.push({x: x, y: i, type: currentTile});
-                        }
-                    }
-                    count = 1;
-                    currentTile = grid[y][x];
-                }
-            }
-            
-            if (count >= MIN_MATCH_SIZE) {
-                for (let i = GRID_SIZE - count; i < GRID_SIZE; i++) {
-                    matches.push({x: x, y: i, type: currentTile});
-                }
-            }
-        }
-        
-        return matches;
-    }
-    
-    function removeMatches(matches) {
-        const matchGroups = {};
-        
-        matches.forEach(match => {
-            if (!matchGroups[match.type]) {
-                matchGroups[match.type] = [];
-            }
-            matchGroups[match.type].push(match);
-        });
-        
-        Object.keys(matchGroups).forEach(tileType => {
-            const group = matchGroups[tileType];
-            const points = group.length * 10 * (group.length - 2);
-            
-            group.forEach(match => {
-                GridState.grid[match.y][match.x] = 0;
-            });
-            
-            EventBus.emit('MATCH_FOUND', {
-                matchSize: group.length,
-                tileType: tileType,
-                points: points
-            });
-        });
-    }
-    
-    function dropTiles() {
-        for (let x = 0; x < GRID_SIZE; x++) {
-            let writePos = GRID_SIZE - 1;
-            
-            for (let y = GRID_SIZE - 1; y >= 0; y--) {
-                if (GridState.grid[y][x] !== 0) {
-                    if (y !== writePos) {
-                        GridState.grid[writePos][x] = GridState.grid[y][x];
-                        GridState.grid[y][x] = 0;
-                    }
-                    writePos--;
+                    GridState.grid[row][col] = -1;
                 }
             }
         }
     }
     
     function fillEmptySpaces() {
-        for (let x = 0; x < GRID_SIZE; x++) {
-            for (let y = 0; y < GRID_SIZE; y++) {
-                if (GridState.grid[y][x] === 0) {
-                    GridState.grid[y][x] = Math.floor(Math.random() * TILE_TYPES) + 1;
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                if (GridState.grid[row][col] === -1) {
+                    GridState.grid[row][col] = Math.floor(Math.random() * TILE_TYPES);
                 }
             }
         }
@@ -350,38 +400,32 @@ const match_engine = (function() {
             return false;
         }
         
-        const grid = GridState.grid;
-        
-        for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-                if (x < GRID_SIZE - 1) {
-                    const temp = grid[y][x];
-                    grid[y][x] = grid[y][x + 1];
-                    grid[y][x + 1] = temp;
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                if (col < GRID_SIZE - 1) {
+                    const temp = GridState.grid[row][col];
+                    GridState.grid[row][col] = GridState.grid[row][col + 1];
+                    GridState.grid[row][col + 1] = temp;
                     
-                    if (findAllMatches().length > 0) {
-                        grid[y][x + 1] = grid[y][x];
-                        grid[y][x] = temp;
-                        return true;
-                    }
+                    const hasMatch = findMatches().length > 0;
                     
-                    grid[y][x + 1] = grid[y][x];
-                    grid[y][x] = temp;
+                    GridState.grid[row][col + 1] = GridState.grid[row][col];
+                    GridState.grid[row][col] = temp;
+                    
+                    if (hasMatch) return true;
                 }
                 
-                if (y < GRID_SIZE - 1) {
-                    const temp = grid[y][x];
-                    grid[y][x] = grid[y + 1][x];
-                    grid[y + 1][x] = temp;
+                if (row < GRID_SIZE - 1) {
+                    const temp = GridState.grid[row][col];
+                    GridState.grid[row][col] = GridState.grid[row + 1][col];
+                    GridState.grid[row + 1][col] = temp;
                     
-                    if (findAllMatches().length > 0) {
-                        grid[y + 1][x] = grid[y][x];
-                        grid[y][x] = temp;
-                        return true;
-                    }
+                    const hasMatch = findMatches().length > 0;
                     
-                    grid[y + 1][x] = grid[y][x];
-                    grid[y][x] = temp;
+                    GridState.grid[row + 1][col] = GridState.grid[row][col];
+                    GridState.grid[row][col] = temp;
+                    
+                    if (hasMatch) return true;
                 }
             }
         }
@@ -394,14 +438,10 @@ const match_engine = (function() {
             return;
         }
         
-        GridState.animating = true;
-        
         const tiles = [];
-        for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-                if (GridState.grid[y][x] !== 0) {
-                    tiles.push(GridState.grid[y][x]);
-                }
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                tiles.push(GridState.grid[row][col]);
             }
         }
         
@@ -411,37 +451,13 @@ const match_engine = (function() {
         }
         
         let tileIndex = 0;
-        for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-                if (tileIndex < tiles.length) {
-                    GridState.grid[y][x] = tiles[tileIndex++];
-                } else {
-                    GridState.grid[y][x] = Math.floor(Math.random() * TILE_TYPES) + 1;
-                }
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                GridState.grid[row][col] = tiles[tileIndex++];
             }
         }
         
-        let attempts = 0;
-        while (!hasValidMoves() && attempts < 10) {
-            for (let i = tiles.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-            }
-            
-            tileIndex = 0;
-            for (let y = 0; y < GRID_SIZE; y++) {
-                for (let x = 0; x < GRID_SIZE; x++) {
-                    if (tileIndex < tiles.length) {
-                        GridState.grid[y][x] = tiles[tileIndex++];
-                    } else {
-                        GridState.grid[y][x] = Math.floor(Math.random() * TILE_TYPES) + 1;
-                    }
-                }
-            }
-            attempts++;
-        }
-        
-        GridState.animating = false;
+        GridState.selectedTile = 'none';
     }
     
     function update(dt) {
@@ -460,245 +476,118 @@ const match_engine = (function() {
     };
 })();
 
+// UI System Module
 const ui_system = (function() {
     let canvas;
     let ctx;
     
-    const GRID_OFFSET_X = (CANVAS_WIDTH - (GRID_SIZE * TILE_SIZE)) / 2;
+    const GRID_OFFSET_X = 90;
     const GRID_OFFSET_Y = 300;
-    const HUD_HEIGHT = 200;
     
-    const TILE_COLORS = [
-        '#FF6B6B',
-        '#4ECDC4',
-        '#45B7D1',
-        '#96CEB4',
-        '#FFEAA7',
-        '#DDA0DD'
-    ];
-    
+    const TILE_COLORS = {
+        '0': '#FF6B6B',
+        '1': '#4ECDC4',
+        '2': '#45B7D1',
+        '3': '#96CEB4',
+        '4': '#FFEAA7',
+        '5': '#DDA0DD'
+    };
+
     function init() {
         canvas = document.getElementById('gameCanvas');
         if (!canvas) {
             canvas = document.createElement('canvas');
             canvas.id = 'gameCanvas';
-            canvas.width = CANVAS_WIDTH;
-            canvas.height = CANVAS_HEIGHT;
-            document.body.appendChild(canvas);
+            document.getElementById('gameplay').appendChild(canvas);
         }
+        canvas.width = 980;
+        canvas.height = 980;
         ctx = canvas.getContext('2d');
         
-        canvas.style.border = '2px solid #333';
         canvas.style.display = 'block';
-        canvas.style.margin = '0 auto';
-        canvas.style.backgroundColor = '#1a1a2e';
+        canvas.style.backgroundColor = 'transparent';
     }
-    
+
     function renderMainMenu() {
-        if (GameState.gameStatus !== 'main_menu') return;
-        
-        ctx.fillStyle = '#0f0f23';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 80px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('MATCH 3', CANVAS_WIDTH / 2, 300);
-        
-        ctx.font = '32px Arial';
-        ctx.fillStyle = '#cccccc';
-        ctx.fillText('Match tiles to score points!', CANVAS_WIDTH / 2, 380);
-        
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(CANVAS_WIDTH / 2 - 150, 600, 300, 80);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 36px Arial';
-        ctx.fillText('START GAME', CANVAS_WIDTH / 2, 650);
-        
-        ctx.fillStyle = '#2196F3';
-        ctx.fillRect(CANVAS_WIDTH / 2 - 150, 720, 300, 80);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('LEADERBOARD', CANVAS_WIDTH / 2, 770);
-        
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#888888';
-        ctx.fillText('Tap tiles to select and swap', CANVAS_WIDTH / 2, 1000);
-        ctx.fillText('Match 3 or more to score', CANVAS_WIDTH / 2, 1040);
+        // Main menu is handled by HTML/CSS
     }
-    
+
     function renderGameplay() {
         if (GameState.gameStatus !== 'gameplay') return;
         
-        ctx.fillStyle = '#0f0f23';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        renderHUD();
+        // Update UI text elements
+        document.getElementById('score_display').textContent = `得分: ${GameState.score}`;
+        document.getElementById('moves_left').textContent = `步数: ${GameState.movesRemaining}`;
+        document.getElementById('target').textContent = `目标: ${GameState.targetScore}`;
+        document.getElementById('level_label').textContent = `第 ${GameState.level} 关`;
+        
         renderGrid();
-        
-        if (GridState.selectedTile && GridState.selectedTile !== 'null') {
-            const coords = GridState.selectedTile.split(',');
-            const x = parseInt(coords[0]);
-            const y = parseInt(coords[1]);
-            
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(
-                GRID_OFFSET_X + x * TILE_SIZE,
-                GRID_OFFSET_Y + y * TILE_SIZE,
-                TILE_SIZE,
-                TILE_SIZE
-            );
-        }
     }
-    
-    function renderHUD() {
-        ctx.fillStyle = '#16213e';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, HUD_HEIGHT);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 36px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Score: ' + GameState.score, 50, 60);
-        
-        ctx.fillText('Lives: ' + GameState.lives, 50, 110);
-        
-        ctx.textAlign = 'right';
-        ctx.fillText('Level: ' + GameState.level, CANVAS_WIDTH - 50, 60);
-        
-        ctx.fillText('Moves: ' + GameState.movesRemaining, CANVAS_WIDTH - 50, 110);
-        
-        ctx.textAlign = 'center';
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#cccccc';
-        ctx.fillText('Target: ' + GameState.targetScore, CANVAS_WIDTH / 2, 160);
-    }
-    
+
     function renderGrid() {
         if (!GridState.grid || GridState.grid.length === 0) return;
         
-        for (let y = 0; y < GridState.gridHeight; y++) {
-            for (let x = 0; x < GridState.gridWidth; x++) {
-                const tileType = GridState.grid[y][x];
-                const tileX = GRID_OFFSET_X + x * TILE_SIZE;
-                const tileY = GRID_OFFSET_Y + y * TILE_SIZE;
+        const tileSize = 120;
+        
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                const tileType = GridState.grid[row][col];
+                const x = col * tileSize + 10;
+                const y = row * tileSize + 10;
                 
-                ctx.fillStyle = '#2c3e50';
-                ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                ctx.fillStyle = TILE_COLORS[tileType] || '#95A5A6';
+                ctx.fillRect(x, y, tileSize - 4, tileSize - 4);
                 
-                ctx.strokeStyle = '#34495e';
+                ctx.strokeStyle = '#2C3E50';
                 ctx.lineWidth = 2;
-                ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                ctx.strokeRect(x, y, tileSize - 4, tileSize - 4);
                 
-                if (tileType >= 1 && tileType <= TILE_COLORS.length) {
-                    ctx.fillStyle = TILE_COLORS[tileType - 1];
-                    ctx.fillRect(tileX + 10, tileY + 10, TILE_SIZE - 20, TILE_SIZE - 20);
-                    
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.fillRect(tileX + 10, tileY + 10, TILE_SIZE - 20, 20);
+                if (GridState.selectedTile === `${col},${row}`) {
+                    ctx.strokeStyle = '#F39C12';
+                    ctx.lineWidth = 6;
+                    ctx.strokeRect(x - 2, y - 2, tileSize, tileSize);
                 }
+                
+                ctx.fillStyle = '#2C3E50';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(tileType, x + tileSize / 2 - 2, y + tileSize / 2 + 16);
             }
         }
     }
-    
+
     function renderGameOver() {
-        if (GameState.gameStatus !== 'game_over') return;
-        
-        ctx.fillStyle = '#0f0f23';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        
-        ctx.fillStyle = '#ff4757';
-        ctx.font = 'bold 72px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 300);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 48px Arial';
-        ctx.fillText('Final Score: ' + GameState.score, CANVAS_WIDTH / 2, 400);
-        
-        ctx.font = '36px Arial';
-        ctx.fillStyle = '#cccccc';
-        ctx.fillText('Level Reached: ' + GameState.level, CANVAS_WIDTH / 2, 460);
-        
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(CANVAS_WIDTH / 2 - 150, 600, 300, 80);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 32px Arial';
-        ctx.fillText('RETRY', CANVAS_WIDTH / 2, 650);
-        
-        ctx.fillStyle = '#2196F3';
-        ctx.fillRect(CANVAS_WIDTH / 2 - 150, 720, 300, 80);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('MAIN MENU', CANVAS_WIDTH / 2, 770);
-        
-        ctx.fillStyle = '#FF9800';
-        ctx.fillRect(CANVAS_WIDTH / 2 - 150, 840, 300, 80);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('LEADERBOARD', CANVAS_WIDTH / 2, 890);
+        document.getElementById('final_score').textContent = `最终得分: ${GameState.score}`;
     }
-    
+
     function renderLeaderboard() {
-        if (GameState.gameStatus !== 'leaderboard') return;
-        
-        ctx.fillStyle = '#0f0f23';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 64px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('LEADERBOARD', CANVAS_WIDTH / 2, 200);
-        
-        const leaderboard = [
-            { name: 'Player 1', score: 15000 },
-            { name: 'Player 2', score: 12500 },
-            { name: 'Player 3', score: 10000 },
-            { name: 'Player 4', score: 8500 },
-            { name: 'Player 5', score: 7000 }
-        ];
-        
-        ctx.font = '36px Arial';
-        ctx.textAlign = 'left';
-        for (let i = 0; i < leaderboard.length; i++) {
-            const y = 320 + i * 80;
-            const entry = leaderboard[i];
-            
-            ctx.fillStyle = '#FFD700';
-            ctx.fillText((i + 1) + '.', 200, y);
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(entry.name, 280, y);
-            
-            ctx.textAlign = 'right';
-            ctx.fillText(entry.score.toLocaleString(), CANVAS_WIDTH - 200, y);
-            ctx.textAlign = 'left';
-        }
-        
-        ctx.fillStyle = '#2196F3';
-        ctx.fillRect(CANVAS_WIDTH / 2 - 100, 800, 200, 60);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 28px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('BACK', CANVAS_WIDTH / 2, 840);
+        // Leaderboard is handled by HTML/CSS
     }
-    
+
     function getClickedTile(x, y) {
         if (GameState.gameStatus !== 'gameplay') return 'none';
         
-        if (x < GRID_OFFSET_X || x > GRID_OFFSET_X + (GridState.gridWidth * TILE_SIZE) ||
-            y < GRID_OFFSET_Y || y > GRID_OFFSET_Y + (GridState.gridHeight * TILE_SIZE)) {
+        const tileSize = 120;
+        const gridStartX = 10;
+        const gridStartY = 10;
+        
+        if (x < gridStartX || x > gridStartX + GRID_SIZE * tileSize ||
+            y < gridStartY || y > gridStartY + GRID_SIZE * tileSize) {
             return 'none';
         }
         
-        const gridX = Math.floor((x - GRID_OFFSET_X) / TILE_SIZE);
-        const gridY = Math.floor((y - GRID_OFFSET_Y) / TILE_SIZE);
+        const col = Math.floor((x - gridStartX) / tileSize);
+        const row = Math.floor((y - gridStartY) / tileSize);
         
-        if (gridX >= 0 && gridX < GridState.gridWidth && 
-            gridY >= 0 && gridY < GridState.gridHeight) {
-            return gridX + ',' + gridY;
+        if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) {
+            return 'none';
         }
         
-        return 'none';
+        return `${col},${row}`;
     }
-    
+
     function render() {
         switch (GameState.gameStatus) {
             case 'main_menu':
@@ -715,7 +604,7 @@ const ui_system = (function() {
                 break;
         }
     }
-    
+
     return {
         init,
         renderMainMenu,
@@ -727,47 +616,42 @@ const ui_system = (function() {
     };
 })();
 
+// Input Handler Module
 const input_handler = (function() {
+    let selectedTile = null;
+    
     function init() {
-        document.addEventListener('click', function(e) {
-            const rect = document.querySelector('canvas').getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            handleClick(x, y);
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            canvas.addEventListener('click', function(event) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                handleClick(x, y);
+            });
+            
+            canvas.addEventListener('touchstart', function(event) {
+                event.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = event.touches[0];
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                handleClick(x, y);
+            });
+        }
+        
+        document.addEventListener('keydown', function(event) {
+            handleKeyPress(event.key);
         });
         
-        document.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            const rect = document.querySelector('canvas').getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-            handleClick(x, y);
-        });
-        
-        document.addEventListener('keydown', function(e) {
-            handleKeyPress(e.key);
+        EventBus.on('GAME_START', function() {
+            selectedTile = null;
         });
     }
     
     function handleClick(x, y) {
-        if (GameState.gameStatus === 'main_menu') {
-            handleMainMenuClick(x, y);
-        } else if (GameState.gameStatus === 'gameplay') {
+        if (GameState.gameStatus === 'gameplay') {
             handleGameplayClick(x, y);
-        } else if (GameState.gameStatus === 'game_over') {
-            handleGameOverClick(x, y);
-        } else if (GameState.gameStatus === 'leaderboard') {
-            handleLeaderboardClick(x, y);
-        }
-    }
-    
-    function handleMainMenuClick(x, y) {
-        if (x >= 340 && x <= 740 && y >= 750 && y <= 850) {
-            EventBus.emit('START_GAME', {});
-        }
-        else if (x >= 340 && x <= 740 && y >= 900 && y <= 1000) {
-            EventBus.emit('SHOW_LEADERBOARD', {});
         }
     }
     
@@ -776,79 +660,56 @@ const input_handler = (function() {
             return;
         }
         
-        const tileCoords = ui_system.getClickedTile(x, y);
-        if (tileCoords === 'none') {
+        const tilePos = ui_system.getClickedTile(x, y);
+        if (tilePos === 'none') {
+            selectedTile = null;
             return;
         }
         
-        const [tileX, tileY] = tileCoords.split(',').map(Number);
+        const [tileX, tileY] = tilePos.split(',').map(Number);
         
-        if (GridState.selectedTile === null) {
-            GridState.selectedTile = `${tileX},${tileY}`;
+        if (selectedTile === null) {
+            selectedTile = { x: tileX, y: tileY };
         } else {
-            const [selectedX, selectedY] = GridState.selectedTile.split(',').map(Number);
+            const dx = Math.abs(selectedTile.x - tileX);
+            const dy = Math.abs(selectedTile.y - tileY);
             
-            if (selectedX === tileX && selectedY === tileY) {
-                GridState.selectedTile = null;
-            } else {
-                const dx = Math.abs(selectedX - tileX);
-                const dy = Math.abs(selectedY - tileY);
+            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                const swapSuccessful = match_engine.swapTiles(
+                    selectedTile.x, selectedTile.y, 
+                    tileX, tileY
+                );
                 
-                if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-                    const swapSuccessful = match_engine.swapTiles(selectedX, selectedY, tileX, tileY);
-                    GridState.selectedTile = null;
+                if (swapSuccessful) {
+                    selectedTile = null;
                 } else {
-                    GridState.selectedTile = `${tileX},${tileY}`;
+                    selectedTile = { x: tileX, y: tileY };
                 }
+            } else {
+                selectedTile = { x: tileX, y: tileY };
             }
-        }
-    }
-    
-    function handleGameOverClick(x, y) {
-        if (x >= 140 && x <= 440 && y >= 1200 && y <= 1300) {
-            EventBus.emit('RETRY_GAME', {});
-        }
-        else if (x >= 640 && x <= 940 && y >= 1200 && y <= 1300) {
-            EventBus.emit('RETURN_MENU', {});
-        }
-        else if (x >= 340 && x <= 740 && y >= 1350 && y <= 1450) {
-            EventBus.emit('SHOW_LEADERBOARD', {});
-        }
-    }
-    
-    function handleLeaderboardClick(x, y) {
-        if (x >= 340 && x <= 740 && y >= 1600 && y <= 1700) {
-            EventBus.emit('CLOSE_LEADERBOARD', {});
         }
     }
     
     function handleKeyPress(key) {
-        if (GameState.gameStatus === 'main_menu') {
-            if (key === 'Enter' || key === ' ') {
-                EventBus.emit('START_GAME', {});
-            } else if (key === 'l' || key === 'L') {
-                EventBus.emit('SHOW_LEADERBOARD', {});
-            }
-        } else if (GameState.gameStatus === 'gameplay') {
+        if (GameState.gameStatus === 'gameplay') {
             if (key === 'Escape') {
-                EventBus.emit('RETURN_MENU', {});
-            }
-        } else if (GameState.gameStatus === 'game_over') {
-            if (key === 'r' || key === 'R') {
-                EventBus.emit('RETRY_GAME', {});
-            } else if (key === 'm' || key === 'M') {
-                EventBus.emit('RETURN_MENU', {});
-            } else if (key === 'l' || key === 'L') {
-                EventBus.emit('SHOW_LEADERBOARD', {});
-            }
-        } else if (GameState.gameStatus === 'leaderboard') {
-            if (key === 'Escape' || key === 'Enter') {
-                EventBus.emit('CLOSE_LEADERBOARD', {});
+                selectedTile = null;
             }
         }
     }
     
     function update(dt) {
+        if (GameState.gameStatus === 'gameplay') {
+            if (selectedTile) {
+                GridState.selectedTile = selectedTile.x + ',' + selectedTile.y;
+            } else {
+                GridState.selectedTile = 'none';
+            }
+        } else {
+            GridState.selectedTile = 'none';
+            selectedTile = null;
+        }
     }
     
     return {
@@ -859,7 +720,7 @@ const input_handler = (function() {
     };
 })();
 
-// showScreen function
+// Show Screen Function
 function showScreen(id) {
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
@@ -870,63 +731,25 @@ function showScreen(id) {
     if (targetScreen) {
         targetScreen.style.display = 'block';
     }
-    
-    // Update UI elements based on current game state
-    updateUI();
 }
 
-// Update UI elements
-function updateUI() {
-    const scoreDisplay = document.getElementById('score_display');
-    const movesLeft = document.getElementById('moves_left');
-    const target = document.getElementById('target');
-    const levelLabel = document.getElementById('level_label');
-    const finalScore = document.getElementById('final_score');
-    
-    if (scoreDisplay) scoreDisplay.textContent = `得分: ${GameState.score}`;
-    if (movesLeft) movesLeft.textContent = `步数: ${GameState.movesRemaining}`;
-    if (target) target.textContent = `目标: ${GameState.targetScore}`;
-    if (levelLabel) levelLabel.textContent = `第 ${GameState.level} 关`;
-    if (finalScore) finalScore.textContent = `最终得分: ${GameState.score}`;
-}
-
-// Game loop
-let lastTime = 0;
-function gameLoop(timestamp) {
-    const dt = (timestamp - lastTime) / 1000;
-    lastTime = timestamp;
-    
-    // Update functions
-    input_handler.update(dt);
-    match_engine.update(dt);
-    
-    // Render functions
-    ui_system.render();
-    
-    if (GameState.gameStatus === 'playing' || GameState.gameStatus === 'gameplay') {
-        requestAnimationFrame(gameLoop);
-    }
-}
-
-// State transition functions
+// State Transition Functions
 function startGame() {
     GameState.gameStatus = 'gameplay';
     EventBus.emit('START_GAME', {});
     showScreen('gameplay');
-    requestAnimationFrame(gameLoop);
 }
 
 function gameOver() {
     GameState.gameStatus = 'game_over';
-    EventBus.emit('GAME_OVER', { finalScore: GameState.score });
+    EventBus.emit('GAME_OVER', { finalScore: GameState.score, reason: 'no_moves' });
     showScreen('game_over');
 }
 
 function retry() {
-    GameState.gameStatus = 'gameplay';
+    GameState.gameStatus = 'main_menu';
     EventBus.emit('RETRY_GAME', {});
-    showScreen('gameplay');
-    requestAnimationFrame(gameLoop);
+    startGame();
 }
 
 function returnToMenu() {
@@ -947,60 +770,48 @@ function closeLeaderboard() {
     showScreen('main_menu');
 }
 
-// Input handlers
+// Game Loop
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+    const dt = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+    
+    // Update functions in order
+    input_handler.update(dt);
+    match_engine.update(dt);
+    
+    // Render functions in order
+    ui_system.render();
+    
+    if (GameState.gameStatus === 'playing' || GameState.gameStatus === 'gameplay') {
+        requestAnimationFrame(gameLoop);
+    } else {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// Initialize Game
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize modules
+    // Initialize modules in order
     game_state.init();
     match_engine.init();
     ui_system.init();
     input_handler.init();
     
     // Set up button event listeners
-    const btnPlay = document.getElementById('btn_play');
-    const btnLeaderboard = document.querySelectorAll('#btn_leaderboard');
-    const btnRetry = document.getElementById('btn_retry');
-    const btnMenu = document.getElementById('btn_menu');
-    const btnClose = document.getElementById('btn_close');
-    
-    if (btnPlay) {
-        btnPlay.addEventListener('click', startGame);
-    }
-    
-    btnLeaderboard.forEach(btn => {
+    document.getElementById('btn_play').addEventListener('click', startGame);
+    document.getElementById('btn_leaderboard').addEventListener('click', showLeaderboard);
+    document.getElementById('btn_retry').addEventListener('click', retry);
+    document.getElementById('btn_menu').addEventListener('click', returnToMenu);
+    document.querySelectorAll('#btn_leaderboard').forEach(btn => {
         btn.addEventListener('click', showLeaderboard);
     });
+    document.getElementById('btn_close').addEventListener('click', closeLeaderboard);
     
-    if (btnRetry) {
-        btnRetry.addEventListener('click', retry);
-    }
-    
-    if (btnMenu) {
-        btnMenu.addEventListener('click', returnToMenu);
-    }
-    
-    if (btnClose) {
-        btnClose.addEventListener('click', closeLeaderboard);
-    }
-    
-    // Listen for state changes
-    EventBus.on('GAME_START', () => {
-        showScreen('gameplay');
-        requestAnimationFrame(gameLoop);
-    });
-    
-    EventBus.on('GAME_OVER', () => {
-        showScreen('game_over');
-    });
-    
-    EventBus.on('START_GAME', startGame);
-    EventBus.on('RETRY_GAME', retry);
-    EventBus.on('RETURN_MENU', returnToMenu);
-    EventBus.on('SHOW_LEADERBOARD', showLeaderboard);
-    EventBus.on('CLOSE_LEADERBOARD', closeLeaderboard);
+    // Start game loop
+    requestAnimationFrame(gameLoop);
     
     // Show initial screen
     showScreen('main_menu');
-    
-    // Start render loop
-    requestAnimationFrame(gameLoop);
 });

@@ -10,9 +10,6 @@ const EventBus = {
     }
 };
 
-// Make EventBus globally available
-window.eventBus = EventBus;
-
 // Global constants
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
@@ -48,13 +45,18 @@ const EnemyBullets = {
     bullets: []
 };
 
-// Module code
+// Set up global eventBus
+window.eventBus = EventBus;
+
+// Module: game_state
 const GameStateModule = (function() {
+    let eventListeners = [];
+
     function init() {
         GameState.gameStatus = 'menu';
         GameState.score = 0;
         GameState.level = 1;
-        GameState.highScore = parseInt(localStorage.getItem('spaceShooterHighScore')) || 0;
+        GameState.highScore = parseInt(localStorage.getItem('spaceShooterHighScore') || '0');
         
         // Set up event listeners
         EventBus.on('GAME_START', handleGameStart);
@@ -67,96 +69,122 @@ const GameStateModule = (function() {
         EventBus.on('CLOSE_LEADERBOARD', handleCloseLeaderboard);
         EventBus.on('ENEMY_DESTROYED', handleEnemyDestroyed);
     }
-    
-    function startGame() {
+
+    function handleGameStart() {
         if (GameState.gameStatus === 'menu') {
+            startGame();
+        }
+    }
+
+    function handleGamePause() {
+        if (GameState.gameStatus === 'playing') {
+            pauseGame();
+        }
+    }
+
+    function handleGameResume() {
+        if (GameState.gameStatus === 'paused') {
+            resumeGame();
+        }
+    }
+
+    function handlePlayerDied() {
+        if (GameState.gameStatus === 'playing') {
+            gameOver();
+        }
+    }
+
+    function handleRetry() {
+        if (GameState.gameStatus === 'game_over') {
+            startGame();
+        }
+    }
+
+    function handleReturnMenu() {
+        if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'leaderboard') {
+            returnToMenu();
+        }
+    }
+
+    function handleShowLeaderboard() {
+        if (GameState.gameStatus === 'game_over') {
+            showLeaderboard();
+        }
+    }
+
+    function handleCloseLeaderboard() {
+        if (GameState.gameStatus === 'leaderboard') {
+            returnToMenu();
+        }
+    }
+
+    function handleEnemyDestroyed(event) {
+        if (GameState.gameStatus === 'playing') {
+            addScore(event.points);
+        }
+    }
+
+    function startGame() {
+        if (GameState.gameStatus === 'menu' || GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'playing';
             GameState.score = 0;
             GameState.level = 1;
         }
     }
-    
+
     function pauseGame() {
         if (GameState.gameStatus === 'playing') {
             GameState.gameStatus = 'paused';
         }
     }
-    
+
     function resumeGame() {
         if (GameState.gameStatus === 'paused') {
             GameState.gameStatus = 'playing';
         }
     }
-    
+
     function gameOver() {
         if (GameState.gameStatus === 'playing') {
             GameState.gameStatus = 'game_over';
+            
+            // Update high score if needed
             if (GameState.score > GameState.highScore) {
                 GameState.highScore = GameState.score;
                 localStorage.setItem('spaceShooterHighScore', GameState.highScore.toString());
             }
         }
     }
-    
+
     function returnToMenu() {
         if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'leaderboard') {
             GameState.gameStatus = 'menu';
         }
     }
-    
+
     function showLeaderboard() {
         if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'leaderboard';
         }
     }
-    
+
     function addScore(points) {
         if (GameState.gameStatus === 'playing') {
             GameState.score += points;
+            
+            // Level progression based on score
+            const newLevel = Math.floor(GameState.score / 1000) + 1;
+            if (newLevel > GameState.level) {
+                GameState.level = newLevel;
+            }
         }
     }
-    
+
     function update(dt) {
-        // Game state update logic if needed
+        // Game state module doesn't need frame-based updates
+        // All state changes are event-driven
     }
-    
-    // Event handlers
-    function handleGameStart(event) {
-        startGame();
-    }
-    
-    function handleGamePause(event) {
-        pauseGame();
-    }
-    
-    function handleGameResume(event) {
-        resumeGame();
-    }
-    
-    function handlePlayerDied(event) {
-        gameOver();
-    }
-    
-    function handleRetry(event) {
-        startGame();
-    }
-    
-    function handleReturnMenu(event) {
-        returnToMenu();
-    }
-    
-    function handleShowLeaderboard(event) {
-        showLeaderboard();
-    }
-    
-    function handleCloseLeaderboard(event) {
-        returnToMenu();
-    }
-    
-    function handleEnemyDestroyed(event) {
-        addScore(event.points);
-    }
-    
+
     return {
         init,
         startGame,
@@ -170,9 +198,10 @@ const GameStateModule = (function() {
     };
 })();
 
+// Module: player_ship
 const player_ship = (function() {
     let lastShotTime = 0;
-    const SHOT_COOLDOWN = 200; // milliseconds between shots
+    const SHOT_COOLDOWN = 150; // milliseconds between shots
 
     function init() {
         PlayerShip.x = 540;
@@ -181,41 +210,34 @@ const player_ship = (function() {
         PlayerShip.width = 60;
         PlayerShip.height = 80;
         PlayerBullets.bullets = [];
-        lastShotTime = 0;
     }
 
     function moveLeft() {
         if (GameState.gameStatus !== 'playing') return;
-        PlayerShip.x -= PLAYER_SPEED;
-        if (PlayerShip.x < 0) {
-            PlayerShip.x = 0;
-        }
+        PlayerShip.x = Math.max(0, PlayerShip.x - PLAYER_SPEED);
     }
 
     function moveRight() {
         if (GameState.gameStatus !== 'playing') return;
-        PlayerShip.x += PLAYER_SPEED;
-        if (PlayerShip.x > CANVAS_WIDTH - PlayerShip.width) {
-            PlayerShip.x = CANVAS_WIDTH - PlayerShip.width;
-        }
+        PlayerShip.x = Math.min(CANVAS_WIDTH - PlayerShip.width, PlayerShip.x + PLAYER_SPEED);
     }
 
     function shoot() {
         if (GameState.gameStatus !== 'playing') return;
         
-        const currentTime = Date.now();
-        if (currentTime - lastShotTime < SHOT_COOLDOWN) return;
+        const now = Date.now();
+        if (now - lastShotTime < SHOT_COOLDOWN) return;
         
-        const bullet = {
+        PlayerBullets.bullets.push({
             x: PlayerShip.x + PlayerShip.width / 2 - 2,
             y: PlayerShip.y,
-            speed: BULLET_SPEED,
             width: 4,
-            height: 10
-        };
+            height: 10,
+            speed: BULLET_SPEED,
+            active: true
+        });
         
-        PlayerBullets.bullets.push(bullet);
-        lastShotTime = currentTime;
+        lastShotTime = now;
     }
 
     function takeDamage(damage) {
@@ -224,6 +246,7 @@ const player_ship = (function() {
         PlayerShip.health -= damage;
         if (PlayerShip.health <= 0) {
             PlayerShip.health = 0;
+            // Emit PLAYER_DIED event
             EventBus.emit('PLAYER_DIED', {});
         }
     }
@@ -243,8 +266,8 @@ const player_ship = (function() {
             const bullet = PlayerBullets.bullets[i];
             bullet.y -= bullet.speed;
             
-            // Remove bullets that are off screen
-            if (bullet.y < -bullet.height) {
+            // Remove bullets that are off-screen
+            if (bullet.y + bullet.height < 0) {
                 PlayerBullets.bullets.splice(i, 1);
                 continue;
             }
@@ -261,7 +284,9 @@ const player_ship = (function() {
                     
                     // Check if enemy is destroyed
                     if (enemy.health <= 0) {
-                        const points = enemy.type === 'basic' ? 100 : 200;
+                        const points = enemy.type === 'basic' ? 100 : enemy.type === 'fast' ? 150 : 200;
+                        
+                        // Emit ENEMY_DESTROYED event
                         EventBus.emit('ENEMY_DESTROYED', {
                             enemyId: enemy.id,
                             points: points
@@ -285,8 +310,10 @@ const player_ship = (function() {
             if (checkBoundingBoxOverlap(bullet, playerRect)) {
                 // Remove bullet
                 EnemyBullets.bullets.splice(i, 1);
+                
                 // Damage player
                 takeDamage(1);
+                break;
             }
         }
 
@@ -302,7 +329,7 @@ const player_ship = (function() {
             
             if (checkBoundingBoxOverlap(enemy, playerRect)) {
                 takeDamage(1);
-                break; // Only take damage once per frame
+                break;
             }
         }
     }
@@ -314,14 +341,11 @@ const player_ship = (function() {
         ctx.fillStyle = '#00ff00';
         ctx.fillRect(PlayerShip.x, PlayerShip.y, PlayerShip.width, PlayerShip.height);
         
-        // Draw a simple ship shape
+        // Add simple ship details
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(PlayerShip.x + PlayerShip.width / 2, PlayerShip.y);
-        ctx.lineTo(PlayerShip.x + 10, PlayerShip.y + PlayerShip.height);
-        ctx.lineTo(PlayerShip.x + PlayerShip.width - 10, PlayerShip.y + PlayerShip.height);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillRect(PlayerShip.x + 25, PlayerShip.y + 10, 10, 20);
+        ctx.fillRect(PlayerShip.x + 10, PlayerShip.y + 40, 15, 30);
+        ctx.fillRect(PlayerShip.x + 35, PlayerShip.y + 40, 15, 30);
 
         // Render player bullets
         ctx.fillStyle = '#ffff00';
@@ -354,111 +378,155 @@ const player_ship = (function() {
     };
 })();
 
+// Module: enemy_system
 const EnemySystem = (function() {
-    let spawnTimer = 0;
+    let lastSpawnTime = 0;
     let spawnInterval = 2000; // milliseconds
-    let enemyIdCounter = 0;
-    
+    let nextEnemyId = 1;
+    let lastEnemyShootTime = {};
+
     function init() {
         Enemies.enemies = [];
         EnemyBullets.bullets = [];
-        spawnTimer = 0;
-        enemyIdCounter = 0;
+        lastSpawnTime = 0;
+        nextEnemyId = 1;
+        lastEnemyShootTime = {};
     }
-    
+
     function spawnEnemy(x, y, type) {
         if (GameState.gameStatus !== 'playing') return;
         
         const enemy = {
-            id: 'enemy_' + (enemyIdCounter++),
+            id: 'enemy_' + nextEnemyId++,
             x: x,
             y: y,
             type: type,
-            health: type === 'basic' ? 1 : type === 'heavy' ? 3 : 1,
-            width: type === 'heavy' ? 80 : 60,
-            height: type === 'heavy' ? 100 : 80,
-            speed: type === 'fast' ? ENEMY_SPEED * 1.5 : ENEMY_SPEED,
-            shootTimer: 0,
-            shootInterval: type === 'shooter' ? 1500 : 3000
+            health: getEnemyHealth(type),
+            width: getEnemyWidth(type),
+            height: getEnemyHeight(type),
+            speed: ENEMY_SPEED,
+            direction: 1,
+            lastShot: 0
         };
         
         Enemies.enemies.push(enemy);
+        lastEnemyShootTime[enemy.id] = 0;
     }
-    
+
     function destroyEnemy(enemyId) {
         if (GameState.gameStatus !== 'playing') return;
         
         const index = Enemies.enemies.findIndex(enemy => enemy.id === enemyId);
         if (index !== -1) {
+            delete lastEnemyShootTime[enemyId];
             Enemies.enemies.splice(index, 1);
         }
     }
-    
+
+    function getEnemyHealth(type) {
+        switch (type) {
+            case 'basic': return 1;
+            case 'heavy': return 3;
+            case 'fast': return 1;
+            default: return 1;
+        }
+    }
+
+    function getEnemyWidth(type) {
+        switch (type) {
+            case 'basic': return 40;
+            case 'heavy': return 60;
+            case 'fast': return 30;
+            default: return 40;
+        }
+    }
+
+    function getEnemyHeight(type) {
+        switch (type) {
+            case 'basic': return 40;
+            case 'heavy': return 60;
+            case 'fast': return 30;
+            default: return 40;
+        }
+    }
+
+    function getEnemySpeed(type) {
+        switch (type) {
+            case 'basic': return ENEMY_SPEED;
+            case 'heavy': return ENEMY_SPEED * 0.5;
+            case 'fast': return ENEMY_SPEED * 1.5;
+            default: return ENEMY_SPEED;
+        }
+    }
+
     function update(dt) {
         if (GameState.gameStatus !== 'playing') return;
+
+        const now = Date.now();
         
         // Spawn enemies periodically
-        spawnTimer += dt * 1000;
-        if (spawnTimer >= spawnInterval) {
-            spawnTimer = 0;
+        if (now - lastSpawnTime > spawnInterval) {
+            const spawnX = Math.random() * (CANVAS_WIDTH - 60);
+            const enemyTypes = ['basic', 'heavy', 'fast'];
+            const randomType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+            spawnEnemy(spawnX, -50, randomType);
+            lastSpawnTime = now;
             
-            // Spawn random enemy type at random x position
-            const x = Math.random() * (CANVAS_WIDTH - 80);
-            const types = ['basic', 'fast', 'heavy', 'shooter'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            spawnEnemy(x, -100, type);
-            
-            // Decrease spawn interval slightly each level
-            spawnInterval = Math.max(800, 2000 - (GameState.level * 100));
+            // Increase difficulty over time
+            spawnInterval = Math.max(800, spawnInterval - 10);
         }
-        
+
         // Update enemies
         for (let i = Enemies.enemies.length - 1; i >= 0; i--) {
             const enemy = Enemies.enemies[i];
             
             // Move enemy down
-            enemy.y += enemy.speed;
+            enemy.y += getEnemySpeed(enemy.type);
+            
+            // Add some horizontal movement for variety
+            if (enemy.type === 'fast') {
+                enemy.x += Math.sin(enemy.y * 0.01) * 2;
+            }
+            
+            // Keep enemies within bounds
+            enemy.x = Math.max(0, Math.min(CANVAS_WIDTH - enemy.width, enemy.x));
+            
+            // Enemy shooting
+            if (now - lastEnemyShootTime[enemy.id] > 1500 + Math.random() * 1000) {
+                const bullet = {
+                    x: enemy.x + enemy.width / 2,
+                    y: enemy.y + enemy.height,
+                    width: 4,
+                    height: 8,
+                    speed: 6,
+                    active: true
+                };
+                EnemyBullets.bullets.push(bullet);
+                lastEnemyShootTime[enemy.id] = now;
+            }
             
             // Remove enemies that are off screen
-            if (enemy.y > CANVAS_HEIGHT + 100) {
+            if (enemy.y > CANVAS_HEIGHT) {
+                delete lastEnemyShootTime[enemy.id];
                 Enemies.enemies.splice(i, 1);
-                continue;
-            }
-            
-            // Enemy shooting logic
-            if (enemy.type === 'shooter' || enemy.type === 'heavy') {
-                enemy.shootTimer += dt * 1000;
-                if (enemy.shootTimer >= enemy.shootInterval) {
-                    enemy.shootTimer = 0;
-                    
-                    // Create enemy bullet
-                    const bullet = {
-                        x: enemy.x + enemy.width / 2,
-                        y: enemy.y + enemy.height,
-                        speed: BULLET_SPEED * 0.7,
-                        width: 8,
-                        height: 16
-                    };
-                    EnemyBullets.bullets.push(bullet);
-                }
             }
         }
-        
+
         // Update enemy bullets
         for (let i = EnemyBullets.bullets.length - 1; i >= 0; i--) {
             const bullet = EnemyBullets.bullets[i];
             bullet.y += bullet.speed;
             
             // Remove bullets that are off screen
-            if (bullet.y > CANVAS_HEIGHT + 50) {
+            if (bullet.y > CANVAS_HEIGHT) {
                 EnemyBullets.bullets.splice(i, 1);
             }
         }
     }
-    
+
     function render(ctx) {
         if (GameState.gameStatus !== 'playing') return;
-        
+
         // Render enemies
         Enemies.enemies.forEach(enemy => {
             ctx.fillStyle = getEnemyColor(enemy.type);
@@ -468,37 +536,29 @@ const EnemySystem = (function() {
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             ctx.strokeRect(enemy.x, enemy.y, enemy.width, enemy.height);
-            
-            // Draw health indicator for heavy enemies
-            if (enemy.type === 'heavy' && enemy.health > 1) {
-                ctx.fillStyle = '#ff0000';
-                const healthBarWidth = (enemy.width * enemy.health) / 3;
-                ctx.fillRect(enemy.x, enemy.y - 10, healthBarWidth, 4);
-            }
         });
-        
+
         // Render enemy bullets
         ctx.fillStyle = '#ff4444';
         EnemyBullets.bullets.forEach(bullet => {
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            ctx.fillRect(bullet.x - 2, bullet.y - 8, bullet.width, bullet.height);
         });
     }
-    
+
     function getEnemyColor(type) {
         switch (type) {
             case 'basic': return '#ff6666';
-            case 'fast': return '#ffaa66';
-            case 'heavy': return '#aa6666';
-            case 'shooter': return '#ff66aa';
+            case 'heavy': return '#cc3333';
+            case 'fast': return '#ff9999';
             default: return '#ff6666';
         }
     }
-    
+
     // Listen for ENEMY_DESTROYED events
-    EventBus.on('ENEMY_DESTROYED', function(data) {
-        destroyEnemy(data.enemyId);
+    EventBus.on('ENEMY_DESTROYED', function(event) {
+        destroyEnemy(event.enemyId);
     });
-    
+
     return {
         init,
         spawnEnemy,
@@ -508,104 +568,177 @@ const EnemySystem = (function() {
     };
 })();
 
+// Module: ui_manager
 const UIManager = (function() {
+    let eventBus;
+    let buttons = {};
+    let lastKeyTime = {};
+    let keyRepeatDelay = 150;
+
     function init() {
-        // UI manager initialized
+        eventBus = window.eventBus;
+        setupButtons();
+        setupEventListeners();
     }
-    
+
+    function setupButtons() {
+        buttons = {
+            menu: {
+                start: { x: 390, y: 800, width: 300, height: 80, text: "START GAME" },
+                leaderboard: { x: 390, y: 920, width: 300, height: 80, text: "LEADERBOARD" }
+            },
+            gameOver: {
+                retry: { x: 290, y: 800, width: 200, height: 80, text: "RETRY" },
+                menu: { x: 590, y: 800, width: 200, height: 80, text: "MENU" },
+                leaderboard: { x: 390, y: 920, width: 300, height: 80, text: "VIEW SCORES" }
+            },
+            leaderboard: {
+                back: { x: 390, y: 1400, width: 300, height: 80, text: "BACK TO MENU" }
+            },
+            paused: {
+                resume: { x: 390, y: 800, width: 300, height: 80, text: "RESUME" },
+                menu: { x: 390, y: 920, width: 300, height: 80, text: "MAIN MENU" }
+            }
+        };
+    }
+
+    function setupEventListeners() {
+        if (eventBus) {
+            eventBus.on('GAME_START', () => {});
+            eventBus.on('GAME_PAUSE', () => {});
+            eventBus.on('GAME_RESUME', () => {});
+            eventBus.on('PLAYER_DIED', () => {});
+            eventBus.on('RETRY', () => {});
+            eventBus.on('RETURN_MENU', () => {});
+            eventBus.on('SHOW_LEADERBOARD', () => {});
+            eventBus.on('CLOSE_LEADERBOARD', () => {});
+        }
+    }
+
     function handleClick(x, y) {
-        if (GameState.gameStatus === 'menu') {
-            // Start button area (center of screen)
-            if (x >= 390 && x <= 690 && y >= 900 && y <= 1000) {
-                EventBus.emit('GAME_START', {});
+        const currentButtons = buttons[GameState.gameStatus];
+        if (!currentButtons) return;
+
+        for (let buttonName in currentButtons) {
+            const button = currentButtons[buttonName];
+            if (isPointInButton(x, y, button)) {
+                handleButtonClick(buttonName);
+                break;
             }
-        } else if (GameState.gameStatus === 'paused') {
-            // Resume button
-            if (x >= 390 && x <= 690 && y >= 800 && y <= 900) {
-                EventBus.emit('GAME_RESUME', {});
-            }
-            // Return to menu button
-            if (x >= 390 && x <= 690 && y >= 1000 && y <= 1100) {
-                EventBus.emit('RETURN_MENU', {});
-            }
-        } else if (GameState.gameStatus === 'game_over') {
-            // Retry button
-            if (x >= 290 && x <= 490 && y >= 1200 && y <= 1300) {
-                EventBus.emit('RETRY', {});
-            }
-            // Menu button
-            if (x >= 590 && x <= 790 && y >= 1200 && y <= 1300) {
-                EventBus.emit('RETURN_MENU', {});
-            }
-            // Leaderboard button
-            if (x >= 390 && x <= 690 && y >= 1350 && y <= 1450) {
-                EventBus.emit('SHOW_LEADERBOARD', {});
-            }
-        } else if (GameState.gameStatus === 'leaderboard') {
-            // Back button
-            if (x >= 390 && x <= 690 && y >= 1600 && y <= 1700) {
-                EventBus.emit('CLOSE_LEADERBOARD', {});
-            }
-        } else if (GameState.gameStatus === 'playing') {
-            EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
         }
     }
-    
+
+    function isPointInButton(x, y, button) {
+        return x >= button.x && x <= button.x + button.width &&
+               y >= button.y && y <= button.y + button.height;
+    }
+
+    function handleButtonClick(buttonName) {
+        if (!eventBus) return;
+
+        switch (GameState.gameStatus) {
+            case 'menu':
+                if (buttonName === 'start') {
+                    eventBus.emit('GAME_START', {});
+                } else if (buttonName === 'leaderboard') {
+                    eventBus.emit('SHOW_LEADERBOARD', {});
+                }
+                break;
+            case 'game_over':
+                if (buttonName === 'retry') {
+                    eventBus.emit('RETRY', {});
+                } else if (buttonName === 'menu') {
+                    eventBus.emit('RETURN_MENU', {});
+                } else if (buttonName === 'leaderboard') {
+                    eventBus.emit('SHOW_LEADERBOARD', {});
+                }
+                break;
+            case 'leaderboard':
+                if (buttonName === 'back') {
+                    eventBus.emit('CLOSE_LEADERBOARD', {});
+                }
+                break;
+            case 'paused':
+                if (buttonName === 'resume') {
+                    eventBus.emit('GAME_RESUME', {});
+                } else if (buttonName === 'menu') {
+                    eventBus.emit('RETURN_MENU', {});
+                }
+                break;
+        }
+    }
+
     function handleKeyPress(key) {
-        if (GameState.gameStatus === 'playing') {
-            if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
-                EventBus.emit('PLAYER_MOVE', { direction: 'left' });
-            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
-                EventBus.emit('PLAYER_MOVE', { direction: 'right' });
-            } else if (key === ' ' || key === 'Enter') {
-                EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
-            } else if (key === 'Escape' || key === 'p' || key === 'P') {
-                EventBus.emit('GAME_PAUSE', {});
-            }
-        } else if (GameState.gameStatus === 'paused') {
-            if (key === 'Escape' || key === 'p' || key === 'P') {
-                EventBus.emit('GAME_RESUME', {});
-            }
-        } else if (GameState.gameStatus === 'menu') {
-            if (key === 'Enter' || key === ' ') {
-                EventBus.emit('GAME_START', {});
-            }
-        } else if (GameState.gameStatus === 'game_over') {
-            if (key === 'r' || key === 'R') {
-                EventBus.emit('RETRY', {});
-            } else if (key === 'm' || key === 'M') {
-                EventBus.emit('RETURN_MENU', {});
-            }
+        const now = Date.now();
+        
+        if (lastKeyTime[key] && now - lastKeyTime[key] < keyRepeatDelay) {
+            return;
+        }
+        lastKeyTime[key] = now;
+
+        if (!eventBus) return;
+
+        switch (GameState.gameStatus) {
+            case 'playing':
+                handleGameplayKeys(key);
+                break;
+            case 'menu':
+                if (key === 'Enter' || key === ' ') {
+                    eventBus.emit('GAME_START', {});
+                }
+                break;
+            case 'paused':
+                if (key === 'Escape' || key === 'p' || key === 'P') {
+                    eventBus.emit('GAME_RESUME', {});
+                }
+                break;
+            case 'game_over':
+                if (key === 'Enter' || key === ' ') {
+                    eventBus.emit('RETRY', {});
+                } else if (key === 'Escape') {
+                    eventBus.emit('RETURN_MENU', {});
+                }
+                break;
+            case 'leaderboard':
+                if (key === 'Escape' || key === 'Enter') {
+                    eventBus.emit('CLOSE_LEADERBOARD', {});
+                }
+                break;
         }
     }
-    
+
+    function handleGameplayKeys(key) {
+        switch (key) {
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+                eventBus.emit('PLAYER_MOVE', { direction: 'left' });
+                break;
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+                eventBus.emit('PLAYER_MOVE', { direction: 'right' });
+                break;
+            case ' ':
+            case 'Enter':
+                eventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
+                break;
+            case 'Escape':
+            case 'p':
+            case 'P':
+                eventBus.emit('GAME_PAUSE', {});
+                break;
+        }
+    }
+
     function update(dt) {
-        // Update UI elements
-        const scoreDisplay = document.getElementById('score_display');
-        if (scoreDisplay) {
-            scoreDisplay.textContent = '得分: ' + GameState.score;
-        }
-        
-        const finalScore = document.getElementById('final_score');
-        if (finalScore) {
-            finalScore.textContent = '最终得分: ' + GameState.score;
-        }
-        
-        const lives = document.getElementById('lives');
-        if (lives) {
-            lives.textContent = '❤'.repeat(Math.max(0, PlayerShip.health));
-        }
-        
-        const scoreList = document.getElementById('score_list');
-        if (scoreList) {
-            scoreList.innerHTML = `1. ${GameState.highScore}<br>2. 0<br>3. 0<br>4. 0<br>5. 0`;
-        }
+        // UI doesn't need continuous updates
     }
-    
+
     function render(ctx) {
-        // UI rendering handled by HTML/CSS
+        // UI rendering is handled by HTML/CSS
     }
-    
+
     return {
         init,
         handleClick,
@@ -636,63 +769,135 @@ function gameLoop(timestamp) {
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     
-    // Update modules in update_order
+    // Update modules in order
     UIManager.update(dt);
     player_ship.update(dt);
     EnemySystem.update(dt);
     GameStateModule.update(dt);
     
-    // Render modules in render_order
-    if (GameState.gameStatus === 'playing' && ctx) {
+    // Clear canvas
+    if (ctx) {
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        
+        // Render modules in order
         player_ship.render(ctx);
         EnemySystem.render(ctx);
         UIManager.render(ctx);
     }
     
-    // Handle screen transitions
-    if (GameState.gameStatus === 'menu') {
-        showScreen('main_menu');
-    } else if (GameState.gameStatus === 'playing') {
-        showScreen('gameplay');
-    } else if (GameState.gameStatus === 'game_over') {
-        showScreen('game_over');
-    } else if (GameState.gameStatus === 'leaderboard') {
-        showScreen('leaderboard');
+    // Update UI elements
+    updateUI();
+    
+    if (GameState.gameStatus === 'playing') {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// Update UI elements
+function updateUI() {
+    const scoreDisplay = document.getElementById('score_display');
+    if (scoreDisplay) {
+        scoreDisplay.textContent = `得分: ${GameState.score}`;
     }
     
-    requestAnimationFrame(gameLoop);
+    const lives = document.getElementById('lives');
+    if (lives) {
+        lives.textContent = '❤'.repeat(Math.max(0, PlayerShip.health));
+    }
+    
+    const finalScore = document.getElementById('final_score');
+    if (finalScore) {
+        finalScore.textContent = `最终得分: ${GameState.score}`;
+    }
+    
+    const highScore = document.getElementById('high_score');
+    if (highScore) {
+        highScore.textContent = GameState.highScore;
+    }
 }
 
 // State transition functions
 function startGame() {
-    GameState.gameStatus = 'playing';
+    GameStateModule.startGame();
+    player_ship.init();
+    EnemySystem.init();
     EventBus.emit('GAME_START', {});
     showScreen('gameplay');
+    if (!canvas) {
+        canvas = document.getElementById('gameCanvas');
+        ctx = canvas.getContext('2d');
+    }
+    requestAnimationFrame(gameLoop);
 }
 
 function gameOver() {
-    GameState.gameStatus = 'game_over';
+    GameStateModule.gameOver();
     EventBus.emit('PLAYER_DIED', {});
     showScreen('game_over');
 }
 
 function retry() {
-    GameState.gameStatus = 'playing';
-    EventBus.emit('RETRY', {});
-    showScreen('gameplay');
+    startGame();
 }
 
 function returnToMenu() {
-    GameState.gameStatus = 'menu';
+    GameStateModule.returnToMenu();
     EventBus.emit('RETURN_MENU', {});
     showScreen('main_menu');
 }
 
 function showLeaderboard() {
-    GameState.gameStatus = 'leaderboard';
+    GameStateModule.showLeaderboard();
     EventBus.emit('SHOW_LEADERBOARD', {});
     showScreen('leaderboard');
+}
+
+// Initialize modules
+function initGame() {
+    GameStateModule.init();
+    player_ship.init();
+    EnemySystem.init();
+    UIManager.init();
+    
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
+    
+    // Set up state transition listeners
+    EventBus.on('GAME_START', () => {
+        if (GameState.gameStatus === 'menu') {
+            startGame();
+        }
+    });
+    
+    EventBus.on('PLAYER_DIED', () => {
+        if (GameState.gameStatus === 'playing') {
+            gameOver();
+        }
+    });
+    
+    EventBus.on('RETRY', () => {
+        if (GameState.gameStatus === 'game_over') {
+            retry();
+        }
+    });
+    
+    EventBus.on('RETURN_MENU', () => {
+        if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'leaderboard') {
+            returnToMenu();
+        }
+    });
+    
+    EventBus.on('SHOW_LEADERBOARD', () => {
+        if (GameState.gameStatus === 'game_over' || GameState.gameStatus === 'menu') {
+            showLeaderboard();
+        }
+    });
+    
+    EventBus.on('CLOSE_LEADERBOARD', () => {
+        if (GameState.gameStatus === 'leaderboard') {
+            returnToMenu();
+        }
+    });
 }
 
 // Input handlers
@@ -702,63 +907,116 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('click', (e) => {
     const rect = document.body.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+    const y = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+    
+    // Handle gameplay shooting
+    if (GameState.gameStatus === 'playing') {
+        EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
+    }
+    
     UIManager.handleClick(x, y);
 });
 
 // Touch support
 document.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    const rect = document.body.getBoundingClientRect();
     const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const rect = document.body.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+    const y = (touch.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+    
+    if (GameState.gameStatus === 'playing') {
+        EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
+    }
+    
     UIManager.handleClick(x, y);
 });
 
-// Button event handlers
-document.addEventListener('DOMContentLoaded', () => {
-    canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
-    
-    // Initialize modules in init_order
-    GameStateModule.init();
-    player_ship.init();
-    EnemySystem.init();
-    UIManager.init();
-    
-    // Button event listeners
-    document.getElementById('btn_play').addEventListener('click', () => {
-        EventBus.emit('GAME_START', {});
-    });
-    
-    document.getElementById('btn_leaderboard').addEventListener('click', () => {
-        EventBus.emit('SHOW_LEADERBOARD', {});
-    });
-    
-    document.getElementById('btn_retry').addEventListener('click', () => {
-        EventBus.emit('RETRY', {});
-    });
-    
-    document.getElementById('btn_menu').addEventListener('click', () => {
-        EventBus.emit('RETURN_MENU', {});
-    });
-    
-    document.getElementById('btn_leaderboard_go').addEventListener('click', () => {
-        EventBus.emit('SHOW_LEADERBOARD', {});
-    });
-    
-    document.getElementById('btn_close').addEventListener('click', () => {
-        EventBus.emit('CLOSE_LEADERBOARD', {});
-    });
-    
-    document.getElementById('tap_area').addEventListener('click', () => {
-        if (GameState.gameStatus === 'playing') {
-            EventBus.emit('PLAYER_SHOOT', { x: PlayerShip.x, y: PlayerShip.y });
+// Screen navigation
+document.getElementById('btn_play').addEventListener('click', () => {
+    EventBus.emit('GAME_START', {});
+});
+
+document.getElementById('btn_leaderboard').addEventListener('click', () => {
+    EventBus.emit('SHOW_LEADERBOARD', {});
+});
+
+document.getElementById('btn_retry').addEventListener('click', () => {
+    EventBus.emit('RETRY', {});
+});
+
+document.getElementById('btn_menu').addEventListener('click', () => {
+    EventBus.emit('RETURN_MENU', {});
+});
+
+document.getElementById('btn_leaderboard_go').addEventListener('click', () => {
+    EventBus.emit('SHOW_LEADERBOARD', {});
+});
+
+document.getElementById('btn_close').addEventListener('click', () => {
+    EventBus.emit('CLOSE_LEADERBOARD', {});
+});
+
+// Movement controls for mobile
+let leftPressed = false;
+let rightPressed = false;
+
+document.addEventListener('keydown', (e) => {
+    if (GameState.gameStatus === 'playing') {
+        switch (e.key) {
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+                if (!leftPressed) {
+                    leftPressed = true;
+                    movePlayer();
+                }
+                break;
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+                if (!rightPressed) {
+                    rightPressed = true;
+                    movePlayer();
+                }
+                break;
         }
-    });
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    switch (e.key) {
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+            leftPressed = false;
+            break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+            rightPressed = false;
+            break;
+    }
+});
+
+function movePlayer() {
+    if (GameState.gameStatus !== 'playing') return;
     
-    // Start game loop
-    requestAnimationFrame(gameLoop);
+    if (leftPressed) {
+        EventBus.emit('PLAYER_MOVE', { direction: 'left' });
+    }
+    if (rightPressed) {
+        EventBus.emit('PLAYER_MOVE', { direction: 'right' });
+    }
+    
+    if (leftPressed || rightPressed) {
+        setTimeout(movePlayer, 50);
+    }
+}
+
+// Initialize game when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initGame();
+    showScreen('main_menu');
 });

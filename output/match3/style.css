@@ -7,16 +7,18 @@ style.css
 
 body {
     font-family: Arial, sans-serif;
+    background: #000;
     overflow: hidden;
     width: 100vw;
     height: 100vh;
-    background: #000;
 }
 
 .screen {
     position: absolute;
     width: 100vw;
     height: 100vh;
+    top: 0;
+    left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -26,8 +28,6 @@ body {
 /* Main Menu Styles */
 #main_menu #bg {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -66,9 +66,6 @@ body {
     border: none;
     cursor: pointer;
     z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #main_menu #btn_leaderboard {
@@ -85,16 +82,15 @@ body {
     text-align: center;
     cursor: pointer;
     z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Gameplay Styles */
+#gameplay {
+    position: relative;
+}
+
 #gameplay #bg {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -130,7 +126,6 @@ body {
     z-index: 1;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
 }
 
 #gameplay #target {
@@ -176,11 +171,11 @@ body {
 
 #gameplay #gameCanvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 3;
-    width: 100%;
-    height: 100%;
+    top: 250px;
+    left: 50px;
+    width: 980px;
+    height: 980px;
+    z-index: 2;
 }
 
 #gameplay #tap_area {
@@ -199,8 +194,6 @@ body {
 /* Game Over Styles */
 #game_over #bg {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -211,40 +204,33 @@ body {
 #game_over #gameover_text {
     position: absolute;
     top: 400px;
-    left: 190px;
-    width: 700px;
-    height: 160px;
+    left: 50%;
+    transform: translateX(-50%);
     color: #E91E63;
     font-size: 64px;
     font-weight: bold;
     text-align: center;
     z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #game_over #final_score {
     position: absolute;
-    top: 600px;
-    left: 290px;
-    width: 500px;
-    height: 80px;
+    top: 500px;
+    left: 50%;
+    transform: translateX(-50%);
     color: #9C27B0;
     font-size: 40px;
     text-align: center;
     z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #game_over #btn_retry {
     position: absolute;
-    top: 800px;
-    left: 290px;
-    width: 500px;
-    height: 120px;
+    top: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 80px;
     background-color: #E91E63;
     color: #FFFFFF;
     font-size: 42px;
@@ -254,17 +240,15 @@ body {
     border: none;
     cursor: pointer;
     z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #game_over #btn_menu {
     position: absolute;
-    top: 970px;
-    left: 290px;
-    width: 500px;
-    height: 100px;
+    top: 720px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 80px;
     background-color: #9C27B0;
     color: #FFFFFF;
     font-size: 36px;
@@ -273,16 +257,14 @@ body {
     border: none;
     cursor: pointer;
     z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #game_over #btn_leaderboard {
     position: absolute;
-    top: 1120px;
-    left: 340px;
-    width: 400px;
+    top: 840px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
     height: 80px;
     background-color: transparent;
     color: #E91E63;
@@ -292,33 +274,20 @@ body {
     text-align: center;
     cursor: pointer;
     z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Leaderboard Styles */
-#leaderboard #bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    opacity: 1;
-    z-index: 0;
+#leaderboard {
+    background: rgba(0,0,0,0.8);
 }
 
 #leaderboard #panel_bg {
-    position: absolute;
-    top: 200px;
-    left: 140px;
+    position: relative;
     width: 800px;
     height: 1000px;
     background-color: #FFFFFF;
     border-radius: 20px;
     border: 4px solid #E91E63;
-    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -339,7 +308,7 @@ body {
     line-height: 1.8;
     text-align: left;
     margin-bottom: 80px;
-    flex: 1;
+    width: 100%;
 }
 
 #leaderboard #btn_close {
@@ -349,13 +318,10 @@ body {
     font-weight: bold;
     border-radius: 12px;
     text-align: center;
-    border: none;
-    cursor: pointer;
     width: 200px;
     height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none;
+    cursor: pointer;
 }
 
 /* Responsive adjustments */
@@ -366,7 +332,7 @@ body {
     }
 }
 
-@media (max-height: 1920px) {
+@media (max-width: 864px) {
     .screen {
         transform: scale(0.6);
         transform-origin: top left;

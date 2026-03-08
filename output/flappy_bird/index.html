@@ -9,12 +9,12 @@ index.html
 </head>
 <body>
     <div id="start_screen" class="screen">
-        <div id="bg" class="bg-image"></div>
-        <div id="ground" class="ground-image"></div>
-        <div id="title_logo" class="title-logo"></div>
-        <div id="bird_preview" class="bird-preview"></div>
-        <button id="btn_play" class="game-button">Play</button>
-        <button id="btn_leaderboard" class="game-button">Score</button>
+        <div id="bg"></div>
+        <div id="ground"></div>
+        <div id="title_logo">Flappy Bird</div>
+        <div id="bird_preview"></div>
+        <button id="btn_play">Play</button>
+        <button id="btn_leaderboard">Score</button>
     </div>
 
     <div id="gameplay" class="screen" style="display:none;">
@@ -22,33 +22,23 @@ index.html
     </div>
 
     <div id="game_over" class="screen" style="display:none;">
-        <div id="bg" class="bg-image"></div>
-        <div id="ground" class="ground-image"></div>
-        <div id="gameover_text" class="gameover-text">Game Over</div>
-        <div id="score_panel" class="score-panel">
-            <div id="medal_icon" class="medal"></div>
-            <div class="score-row">
-                <span>Score:</span>
-                <span id="score_value" class="score-value">0</span>
-            </div>
-            <div class="score-row">
-                <span>Best:</span>
-                <span id="best_value" class="score-value">0</span>
-            </div>
+        <div id="bg"></div>
+        <div id="ground"></div>
+        <div id="gameover_text">Game Over</div>
+        <div id="score_panel">
+            <div id="medal_icon"></div>
+            <div id="score_value">0</div>
+            <div id="best_value">0</div>
         </div>
-        <button id="btn_restart" class="game-button">Play</button>
-        <button id="btn_leaderboard_go" class="game-button">Score</button>
+        <button id="btn_restart">Play</button>
+        <button id="btn_leaderboard_go">Score</button>
     </div>
 
     <div id="leaderboard" class="screen" style="display:none;">
-        <div id="bg" class="bg-image"></div>
-        <div id="panel_bg" class="leaderboard-panel">
-            <div id="title" class="leaderboard-title">Leaderboard</div>
-            <div id="score_list" class="score-list">
-                <div>Best Score: <span id="high_score_display">0</span></div>
-                <div>Last Score: <span id="last_score_display">0</span></div>
-            </div>
-            <button id="btn_close" class="close-button">OK</button>
+        <div id="panel_bg">
+            <div id="title">Leaderboard</div>
+            <div id="score_list">Best Score: 0</div>
+            <button id="btn_close">OK</button>
         </div>
     </div>
 

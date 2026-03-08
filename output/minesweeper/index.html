@@ -8,43 +8,42 @@ index.html
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Main Menu Screen -->
     <div id="main_menu" class="screen">
-        <div id="bg" class="bg-image"></div>
+        <div id="bg"></div>
         <div id="title">扫雷</div>
-        <button id="btn_play" onclick="showScreen('gameplay')">开始游戏</button>
-        <button id="btn_leaderboard" onclick="showScreen('leaderboard')">排行榜</button>
+        <button id="btn_play">开始游戏</button>
+        <button id="btn_leaderboard">排行榜</button>
     </div>
 
-    <!-- Gameplay Screen -->
-    <div id="gameplay" class="screen">
-        <div id="bg" class="bg-image"></div>
+    <div id="gameplay" class="screen" style="display:none;">
+        <div id="bg"></div>
         <div id="score_display">得分: 0</div>
         <div id="mine_count">💣 10</div>
         <div id="timer">⏱ 000</div>
         <div id="grid_bg"></div>
-        <canvas id="game_canvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
         <div id="flag_count">🚩 0</div>
+        <div id="tap_area"></div>
     </div>
 
-    <!-- Game Over Screen -->
-    <div id="game_over" class="screen">
-        <div id="bg" class="bg-image"></div>
+    <div id="game_over" class="screen" style="display:none;">
+        <div id="bg"></div>
         <div id="gameover_text">游戏结束</div>
-        <div id="final_score">得分: 0</div>
-        <button id="btn_retry" onclick="restartGame()">再来一次</button>
-        <button id="btn_menu" onclick="showScreen('main_menu')">主菜单</button>
-        <button id="btn_leaderboard" onclick="showScreen('leaderboard')">排行榜</button>
+        <div id="final_score">最终得分: 0</div>
+        <button id="btn_retry">重新开始</button>
+        <button id="btn_menu">返回菜单</button>
+        <button id="btn_leaderboard_gameover">排行榜</button>
     </div>
 
-    <!-- Leaderboard Screen -->
-    <div id="leaderboard" class="screen">
-        <div class="leaderboard-overlay" onclick="hideLeaderboard()"></div>
-        <div class="leaderboard-panel">
-            <div id="panel_bg"></div>
+    <div id="leaderboard" class="screen" style="display:none;">
+        <div id="panel_bg">
             <div id="title">排行榜</div>
-            <div id="score_list">1. 9999<br>2. 7500<br>3. 5000<br>4. 2500<br>5. 1000</div>
-            <button id="btn_close" onclick="hideLeaderboard()">关闭</button>
+            <div id="score_list">
+                1. 初级: 12秒<br>
+                2. 中级: 45秒<br>
+                3. 高级: 120秒
+            </div>
+            <button id="btn_close">关闭</button>
         </div>
     </div>
 

@@ -1,80 +1,66 @@
 style.css
-* {
+body {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-
-body {
     font-family: Arial, sans-serif;
-    overflow: hidden;
     background: #70C5CE;
+    overflow: hidden;
 }
 
 .screen {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100vw;
     height: 100vh;
+    top: 0;
+    left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.bg-image {
+/* Start Screen */
+#start_screen #bg {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, #70C5CE 0%, #87CEEB 100%);
+    background: #70C5CE;
     opacity: 1;
     z-index: 0;
 }
 
-.ground-image {
+#start_screen #ground {
     position: absolute;
     bottom: 0;
-    left: 0;
     width: 100%;
     height: 12.5%;
-    background: #DEB887;
+    background: #DED895;
     opacity: 1;
     z-index: 1;
 }
 
-/* Start Screen Styles */
-#start_screen .title-logo {
+#start_screen #title_logo {
     position: absolute;
-    top: 19.8%;
-    left: 17.6%;
-    width: 64.8%;
+    top: 20%;
+    width: 65%;
     height: 10.4%;
-    background: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 48px;
+    font-size: 4rem;
     font-weight: bold;
-    color: #000;
+    color: #FFFFFF;
+    text-shadow: 4px 4px 0px #000000;
     opacity: 1;
     z-index: 2;
-    border-radius: 16px;
 }
 
-#start_screen .title-logo::after {
-    content: "Flappy Bird";
-}
-
-#start_screen .bird-preview {
+#start_screen #bird_preview {
     position: absolute;
     top: 36.5%;
-    left: 42.6%;
     width: 14.8%;
     height: 6.25%;
-    background: #FFFF00;
+    background: #FFD700;
     border-radius: 50%;
     opacity: 1;
     z-index: 2;
@@ -93,14 +79,14 @@ body {
     border-radius: 16px;
     text-align: center;
     border: 4px solid #8B6914;
-    z-index: 3;
     cursor: pointer;
+    z-index: 3;
 }
 
 #start_screen #btn_leaderboard {
     position: absolute;
     top: 57.3%;
-    left: 55.6%;
+    right: 18.5%;
     width: 25.9%;
     height: 6.25%;
     background-color: #E8A43A;
@@ -110,11 +96,15 @@ body {
     border-radius: 16px;
     text-align: center;
     border: 4px solid #8B6914;
-    z-index: 3;
     cursor: pointer;
+    z-index: 3;
 }
 
 /* Gameplay Screen */
+#gameplay {
+    padding: 0;
+}
+
 #gameCanvas {
     width: 100vw;
     height: 100vh;
@@ -123,73 +113,85 @@ body {
 }
 
 /* Game Over Screen */
-#game_over .gameover-text {
+#game_over #bg {
     position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #FFFFFF;
-    font-size: 64px;
-    font-weight: bold;
+    width: 100%;
+    height: 100%;
+    background: #70C5CE;
+    opacity: 1;
+    z-index: 0;
+}
+
+#game_over #ground {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 12.5%;
+    background: #DED895;
+    opacity: 1;
+    z-index: 1;
+}
+
+#game_over #gameover_text {
+    position: absolute;
+    top: 15%;
+    width: 100%;
     text-align: center;
+    font-size: 4rem;
+    font-weight: bold;
+    color: #FFFFFF;
     text-shadow: 4px 4px 0px #000000;
     opacity: 1;
     z-index: 2;
 }
 
-#game_over .score-panel {
+#game_over #score_panel {
     position: absolute;
-    top: 35%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 400px;
-    height: 200px;
+    top: 30%;
+    width: 60%;
+    height: 25%;
     background: #DEB04F;
     border-radius: 24px;
     border: 6px solid #8B6914;
-    opacity: 1;
-    z-index: 2;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    z-index: 2;
 }
 
-#game_over .medal {
-    position: absolute;
-    top: 20px;
-    left: 20px;
+#game_over #medal_icon {
     width: 60px;
     height: 60px;
     background: #FFD700;
     border-radius: 50%;
+    margin-bottom: 20px;
     opacity: 1;
 }
 
-#game_over .score-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 15px 0;
-    margin-left: 100px;
-    color: #FFFFFF;
-    font-size: 32px;
-    font-weight: bold;
-}
-
-#game_over .score-value {
+#game_over #score_value {
     color: #FFFFFF;
     font-size: 48px;
     font-weight: bold;
     text-align: right;
+    margin: 10px 0;
+}
+
+#game_over #best_value {
+    color: #FFFFFF;
+    font-size: 48px;
+    font-weight: bold;
+    text-align: right;
+    margin: 10px 0;
 }
 
 #game_over #btn_restart {
     position: absolute;
     top: 65%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 280px;
-    height: 80px;
+    left: 25%;
+    width: 20%;
+    height: 6.25%;
     background-color: #E8A43A;
     color: #FFFFFF;
     font-size: 36px;
@@ -203,11 +205,10 @@ body {
 
 #game_over #btn_leaderboard_go {
     position: absolute;
-    top: 75%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 280px;
-    height: 80px;
+    top: 65%;
+    right: 25%;
+    width: 20%;
+    height: 6.25%;
     background-color: #E8A43A;
     color: #FFFFFF;
     font-size: 36px;
@@ -220,24 +221,25 @@ body {
 }
 
 /* Leaderboard Screen */
-#leaderboard .leaderboard-panel {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 500px;
-    height: 600px;
+#leaderboard {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#leaderboard #panel_bg {
+    width: 70%;
+    height: 60%;
     background-color: #DEB04F;
     border-radius: 24px;
     border: 6px solid #8B6914;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding: 40px;
-    z-index: 2;
+    box-sizing: border-box;
 }
 
-#leaderboard .leaderboard-title {
+#leaderboard #title {
     color: #FFFFFF;
     font-size: 48px;
     font-weight: bold;
@@ -245,7 +247,7 @@ body {
     margin-bottom: 40px;
 }
 
-#leaderboard .score-list {
+#leaderboard #score_list {
     color: #5A3E1B;
     font-size: 40px;
     line-height: 1.8;
@@ -253,7 +255,7 @@ body {
     margin-bottom: 40px;
 }
 
-#leaderboard .close-button {
+#leaderboard #btn_close {
     background-color: #E8A43A;
     color: #FFFFFF;
     font-size: 36px;
@@ -265,29 +267,40 @@ body {
     cursor: pointer;
 }
 
-.game-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    outline: none;
-}
-
-.game-button:hover {
-    opacity: 0.8;
-}
-
-.close-button:hover {
-    opacity: 0.8;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .screen {
-        font-size: 0.8em;
+    #start_screen #title_logo {
+        font-size: 3rem;
     }
     
-    #gameCanvas {
-        width: 100vw;
-        height: 100vh;
+    #start_screen #btn_play,
+    #start_screen #btn_leaderboard {
+        font-size: 24px;
+    }
+    
+    #game_over #gameover_text {
+        font-size: 3rem;
+    }
+    
+    #game_over #score_value,
+    #game_over #best_value {
+        font-size: 32px;
+    }
+    
+    #game_over #btn_restart,
+    #game_over #btn_leaderboard_go {
+        font-size: 24px;
+    }
+    
+    #leaderboard #title {
+        font-size: 32px;
+    }
+    
+    #leaderboard #score_list {
+        font-size: 28px;
+    }
+    
+    #leaderboard #btn_close {
+        font-size: 24px;
     }
 }

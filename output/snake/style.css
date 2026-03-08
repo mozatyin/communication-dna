@@ -7,7 +7,7 @@ style.css
 
 body {
     font-family: Arial, sans-serif;
-    background: #000;
+    background: #000000;
     overflow: hidden;
     width: 100vw;
     height: 100vh;
@@ -17,41 +17,32 @@ body {
     position: absolute;
     width: 100vw;
     height: 100vh;
-    display: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.screen.active {
-    display: block;
-}
-
-.bg-image {
+#bg {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: #000000;
     opacity: 1;
     z-index: 0;
 }
 
 /* Main Menu Styles */
-#main_menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
 #main_menu #title {
     color: #4CAF50;
     font-size: 96px;
     font-weight: bold;
     text-align: center;
     text-shadow: 0 0 20px #4CAF50;
-    margin-bottom: 50px;
     z-index: 1;
+    margin-bottom: 50px;
 }
 
 #main_menu #snake_preview {
@@ -60,16 +51,16 @@ body {
     background: #4CAF50;
     border-radius: 10px;
     opacity: 1;
-    margin-bottom: 50px;
     z-index: 1;
+    margin-bottom: 50px;
 }
 
 #main_menu #high_score {
     color: #888888;
     font-size: 32px;
     text-align: center;
-    margin-bottom: 80px;
     z-index: 1;
+    margin-bottom: 80px;
 }
 
 #main_menu #btn_start {
@@ -83,6 +74,10 @@ body {
     padding: 30px 60px;
     cursor: pointer;
     z-index: 2;
+}
+
+#main_menu #btn_start:hover {
+    background-color: #45a049;
 }
 
 /* Gameplay Styles */
@@ -113,7 +108,8 @@ body {
 #gameplay #game_grid {
     position: absolute;
     top: 180px;
-    left: 40px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 1000px;
     height: 1000px;
     background-color: #1A1A1A;
@@ -127,51 +123,101 @@ body {
     height: 100%;
 }
 
-.dpad-container {
+#gameplay #snake {
     position: absolute;
-    bottom: 200px;
+    width: 50px;
+    height: 50px;
+    background: #4CAF50;
+    opacity: 1;
+    z-index: 2;
+    display: none;
+}
+
+#gameplay #food_item {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: #FF0000;
+    border-radius: 50%;
+    opacity: 1;
+    z-index: 2;
+    display: none;
+}
+
+#gameplay #btn_up {
+    position: absolute;
+    bottom: 400px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    z-index: 2;
-}
-
-.dpad-row {
-    display: flex;
-    gap: 120px;
-}
-
-.dpad-btn {
+    width: 200px;
+    height: 120px;
     background-color: rgba(255,255,255,0.1);
     color: #FFFFFF;
     font-size: 48px;
     border-radius: 16px;
     text-align: center;
     border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#gameplay #btn_left {
+    position: absolute;
+    bottom: 260px;
+    left: calc(50% - 220px);
     width: 200px;
     height: 120px;
+    background-color: rgba(255,255,255,0.1);
+    color: #FFFFFF;
+    font-size: 48px;
+    border-radius: 16px;
+    text-align: center;
+    border: none;
     cursor: pointer;
+    z-index: 2;
+}
+
+#gameplay #btn_right {
+    position: absolute;
+    bottom: 260px;
+    right: calc(50% - 220px);
+    width: 200px;
+    height: 120px;
+    background-color: rgba(255,255,255,0.1);
+    color: #FFFFFF;
+    font-size: 48px;
+    border-radius: 16px;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#gameplay #btn_down {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 120px;
+    background-color: rgba(255,255,255,0.1);
+    color: #FFFFFF;
+    font-size: 48px;
+    border-radius: 16px;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
 }
 
 /* Game Over Styles */
-#game_over {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
 #game_over #gameover_text {
     color: #F44336;
     font-size: 80px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 40px;
     z-index: 1;
+    margin-bottom: 50px;
 }
 
 #game_over #final_score {
@@ -179,8 +225,8 @@ body {
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 60px;
     z-index: 1;
+    margin-bottom: 80px;
 }
 
 #game_over #btn_retry {
@@ -192,9 +238,9 @@ body {
     text-align: center;
     border: none;
     padding: 30px 60px;
-    margin-bottom: 20px;
     cursor: pointer;
     z-index: 2;
+    margin-bottom: 30px;
 }
 
 #game_over #btn_leaderboard {
@@ -205,9 +251,9 @@ body {
     border-radius: 16px;
     text-align: center;
     padding: 20px 40px;
-    margin-bottom: 20px;
     cursor: pointer;
     z-index: 2;
+    margin-bottom: 30px;
 }
 
 #game_over #btn_menu {
@@ -223,22 +269,15 @@ body {
 }
 
 /* Leaderboard Styles */
-#leaderboard {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
 #leaderboard #panel_bg {
     background-color: #1A1A1A;
     border-radius: 24px;
     border: 3px solid #4CAF50;
     padding: 60px;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 1;
 }
 
 #leaderboard #title {
@@ -280,17 +319,53 @@ body {
         height: 80vw;
         max-width: 800px;
         max-height: 800px;
-        left: 50%;
-        transform: translateX(-50%);
     }
     
-    .dpad-btn {
-        width: 150px;
-        height: 100px;
-        font-size: 36px;
+    #game_over #gameover_text {
+        font-size: 60px;
+    }
+}
+
+@media (max-width: 768px) {
+    #main_menu #title {
+        font-size: 48px;
     }
     
-    .dpad-row {
-        gap: 80px;
+    #main_menu #btn_start {
+        font-size: 32px;
+        padding: 20px 40px;
+    }
+    
+    #gameplay #score_display,
+    #gameplay #best_display {
+        font-size: 24px;
+    }
+    
+    #gameplay #btn_up,
+    #gameplay #btn_left,
+    #gameplay #btn_right,
+    #gameplay #btn_down {
+        width: 120px;
+        height: 80px;
+        font-size: 32px;
+    }
+    
+    #game_over #gameover_text {
+        font-size: 40px;
+    }
+    
+    #game_over #final_score {
+        font-size: 32px;
+    }
+    
+    #game_over #btn_retry {
+        font-size: 28px;
+        padding: 20px 40px;
+    }
+    
+    #game_over #btn_leaderboard,
+    #game_over #btn_menu {
+        font-size: 24px;
+        padding: 15px 30px;
     }
 }

@@ -18,43 +18,50 @@ index.html
     </div>
 
     <!-- Gameplay Screen -->
-    <div id="gameplay" class="screen" style="display:none;">
+    <div id="gameplay" class="screen">
         <div id="bg"></div>
         <div id="title_small">2048</div>
+        
         <div id="score_box">
             <div id="score_label">SCORE</div>
             <div id="score_value">0</div>
         </div>
+        
         <div id="best_box">
             <div id="best_label">BEST</div>
             <div id="best_value">0</div>
         </div>
+        
         <button id="btn_new_game">新游戏</button>
+        
         <div id="grid_bg">
-            <div id="game_grid"></div>
+            <div id="game_grid">
+                <!-- Grid tiles will be generated dynamically -->
+            </div>
         </div>
-        <canvas id="gameCanvas"></canvas>
+        
+        <div id="instructions">使用方向键或WASD移动</div>
     </div>
 
     <!-- Game Over Screen -->
-    <div id="game_over" class="screen" style="display:none;">
+    <div id="game_over" class="screen">
         <div id="bg"></div>
         <div id="overlay">
             <div id="gameover_text">游戏结束</div>
             <div id="final_score">最终得分: 0</div>
             <button id="btn_retry">重新开始</button>
             <button id="btn_menu">返回菜单</button>
-            <button id="btn_leaderboard_go">排行榜</button>
+            <button id="btn_leaderboard_gameover">排行榜</button>
         </div>
     </div>
 
     <!-- Leaderboard Screen -->
-    <div id="leaderboard" class="screen" style="display:none;">
+    <div id="leaderboard" class="screen">
+        <div id="bg"></div>
         <div id="panel_bg">
             <div id="title">排行榜</div>
             <div id="score_list">
-                <div>1. 最高分: <span id="best_score_display">0</span></div>
-                <div>2. 当前分: <span id="current_score_display">0</span></div>
+                1. 最高分: <span id="best_score_display">0</span>
             </div>
             <button id="btn_close">关闭</button>
         </div>

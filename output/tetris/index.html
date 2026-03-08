@@ -4,7 +4,7 @@ index.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>俄罗斯方块</title>
+    <title>俄罗斯方块 (Tetris)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,34 +25,28 @@ index.html
         <div id="current_block"></div>
         <div id="next_label">NEXT</div>
         <div id="next_block"></div>
-        <div id="score_label">SCORE</div>
+        <div id="score_label">得分</div>
         <div id="score_value">0</div>
-        <div id="level_label">LEVEL</div>
+        <div id="level_label">等级</div>
         <div id="level_value">1</div>
-        <div id="lines_label">LINES</div>
+        <div id="lines_label">行数</div>
         <div id="lines_value">0</div>
     </div>
 
     <div id="game_over" class="screen" style="display:none;">
         <div id="bg"></div>
         <div id="gameover_text">GAME OVER</div>
-        <div id="final_score">最终得分: 0</div>
+        <div id="final_score">得分: 0</div>
         <div id="final_lines">消除行数: 0</div>
-        <button id="btn_retry">重新开始</button>
-        <button id="btn_leaderboard_go">排行榜</button>
-        <button id="btn_menu">返回菜单</button>
+        <button id="btn_retry">重试</button>
+        <button id="btn_leaderboard">排行榜</button>
+        <button id="btn_menu">主菜单</button>
     </div>
 
     <div id="leaderboard" class="screen" style="display:none;">
         <div id="panel_bg">
             <div id="title">排行榜</div>
-            <div id="score_list">
-                <div>1. ---</div>
-                <div>2. ---</div>
-                <div>3. ---</div>
-                <div>4. ---</div>
-                <div>5. ---</div>
-            </div>
+            <div id="score_list">暂无记录</div>
             <button id="btn_close">关闭</button>
         </div>
     </div>
