@@ -317,6 +317,145 @@ def test_system_prompt_has_completeness_requirements():
     assert "score" in prompt
 
 
+# ── Modular Generate ─────────────────────────────────────────────────────────
+
+
+def test_modular_generate_mocked():
+    """All 4 stages called in modular_generate."""
+    with patch("intention_graph.game_code_generator.anthropic.Anthropic"):
+        gen = GameCodeGenerator(api_key="test-key")
+
+    with (
+        patch("intention_graph.game_code_generator.ModuleDecomposer") as mock_decomp,
+        patch("intention_graph.game_code_generator.ArchitectureDesigner") as mock_arch,
+        patch("intention_graph.game_code_generator.ModuleGenerator") as mock_gen,
+        patch("intention_graph.game_code_generator.AssemblyAgent") as mock_asm,
+    ):
+        from intention_graph.modular_code_gen.models import (
+            ModuleSpec, ModuleInterface, FunctionSig,
+            ArchitectureDoc, SharedDataStructure, FieldDef,
+            ModuleCode,
+        )
+        # Stage A
+        mock_decomp.return_value.decompose.return_value = [
+            ModuleSpec(module_id="game_state", description="State",
+                       core_systems=["score"], dependencies=[]),
+        ]
+        # Stage B
+        mock_arch.return_value.design.return_value = ArchitectureDoc(
+            game_title="Test",
+            modules=[ModuleInterface(
+                module_id="game_state", description="State",
+                exports=[FunctionSig(name="init", params=[])],
+                imports=[], state_access=["GameState"],
+            )],
+            shared_data=[SharedDataStructure(name="GameState",
+                         fields=[FieldDef(name="score", type="number")])],
+            events=[], init_order=["game_state"],
+            update_order=[], render_order=[],
+        )
+        # Stage C
+        mock_gen.return_value.generate_all_parallel.return_value = [
+            ModuleCode(module_id="game_state", js_code="var x=1;"),
+        ]
+        # Stage D
+        mock_asm.return_value.assemble.return_value = {
+            "index.html": "<html></html>",
+            "style.css": "body{}",
+            "core.js": "var x=1;",
+        }
+
+        result = gen.modular_generate(
+            _SAMPLE_PRD, _SAMPLE_WIREFRAME,
+            core_systems=["score"], complexity="arcade",
+        )
+
+    assert result["index.html"] == "<html></html>"
+    mock_decomp.return_value.decompose.assert_called_once()
+    mock_arch.return_value.design.assert_called_once()
+    mock_gen.return_value.generate_all_parallel.assert_called_once()
+    mock_asm.return_value.assemble.assert_called_once()
+
+
+def test_modular_fallback_on_failure():
+    """Decomposer fails → single-shot fallback."""
+    with patch("intention_graph.game_code_generator.anthropic.Anthropic"):
+        gen = GameCodeGenerator(api_key="test-key")
+
+    with patch("intention_graph.game_code_generator.ModuleDecomposer") as mock_decomp:
+        mock_decomp.return_value.decompose.side_effect = ValueError("LLM parse fail")
+
+        gen._client.messages.stream.return_value = _mock_stream(_SAMPLE_CODE_RESPONSE)
+
+        result = gen.modular_generate(
+            _SAMPLE_PRD, _SAMPLE_WIREFRAME,
+            core_systems=["score"],
+        )
+
+    # Should have fallen back to single-shot
+    assert "<!DOCTYPE html>" in result["index.html"]
+    assert "showScreen" in result["core.js"]
+
+
+def test_modular_best_of_n_assembly_repeated():
+    """Assembly called N times in modular_generate_best_of_n."""
+    with patch("intention_graph.game_code_generator.anthropic.Anthropic"):
+        gen = GameCodeGenerator(api_key="test-key")
+
+    with (
+        patch("intention_graph.game_code_generator.ModuleDecomposer") as mock_decomp,
+        patch("intention_graph.game_code_generator.ArchitectureDesigner") as mock_arch,
+        patch("intention_graph.game_code_generator.ModuleGenerator") as mock_gen,
+        patch("intention_graph.game_code_generator.AssemblyAgent") as mock_asm,
+        patch("intention_graph.game_code_generator.evaluate") as mock_eval,
+    ):
+        from intention_graph.modular_code_gen.models import (
+            ModuleSpec, ModuleInterface, FunctionSig,
+            ArchitectureDoc, SharedDataStructure, FieldDef,
+            ModuleCode,
+        )
+        mock_decomp.return_value.decompose.return_value = [
+            ModuleSpec(module_id="game_state", description="State",
+                       core_systems=["score"], dependencies=[]),
+        ]
+        mock_arch.return_value.design.return_value = ArchitectureDoc(
+            game_title="Test",
+            modules=[ModuleInterface(
+                module_id="game_state", description="State",
+                exports=[FunctionSig(name="init", params=[])],
+                imports=[], state_access=["GameState"],
+            )],
+            shared_data=[SharedDataStructure(name="GameState",
+                         fields=[FieldDef(name="score", type="number")])],
+            events=[], init_order=["game_state"],
+            update_order=[], render_order=[],
+        )
+        mock_gen.return_value.generate_all_parallel.return_value = [
+            ModuleCode(module_id="game_state", js_code="var x=1;"),
+        ]
+        mock_asm.return_value.assemble.return_value = {
+            "index.html": "<html></html>",
+            "style.css": "body{}",
+            "core.js": "var x=1;",
+        }
+        mock_report = MagicMock()
+        mock_report.overall_score = 0.8
+        mock_eval.return_value = mock_report
+
+        result, score = gen.modular_generate_best_of_n(
+            _SAMPLE_PRD, _SAMPLE_WIREFRAME,
+            core_systems=["score"], n=3,
+        )
+
+    assert result["index.html"] == "<html></html>"
+    assert score == 0.8
+    # Assembly should be called N=3 times
+    assert mock_asm.return_value.assemble.call_count == 3
+
+
+# ── Integration ──────────────────────────────────────────────────────────────
+
+
 @pytest.mark.slow
 def test_integration_generate(game_code_generator):
     result = game_code_generator.generate(_SAMPLE_PRD, _SAMPLE_WIREFRAME)

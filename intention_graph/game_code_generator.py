@@ -14,6 +14,10 @@ from typing import Any
 import anthropic
 
 from intention_graph.game_code_quality import evaluate
+from intention_graph.modular_code_gen.architecture_designer import ArchitectureDesigner
+from intention_graph.modular_code_gen.assembly_agent import AssemblyAgent
+from intention_graph.modular_code_gen.module_decomposer import ModuleDecomposer
+from intention_graph.modular_code_gen.module_generator import ModuleGenerator
 
 
 _GAME_CODE_SYSTEM_PROMPT = """\
@@ -213,6 +217,122 @@ class GameCodeGenerator:
 
         if best_code is None:
             raise RuntimeError(f"All {n} candidates failed")
+
+        return best_code, best_score
+
+    def modular_generate(
+        self,
+        prd_document: str,
+        wireframe: dict[str, Any],
+        core_systems: list[str] | None = None,
+        complexity: str = "arcade",
+        reference_code: str | None = None,
+    ) -> dict[str, str]:
+        """Multi-agent modular generation with fallback to single-shot.
+
+        Stages: A (decompose) → B (architecture) → C (parallel generate) → D (assemble).
+        Falls back to single-shot generate() on failure.
+        """
+        try:
+            api_key = self._client.api_key
+
+            # Stage A: Decompose
+            decomposer = ModuleDecomposer(api_key, self._model)
+            specs = decomposer.decompose(
+                prd_document, wireframe, core_systems or [], complexity,
+            )
+            print(
+                f"  [Modular] Decomposed into {len(specs)} modules: "
+                f"{[s.module_id for s in specs]}",
+                file=sys.stderr,
+            )
+
+            # Stage B: Architecture
+            designer = ArchitectureDesigner(api_key, self._model)
+            arch = designer.design(prd_document, wireframe, specs)
+            print(
+                f"  [Modular] Architecture: {len(arch.shared_data)} shared structs, "
+                f"{len(arch.events)} events",
+                file=sys.stderr,
+            )
+
+            # Stage C: Parallel module generation
+            generator = ModuleGenerator(api_key, self._model)
+            modules = generator.generate_all_parallel(arch, prd_document, wireframe)
+            stubs = sum(1 for m in modules if m.is_stub)
+            print(
+                f"  [Modular] Generated {len(modules)} modules ({stubs} stubs)",
+                file=sys.stderr,
+            )
+
+            # Stage D: Assembly
+            assembler = AssemblyAgent(api_key, self._model)
+            return assembler.assemble(modules, arch, wireframe, prd_document)
+
+        except Exception as e:
+            print(
+                f"  [Modular] Failed ({e}), falling back to single-shot",
+                file=sys.stderr,
+            )
+            return self.generate(prd_document, wireframe, reference_code)
+
+    def modular_generate_best_of_n(
+        self,
+        prd_document: str,
+        wireframe: dict[str, Any],
+        core_systems: list[str] | None = None,
+        complexity: str = "arcade",
+        reference_code: str | None = None,
+        n: int = 2,
+    ) -> tuple[dict[str, str], float]:
+        """Generate modules once, assemble N times, pick best by L1+L2.
+
+        Stages A-C run once. Stage D (assembly) runs N times.
+        """
+        api_key = self._client.api_key
+
+        # Stages A-C: run once
+        decomposer = ModuleDecomposer(api_key, self._model)
+        specs = decomposer.decompose(
+            prd_document, wireframe, core_systems or [], complexity,
+        )
+
+        designer = ArchitectureDesigner(api_key, self._model)
+        arch = designer.design(prd_document, wireframe, specs)
+
+        generator = ModuleGenerator(api_key, self._model)
+        modules = generator.generate_all_parallel(arch, prd_document, wireframe)
+
+        # Stage D: assemble N times, pick best
+        assembler = AssemblyAgent(api_key, self._model)
+        best_code: dict[str, str] | None = None
+        best_score = -1.0
+
+        for i in range(n):
+            try:
+                code = assembler.assemble(modules, arch, wireframe, prd_document)
+                report = evaluate(
+                    code.get("index.html", ""),
+                    code.get("style.css", ""),
+                    code.get("core.js", ""),
+                    wireframe,
+                )
+                score = report.overall_score
+                print(
+                    f"  [Modular Best-of-{n}] Assembly {i + 1}/{n}: {score:.0%}",
+                    file=sys.stderr,
+                )
+                if score > best_score:
+                    best_score = score
+                    best_code = code
+            except Exception as e:
+                print(
+                    f"  [Modular Best-of-{n}] Assembly {i + 1}/{n} failed: {e}",
+                    file=sys.stderr,
+                )
+
+        if best_code is None:
+            raise RuntimeError(f"All {n} assembly attempts failed")
 
         return best_code, best_score
 

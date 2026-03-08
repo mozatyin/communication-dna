@@ -60,6 +60,7 @@ def run_game_code_eval(
     with_semantic: bool = False,
     with_browser: bool = False,
     best_of_n: int = 1,
+    modular: bool = False,
 ) -> dict:
     """Run full Stage 4 PDCA pipeline and return metrics."""
     api_key = api_key or os.environ["ANTHROPIC_API_KEY"]
@@ -93,10 +94,29 @@ def run_game_code_eval(
     }
 
     # Generate game code
-    print(f"\n--- Generating code (best-of-{best_of_n}) ---")
+    mode = "modular" if modular else "single-shot"
+    print(f"\n--- Generating code ({mode}, best-of-{best_of_n}) ---")
     gen = GameCodeGenerator(api_key=api_key)
 
-    if best_of_n > 1:
+    # Extract core_systems and complexity from PRD if available
+    core_systems = None
+    complexity = "arcade"
+
+    if modular:
+        if best_of_n > 1:
+            code, gen_score = gen.modular_generate_best_of_n(
+                prd_doc, wireframe,
+                core_systems=core_systems, complexity=complexity,
+                n=best_of_n,
+            )
+            print(f"[Generate] Modular best-of-{best_of_n} selected (score={gen_score:.0%})")
+        else:
+            code = gen.modular_generate(
+                prd_doc, wireframe,
+                core_systems=core_systems, complexity=complexity,
+            )
+            print(f"[Generate] Modular single candidate")
+    elif best_of_n > 1:
         code, gen_score = gen.generate_best_of_n(
             prd_doc, wireframe, n=best_of_n,
         )
@@ -193,6 +213,7 @@ if __name__ == "__main__":
     parser.add_argument("--semantic", action="store_true", help="Run Layer 3 LLM judge")
     parser.add_argument("--browser", action="store_true", help="Run Playwright browser smoke tests")
     parser.add_argument("--best-of-n", type=int, default=1, help="Generate N candidates")
+    parser.add_argument("--modular", action="store_true", help="Use modular multi-agent pipeline")
     args = parser.parse_args()
 
     if args.game == "all":
@@ -204,6 +225,7 @@ if __name__ == "__main__":
                     with_semantic=args.semantic,
                     with_browser=args.browser,
                     best_of_n=args.best_of_n,
+                    modular=args.modular,
                 )
                 all_results[g] = r
             except Exception as e:
@@ -229,4 +251,5 @@ if __name__ == "__main__":
             with_semantic=args.semantic,
             with_browser=args.browser,
             best_of_n=args.best_of_n,
+            modular=args.modular,
         )
