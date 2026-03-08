@@ -230,12 +230,15 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 3)
         print(f"  Profile: {profile_name}")
         print(f"{'='*60}")
 
-        # Generate text
-        print("  Generating text...", end=" ", flush=True)
-        lines = []
-        for prompt in PROMPTS:
-            text = speaker.generate(profile=profile, content=prompt)
-            lines.append(f"Speaker: {text}")
+        # Generate text with refinement loop
+        print("  Generating text (with refinement)...", end=" ", flush=True)
+        texts = speaker.generate_batch_with_refinement(
+            profile=profile,
+            prompts=PROMPTS,
+            detector=detector,
+            max_rounds=1,
+        )
+        lines = [f"Speaker: {t}" for t in texts]
         conversation = "\n\n".join(lines)
         word_count = len(conversation.split())
         print(f"done ({word_count} words)")
@@ -368,7 +371,7 @@ def run_eval(api_key: str, baseline_path: str | None = None, n_samples: int = 3)
             print(f"\n  v0.1 baseline MAE: {bl_mae:.3f} → v0.2 MAE: {overall_mae:.3f} (Δ{overall_mae - bl_mae:+.3f})")
 
     # ── Save results for future comparison ────────────────────────────────
-    version_tag = "v2.8"  # Update per release
+    version_tag = "v3.1"  # Update per release
     output_path = Path(f"eval_results_{version_tag}.json")
     save_data = dict(results)
     save_data["_overall"] = {

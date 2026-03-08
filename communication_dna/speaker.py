@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import statistics
+from typing import TYPE_CHECKING
+
 import anthropic
 
 from communication_dna.models import CommunicationDNA, Feature
 from communication_dna.catalog import ALL_DIMENSIONS, FEATURE_CATALOG
+
+if TYPE_CHECKING:
+    from communication_dna.detector import Detector
 
 
 # Pre-build a lookup from (dimension, name) -> catalog entry for anchor text
@@ -428,6 +434,70 @@ def _generate_interaction_warnings(profile: CommunicationDNA) -> str:
     return "\n".join(warnings)
 
 
+def _get_correction_hint(feature_name: str, signed_error: float) -> str:
+    """Return a concrete correction hint for a feature error."""
+    over = signed_error > 0
+    hints = {
+        "sentence_length": (
+            "Use shorter sentences and fragments." if over
+            else "Use longer, multi-clause sentences."
+        ),
+        "formality": (
+            "Add more contractions and casual connectors (so, basically, just)." if over
+            else "Remove contractions, use Latinate vocabulary."
+        ),
+        "hedging_frequency": (
+            "Remove hedge words (maybe, perhaps, I think). Be more definitive." if over
+            else "Add more hedges: 'perhaps', 'I think', 'it seems', 'might'."
+        ),
+        "humor_frequency": (
+            "Remove jokes and witty remarks. Be more straightforward." if over
+            else "Add a joke, ironic observation, or witty aside."
+        ),
+        "empathy_expression": (
+            "Reduce emotional mirroring and validation phrases." if over
+            else "Add more emotional validation: 'I can imagine how that feels', 'that must be...'."
+        ),
+        "emotion_word_density": (
+            "Use fewer emotion words. Be more neutral/analytical." if over
+            else "Add more feeling words: excited, worried, grateful, frustrated."
+        ),
+        "colloquialism": (
+            "Use more standard written English. Remove slang." if over
+            else "Add casual expressions and contractions."
+        ),
+        "directness": (
+            "Soften statements with qualifiers." if over
+            else "Make statements more blunt and assertive."
+        ),
+        "definition_tendency": (
+            "Don't explain or define terms. Assume the reader knows." if over
+            else "Add brief explanations of key concepts."
+        ),
+        "emoji_usage": (
+            "Use fewer emoji." if over
+            else "Add more emoji."
+        ),
+        "ellipsis_frequency": (
+            "Complete all sentences. Remove '...' trailing." if over
+            else "Add more '...' trailing sentences."
+        ),
+        "emotional_polarity_balance": (
+            "Balance positive emotions with some concerns or caveats." if over
+            else "Make the emotional tone more positive and supportive."
+        ),
+        "vulnerability_willingness": (
+            "Be less self-revealing. Keep personal concerns private." if over
+            else "Share more personal feelings and concerns."
+        ),
+        "metacommentary": (
+            "Don't comment on your own speech. Just say it." if over
+            else "Add self-aware comments about your own communication."
+        ),
+    }
+    return hints.get(feature_name, f"Adjust {feature_name} {'down' if over else 'up'}.")
+
+
 class Speaker:
     """Generate text matching a CommunicationDNA profile."""
 
@@ -460,6 +530,145 @@ class Speaker:
         response = self._client.messages.create(
             model=self._model,
             max_tokens=2048,
+            system=system_prompt,
+            messages=[{"role": "user", "content": f"Express this in the style described:\n\n{content}"}],
+        )
+
+        return response.content[0].text
+
+    def generate_batch_with_refinement(
+        self,
+        profile: CommunicationDNA,
+        prompts: list[str],
+        detector: Detector,
+        max_rounds: int = 2,
+        intensity: float = 1.0,
+    ) -> list[str]:
+        """Generate texts for multiple prompts with detect-feedback-regenerate loop.
+
+        Implements SELF-REFINE pattern:
+        1. Generate all texts normally
+        2. Quick-detect (1 sample) on concatenated conversation
+        3. Compare detected vs target, identify worst features
+        4. Regenerate all texts with targeted feedback
+        5. Keep best version (lowest weighted MAE)
+        """
+        # Round 0: Initial generation
+        texts = [self.generate(profile, p, intensity) for p in prompts]
+
+        target_map = {f.name: f.value for f in profile.features}
+        best_texts = list(texts)
+        best_mae = float("inf")
+
+        for round_num in range(max_rounds):
+            # Concatenate for detection
+            conversation = "\n\n".join(f"Speaker: {t}" for t in texts)
+
+            # Quick detect (1 sample for speed)
+            detected = detector.analyze(
+                text=conversation,
+                speaker_id=f"refine_r{round_num}",
+                speaker_label="Speaker",
+            )
+
+            # Compare to target, compute errors
+            errors: list[tuple[str, float, float, float]] = []  # (name, signed_error, target, detected)
+            abs_errors: list[float] = []
+            for f in detected.features:
+                if f.name in target_map:
+                    signed_err = f.value - target_map[f.name]
+                    errors.append((f.name, signed_err, target_map[f.name], f.value))
+                    abs_errors.append(abs(signed_err))
+
+            current_mae = statistics.mean(abs_errors) if abs_errors else float("inf")
+
+            # Track best
+            if current_mae < best_mae:
+                best_mae = current_mae
+                best_texts = list(texts)
+
+            # Sort by absolute error
+            errors.sort(key=lambda x: abs(x[1]), reverse=True)
+
+            # Early stop: if top error is small, no need to refine
+            if not errors or abs(errors[0][1]) < 0.12:
+                break
+
+            # Build feedback only for features with large errors (>0.12)
+            # Skip near-floor features (target < 0.10) as they're hard to control
+            feedback_items = [
+                (n, e, t, d) for n, e, t, d in errors
+                if abs(e) > 0.12 and t >= 0.10
+            ][:4]
+            if not feedback_items:
+                break
+
+            feedback_lines = [
+                "<style_feedback>",
+                "CRITICAL — Your previous text was analyzed and these features are OFF-TARGET.",
+                "Fix ONLY the listed features. Do NOT change features that are already on-target.",
+            ]
+            for name, error, target, det_val in feedback_items:
+                direction = "TOO HIGH" if error > 0 else "TOO LOW"
+                action = "REDUCE" if error > 0 else "INCREASE"
+                hint = _get_correction_hint(name, error)
+                feedback_lines.append(
+                    f"- {name}: detected={det_val:.2f}, target={target:.2f} ({direction}). "
+                    f"{action}. {hint}"
+                )
+            feedback_lines.append("</style_feedback>")
+            feedback = "\n".join(feedback_lines)
+
+            # Regenerate with feedback and lower temperature
+            temp = 0.8 if round_num == 0 else 0.7
+            texts = [
+                self._generate_with_feedback(profile, p, feedback, intensity, temp)
+                for p in prompts
+            ]
+
+        # Final check on last round's texts
+        if texts != best_texts:
+            conversation = "\n\n".join(f"Speaker: {t}" for t in texts)
+            detected = detector.analyze(
+                text=conversation,
+                speaker_id="refine_final",
+                speaker_label="Speaker",
+            )
+            final_errors = []
+            for f in detected.features:
+                if f.name in target_map:
+                    final_errors.append(abs(f.value - target_map[f.name]))
+            final_mae = statistics.mean(final_errors) if final_errors else float("inf")
+            if final_mae < best_mae:
+                best_texts = list(texts)
+
+        return best_texts
+
+    def _generate_with_feedback(
+        self,
+        profile: CommunicationDNA,
+        content: str,
+        feedback: str,
+        intensity: float = 1.0,
+        temperature: float = 0.8,
+    ) -> str:
+        """Generate text with style feedback injected into system prompt."""
+        style_instructions = _profile_to_style_instructions(profile, intensity_scale=intensity)
+
+        system_prompt = (
+            "<role>\n"
+            "You are a communication style actor. Express the user's content using EXACTLY "
+            "the communication style described below. Do not add content beyond what is requested. "
+            "Do not mention that you are acting or imitating. Just speak naturally in the described style.\n"
+            "</role>\n\n"
+            f"{style_instructions}\n\n"
+            f"{feedback}"
+        )
+
+        response = self._client.messages.create(
+            model=self._model,
+            max_tokens=2048,
+            temperature=temperature,
             system=system_prompt,
             messages=[{"role": "user", "content": f"Express this in the style described:\n\n{content}"}],
         )
