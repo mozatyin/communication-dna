@@ -110,6 +110,18 @@ The CSS must faithfully reproduce the wireframe's visual design:
 - Use wireframe background-color values for buttons and containers
 - Every wireframe element with a style must have a corresponding CSS rule
 - Responsive layout: use flexbox/grid, not absolute positioning
+
+## Mobile Support
+
+- Add `<meta name="viewport" content="width=device-width, initial-scale=1.0">` to HTML
+- Add touch event listeners (touchstart/touchmove/touchend) alongside keyboard handlers
+- Buttons must have `cursor: pointer` and hover states in CSS
+
+## High Score Persistence
+
+- Use localStorage to save/load high scores on game over
+- Display best score on game over screen
+- Populate leaderboard screen with top 5 scores from localStorage
 """
 
 

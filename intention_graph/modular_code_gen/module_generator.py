@@ -56,6 +56,23 @@ Ensure your implementation satisfies the postcondition when the precondition hol
 - **Interactions**: If your module owns an interaction rule, implement the collision \
 detection described in the `condition` field and the `effect` when triggered.
 
+## Input Handling
+
+If your module handles player input:
+- Support BOTH keyboard AND touch input
+- For keyboard: use keydown/keyup with key tracking flags, apply in update()
+- For touch: track touchstart position, handle touchmove for continuous input, \
+touchend for taps/swipes
+- Only process input when GameState.gameStatus === 'playing'
+
+## Score & Persistence
+
+If your module manages scoring:
+- Save high scores to localStorage on game over: \
+`localStorage.setItem(key, JSON.stringify(scores))`
+- Load high scores on init: `JSON.parse(localStorage.getItem(key) || '[]')`
+- Track best score separately for display
+
 ## Output
 
 Return ONLY the JavaScript code for this module. No markdown fences, no \
@@ -89,6 +106,11 @@ Your module likely deals with moving objects. Implementation requirements:
 - Clear canvas with `ctx.clearRect(0, 0, canvas.width, canvas.height)` each frame
 - Draw each object with distinct `ctx.fillStyle` color
 - Draw score/HUD with `ctx.fillText()`
+
+### Touch Input (for physics games)
+- Tap anywhere on canvas = jump/flap/launch
+- For paddle games: track touchmove X position, move paddle to follow touch
+- `canvas.addEventListener('touchstart', (e) => { e.preventDefault(); /* action */ })`
 """
 
 _DOMAIN_GRID = """\
@@ -122,6 +144,12 @@ Your module likely manages a grid/board. Implementation requirements:
 - Process each row/column as 1D array in swipe direction
 - Compact non-zero values, merge adjacent equals, compact again
 - Track if any tile moved to determine valid move
+
+### Touch Input (for grid games)
+- Swipe detection: track touchstart→touchend delta, determine direction
+- `dx = endX - startX; dy = endY - startY`
+- Direction = largest absolute component: horizontal if `|dx| > |dy|`
+- For minesweeper: tap = reveal, long press (300ms+) = flag
 """
 
 _DOMAIN_PIECE = """\
@@ -149,6 +177,11 @@ Your module likely handles falling pieces. Implementation requirements:
 - After locking piece: scan all rows from bottom
 - Full row = all cells filled → remove row, shift above rows down
 - Award points per lines cleared (1=100, 2=300, 3=500, 4=800)
+
+### Touch Input (for piece games)
+- Swipe left/right = move piece, swipe down = hard drop
+- Tap = rotate piece
+- Track touch start/end positions for swipe detection
 """
 
 _DOMAIN_ACTION = """\
@@ -177,6 +210,11 @@ Your module likely handles player, enemies, or projectiles. Implementation requi
 - Layer order: background → enemies → bullets → player → HUD
 - Use distinct colors for player (green), enemies (red), bullets (yellow)
 - Draw health/lives as icons or text
+
+### Touch Input (for action games)
+- Touch left/right half of screen to move player left/right
+- Tap = fire/shoot
+- Use `touchstart`/`touchend` for movement, separate handler for firing
 """
 
 _DOMAIN_PUZZLE = """\
@@ -210,6 +248,11 @@ Your module likely handles board state and logic. Implementation requirements:
   scores.sort((a,b) => b.score - a.score);
   localStorage.setItem('scores', JSON.stringify(scores.slice(0, 10)));
   ```
+
+### Touch Input (for puzzle games)
+- Canvas click → grid coordinate: `col = Math.floor((e.offsetX - gridOffsetX) / cellSize)`
+- Swipe: track touchstart→touchend delta for direction
+- Tap = select/toggle cell
 """
 
 # Map game keywords to domain prompts
