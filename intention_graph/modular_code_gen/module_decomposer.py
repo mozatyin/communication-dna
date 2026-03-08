@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 import anthropic
@@ -89,20 +90,23 @@ class ModuleDecomposer:
             "Return the module decomposition JSON array."
         )
 
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=4096,
-            temperature=0.0,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_msg}],
-        )
-
-        raw = response.content[0].text
+        raw = self._call_with_retry(user_msg)
         items = _parse_json_array(raw)
         if not items:
             raise ValueError("Failed to parse module decomposition from LLM response")
 
         modules = [ModuleSpec(**item) for item in items]
+
+        # Robust parsing: skip items that fail ModuleSpec construction
+        modules = []
+        for item in items:
+            try:
+                modules.append(ModuleSpec(**item))
+            except (TypeError, ValueError):
+                continue
+
+        if not modules:
+            raise ValueError("No valid modules parsed from LLM response")
 
         # Ensure game_state module exists
         if not any(m.module_id == "game_state" for m in modules):
@@ -117,3 +121,24 @@ class ModuleDecomposer:
             )
 
         return modules
+
+    def _call_with_retry(self, user_msg: str) -> str:
+        """LLM call with retry on rate limit errors."""
+        for attempt in range(3):
+            try:
+                response = self._client.messages.create(
+                    model=self._model,
+                    max_tokens=4096,
+                    temperature=0.0,
+                    system=_SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_msg}],
+                )
+                return response.content[0].text
+            except anthropic.RateLimitError:
+                time.sleep((attempt + 1) * 10)
+            except anthropic.APIStatusError as e:
+                if e.status_code in (403, 429, 529):
+                    time.sleep((attempt + 1) * 10)
+                else:
+                    raise
+        raise RuntimeError("Decomposer LLM call failed after 3 retries")

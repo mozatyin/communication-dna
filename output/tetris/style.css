@@ -1,0 +1,249 @@
+style.css
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #0a0a0a;
+    color: #ffffff;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* Main Menu Styles */
+#main_menu {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    text-align: center;
+}
+
+#main_menu .bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+    z-index: 0;
+}
+
+#title {
+    font-size: clamp(60px, 8vw, 120px);
+    font-weight: bold;
+    color: #00E5FF;
+    text-shadow: 0 0 20px #00E5FF, 0 0 40px #0088ff;
+    margin-bottom: 2rem;
+    z-index: 1;
+    animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes neonPulse {
+    from { text-shadow: 0 0 20px #00E5FF, 0 0 40px #0088ff; }
+    to { text-shadow: 0 0 30px #00E5FF, 0 0 60px #0088ff, 0 0 80px #0088ff; }
+}
+
+#block_preview {
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(45deg, #800080, #a020f0);
+    margin: 2rem auto;
+    border-radius: 10px;
+    opacity: 0.8;
+    box-shadow: 0 0 20px rgba(128, 0, 128, 0.5);
+    z-index: 1;
+}
+
+#high_score {
+    font-size: 24px;
+    color: #FFD700;
+    margin-bottom: 2rem;
+    z-index: 1;
+}
+
+button {
+    background: linear-gradient(135deg, #00E5FF, #0088ff);
+    color: #000000;
+    border: none;
+    border-radius: 16px;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 15px 30px;
+    margin: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    z-index: 1;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 229, 255, 0.4);
+}
+
+#btn_leaderboard {
+    background: transparent;
+    color: #00E5FF;
+    border: 3px solid #00E5FF;
+}
+
+#btn_leaderboard:hover {
+    background: rgba(0, 229, 255, 0.1);
+}
+
+/* Gameplay Styles */
+#gameplay {
+    background: #0a0a0a;
+    padding: 0;
+    justify-content: flex-start;
+}
+
+#gameCanvas {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    background: #0a0a0a;
+}
+
+/* Game Over Styles */
+#game_over {
+    background: transparent;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1;
+}
+
+.game-over-content, .leaderboard-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    background: rgba(26, 26, 46, 0.9);
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    border: 2px solid #00E5FF;
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.game-over-content h2, .leaderboard-content h2 {
+    font-size: clamp(36px, 6vw, 60px);
+    color: #00E5FF;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 10px #00E5FF;
+}
+
+#final_score, #final_lines, #final_level {
+    font-size: 20px;
+    margin: 1rem 0;
+    color: #ffffff;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.button-group button {
+    min-width: 120px;
+    font-size: 18px;
+}
+
+/* Leaderboard Styles */
+#leaderboard {
+    background: transparent;
+}
+
+#scores_list {
+    margin: 2rem 0;
+    min-height: 300px;
+}
+
+.score-item {
+    font-size: 18px;
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(0, 229, 255, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #00E5FF;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #title {
+        font-size: 48px;
+    }
+    
+    button {
+        font-size: 18px;
+        padding: 12px 24px;
+        min-width: 150px;
+    }
+    
+    .game-over-content, .leaderboard-content {
+        padding: 2rem 1rem;
+        margin: 1rem;
+    }
+    
+    .button-group {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-height: 600px) {
+    #title {
+        font-size: 36px;
+        margin-bottom: 1rem;
+    }
+    
+    #block_preview {
+        width: 100px;
+        height: 100px;
+        margin: 1rem auto;
+    }
+    
+    button {
+        padding: 8px 16px;
+        margin: 5px;
+    }
+}
+
+/* Touch-friendly buttons for mobile */
+@media (hover: none) and (pointer: coarse) {
+    button {
+        min-height: 44px;
+        font-size: 20px;
+    }
+}

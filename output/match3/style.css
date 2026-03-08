@@ -1,0 +1,339 @@
+style.css
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+.screen {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+}
+
+#main_menu {
+    display: block;
+}
+
+.background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    z-index: 0;
+}
+
+.background.dimmed {
+    opacity: 0.4;
+}
+
+/* Main Menu Styles */
+#main_menu #title {
+    position: absolute;
+    left: 17.6%;
+    top: 20.8%;
+    width: 64.8%;
+    height: 8.3%;
+    color: #E91E63;
+    font-size: 4.5vw;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+#main_menu #btn_play {
+    position: absolute;
+    left: 26.9%;
+    top: 46.9%;
+    width: 46.3%;
+    height: 6.25%;
+    background-color: #E91E63;
+    color: #FFFFFF;
+    font-size: 2.6vw;
+    font-weight: bold;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#main_menu #btn_leaderboard {
+    position: absolute;
+    left: 31.5%;
+    top: 55.7%;
+    width: 37%;
+    height: 5.2%;
+    background-color: transparent;
+    color: #E91E63;
+    font-size: 2.2vw;
+    border: 3px solid #E91E63;
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Gameplay Styles */
+#gameplay #score_display {
+    position: absolute;
+    left: 40.7%;
+    top: 3.1%;
+    width: 18.5%;
+    height: 3.1%;
+    color: #E91E63;
+    font-size: 2.5vw;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+#gameplay #moves_left {
+    position: absolute;
+    left: 3.7%;
+    top: 3.1%;
+    width: 18.5%;
+    height: 3.1%;
+    color: #E91E63;
+    font-size: 2.2vw;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+}
+
+#gameplay #target {
+    position: absolute;
+    left: 72.2%;
+    top: 3.1%;
+    width: 24.1%;
+    height: 3.1%;
+    color: #9C27B0;
+    font-size: 2vw;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    z-index: 1;
+}
+
+#gameplay #level_label {
+    position: absolute;
+    left: 40.7%;
+    top: 7.3%;
+    width: 18.5%;
+    height: 2.6%;
+    color: #9C27B0;
+    font-size: 1.7vw;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+#gameplay #grid_bg {
+    position: absolute;
+    left: 3.7%;
+    top: 12.5%;
+    width: 92.6%;
+    height: 52.1%;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: 16px;
+    z-index: 1;
+}
+
+#gameCanvas {
+    position: absolute;
+    left: 3.7%;
+    top: 12.5%;
+    width: 92.6%;
+    height: 52.1%;
+    z-index: 3;
+}
+
+#gameplay #tap_area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 5;
+}
+
+/* Game Over Styles */
+#game_over #gameover_text {
+    position: absolute;
+    left: 17.6%;
+    top: 28.6%;
+    width: 64.8%;
+    height: 6.25%;
+    color: #E91E63;
+    font-size: 4vw;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+#game_over #final_score {
+    position: absolute;
+    left: 26.9%;
+    top: 37.5%;
+    width: 46.3%;
+    height: 4.2%;
+    color: #9C27B0;
+    font-size: 2.5vw;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+#game_over #btn_retry {
+    position: absolute;
+    left: 26.9%;
+    top: 47.9%;
+    width: 46.3%;
+    height: 6.25%;
+    background-color: #E91E63;
+    color: #FFFFFF;
+    font-size: 2.6vw;
+    font-weight: bold;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#game_over #btn_menu {
+    position: absolute;
+    left: 26.9%;
+    top: 56.8%;
+    width: 46.3%;
+    height: 5.2%;
+    background-color: #9C27B0;
+    color: #FFFFFF;
+    font-size: 2.2vw;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#game_over #btn_leaderboard {
+    position: absolute;
+    left: 31.5%;
+    top: 64.6%;
+    width: 37%;
+    height: 4.2%;
+    background-color: transparent;
+    color: #E91E63;
+    font-size: 2vw;
+    border: 2px solid #E91E63;
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Leaderboard Styles */
+#leaderboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0,0,0,0.5);
+}
+
+#leaderboard.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#leaderboard #panel_bg {
+    position: absolute;
+    width: 74.1%;
+    height: 52.1%;
+    background-color: #FFFFFF;
+    border-radius: 20px;
+    border: 4px solid #E91E63;
+    z-index: 0;
+}
+
+#leaderboard #title {
+    position: absolute;
+    left: 18.5%;
+    top: 3.1%;
+    width: 37%;
+    height: 4.2%;
+    color: #E91E63;
+    font-size: 3vw;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+#leaderboard #score_list {
+    position: absolute;
+    left: 9.3%;
+    top: 10.4%;
+    width: 55.6%;
+    height: 26%;
+    color: #333333;
+    font-size: 2.5vw;
+    line-height: 1.8;
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    z-index: 1;
+}
+
+#leaderboard #btn_close {
+    position: absolute;
+    left: 23.1%;
+    top: 42.7%;
+    width: 27.8%;
+    height: 5.2%;
+    background-color: #E91E63;
+    color: #FFFFFF;
+    font-size: 2.2vw;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+button:active {
+    transform: scale(0.95);
+}

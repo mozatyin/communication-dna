@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 import anthropic
@@ -180,7 +181,13 @@ def _parse_architecture(data: dict) -> ArchitectureDoc:
     for m in data.get("modules", []):
         exports = []
         for e in m.get("exports", []):
-            params = [ParamDef(**p) for p in e.get("params", [])]
+            raw_params = e.get("params", [])
+            params = []
+            for p in raw_params:
+                if isinstance(p, dict):
+                    params.append(ParamDef(**p))
+                elif isinstance(p, str):
+                    params.append(ParamDef(name=p, type="any"))
             exports.append(FunctionSig(
                 name=e["name"],
                 params=params,
@@ -315,15 +322,7 @@ class ArchitectureDesigner:
             "Design the complete architecture JSON."
         )
 
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=8192,
-            temperature=0.0,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_msg}],
-        )
-
-        raw = response.content[0].text
+        raw = self._call_with_retry(user_msg)
         data = _parse_json(raw)
         if not data:
             raise ValueError("Failed to parse architecture from LLM response")
@@ -334,6 +333,27 @@ class ArchitectureDesigner:
         self._post_validate(arch, modules)
 
         return arch
+
+    def _call_with_retry(self, user_msg: str) -> str:
+        """LLM call with retry on rate limit errors."""
+        for attempt in range(3):
+            try:
+                response = self._client.messages.create(
+                    model=self._model,
+                    max_tokens=8192,
+                    temperature=0.0,
+                    system=_SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_msg}],
+                )
+                return response.content[0].text
+            except anthropic.RateLimitError:
+                time.sleep((attempt + 1) * 10)
+            except anthropic.APIStatusError as e:
+                if e.status_code in (403, 429, 529):
+                    time.sleep((attempt + 1) * 10)
+                else:
+                    raise
+        raise RuntimeError("Architecture design LLM call failed after 3 retries")
 
     def _post_validate(
         self, arch: ArchitectureDoc, input_specs: list[ModuleSpec]

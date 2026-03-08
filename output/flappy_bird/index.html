@@ -1,0 +1,54 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="start_screen" class="screen">
+        <div class="screen-content">
+            <h1>Flappy Bird</h1>
+            <div class="bird-preview"></div>
+            <button id="btn_play">Play</button>
+            <button id="btn_leaderboard">Score</button>
+        </div>
+    </div>
+
+    <div id="gameplay" class="screen" style="display:none;">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="game_over" class="screen" style="display:none;">
+        <div class="screen-content">
+            <h2>Game Over</h2>
+            <div class="score-panel">
+                <div class="medal"></div>
+                <div class="scores">
+                    <p>Score: <span id="current-score">0</span></p>
+                    <p>Best: <span id="high-score">0</span></p>
+                </div>
+            </div>
+            <button id="btn_retry">Retry</button>
+            <button id="btn_menu">Menu</button>
+            <button id="btn_scores">Scores</button>
+        </div>
+    </div>
+
+    <div id="leaderboard" class="screen" style="display:none;">
+        <div class="leaderboard-panel">
+            <h2>Leaderboard</h2>
+            <div class="best-score">
+                <p>Best Score</p>
+                <div class="score-display" id="leaderboard-score">0</div>
+            </div>
+            <p>Last Score: <span id="last-score">0</span></p>
+            <button id="btn_ok">OK</button>
+        </div>
+    </div>
+
+    <script src="core.js"></script>
+</body>
+</html>

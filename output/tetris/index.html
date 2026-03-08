@@ -1,0 +1,52 @@
+index.html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄罗斯方块 (Tetris)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main_menu" class="screen">
+        <div class="bg"></div>
+        <h1 id="title">TETRIS</h1>
+        <div id="block_preview"></div>
+        <div id="high_score">最高分: 0</div>
+        <button id="btn_start">开始游戏</button>
+        <button id="btn_leaderboard">排行榜</button>
+    </div>
+
+    <div id="gameplay" class="screen">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="game_over" class="screen">
+        <div class="overlay"></div>
+        <div class="game-over-content">
+            <h2>游戏结束</h2>
+            <div id="final_score">最终分数: 0</div>
+            <div id="final_lines">清除行数: 0</div>
+            <div id="final_level">达到等级: 1</div>
+            <div class="button-group">
+                <button id="btn_retry">重试</button>
+                <button id="btn_menu">主菜单</button>
+            </div>
+            <button id="btn_game_over_leaderboard">查看排行榜</button>
+        </div>
+    </div>
+
+    <div id="leaderboard" class="screen">
+        <div class="overlay"></div>
+        <div class="leaderboard-content">
+            <h2>排行榜</h2>
+            <div id="scores_list">
+                <div class="score-item">暂无记录</div>
+            </div>
+            <button id="btn_close_leaderboard">返回</button>
+        </div>
+    </div>
+
+    <script src="core.js"></script>
+</body>
+</html>

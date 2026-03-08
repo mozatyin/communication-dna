@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
@@ -148,28 +149,29 @@ class ModuleGenerator:
         architecture: ArchitectureDoc,
         prd_document: str,
         wireframe: dict,
-        max_workers: int = 4,
+        max_workers: int = 2,
     ) -> list[ModuleCode]:
-        """Generate code for all modules in parallel."""
+        """Generate code for all modules in parallel with staggered launches."""
         results: dict[str, ModuleCode] = {}
 
+        def _generate_with_delay(module: ModuleInterface, delay: float) -> ModuleCode:
+            if delay > 0:
+                time.sleep(delay)
+            return self.generate_module(architecture, module, prd_document, wireframe)
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(
-                    self.generate_module,
-                    architecture,
-                    module,
-                    prd_document,
-                    wireframe,
-                ): module.module_id
-                for module in architecture.modules
-            }
+            futures = {}
+            for i, module in enumerate(architecture.modules):
+                # Stagger launches by 2s to avoid rate limits
+                delay = i * 2.0
+                future = executor.submit(_generate_with_delay, module, delay)
+                futures[future] = module.module_id
+
             for future in as_completed(futures):
                 module_id = futures[future]
                 try:
                     results[module_id] = future.result()
                 except Exception:
-                    # Find the interface and create a stub
                     for m in architecture.modules:
                         if m.module_id == module_id:
                             results[module_id] = _create_stub(m)
@@ -185,20 +187,31 @@ class ModuleGenerator:
         return ordered
 
     def _call_llm(self, user_msg: str) -> ModuleCode:
-        """Make a single LLM call and return ModuleCode."""
-        response = self._client.messages.create(
-            model=self._model,
-            max_tokens=16000,
-            temperature=0.2,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_msg}],
-        )
-        raw = _strip_fences(response.content[0].text)
+        """Make a single LLM call with retry on rate limit errors."""
+        for attempt in range(3):
+            try:
+                response = self._client.messages.create(
+                    model=self._model,
+                    max_tokens=16000,
+                    temperature=0.2,
+                    system=_SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_msg}],
+                )
+                raw = _strip_fences(response.content[0].text)
 
-        # Extract module_id from the code
-        match = re.search(r"const\s+(\w+)\s*=\s*\(function", raw)
-        module_id = match.group(1) if match else "unknown"
-        # Try to reverse CamelCase to snake_case
-        snake = re.sub(r"(?<!^)(?=[A-Z])", "_", module_id).lower()
+                # Extract module_id from the code
+                match = re.search(r"const\s+(\w+)\s*=\s*\(function", raw)
+                module_id = match.group(1) if match else "unknown"
+                snake = re.sub(r"(?<!^)(?=[A-Z])", "_", module_id).lower()
 
-        return ModuleCode(module_id=snake, js_code=raw)
+                return ModuleCode(module_id=snake, js_code=raw)
+            except anthropic.RateLimitError:
+                wait = (attempt + 1) * 10
+                time.sleep(wait)
+            except anthropic.APIStatusError as e:
+                if e.status_code in (403, 429, 529):
+                    wait = (attempt + 1) * 10
+                    time.sleep(wait)
+                else:
+                    raise
+        raise RuntimeError("LLM call failed after 3 retries")

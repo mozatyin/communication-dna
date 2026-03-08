@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from typing import Any
 
 import anthropic
@@ -98,8 +99,17 @@ state_machine (e.g., startGame, gameOver, retry). Each transition function:
 - Wire modules together through the EventBus and shared state
 - showScreen() must set display:none on all .screen divs, then display:block on target
 - All wireframe element IDs must appear in HTML
-- Colors/fonts must match wireframe styles
+- Colors/fonts must match wireframe styles EXACTLY (copy hex codes from wireframe)
 - Game must be immediately playable when opened
+
+## CSS Quality (HIGH PRIORITY)
+
+The CSS must faithfully reproduce the wireframe's visual design:
+- Copy ALL color hex codes from wireframe styles into CSS
+- Match font sizes from wireframe (convert to rem/px as appropriate)
+- Use wireframe background-color values for buttons and containers
+- Every wireframe element with a style must have a corresponding CSS rule
+- Responsive layout: use flexbox/grid, not absolute positioning
 """
 
 
@@ -184,25 +194,60 @@ class AssemblyAgent:
             )
         modules_text = "\n\n".join(module_code_sections)
 
+        # Extract wireframe styles for CSS emphasis
+        style_summary = self._extract_wireframe_styles(wireframe)
+
         user_msg = (
             f"## Architecture Document\n{arch_json}\n\n"
             f"## Wireframe\n{wf_text[:8000]}\n\n"
+            f"## Wireframe Style Reference (MUST match in CSS)\n{style_summary}\n\n"
             f"## PRD\n{prd_document[:3000]}\n\n"
             f"## Module Code\n{modules_text}\n\n"
             "Assemble these modules into a working game. "
+            "IMPORTANT: CSS must match ALL wireframe colors and font sizes exactly. "
             "Return index.html, style.css, and core.js."
         )
 
-        chunks: list[str] = []
-        with self._client.messages.stream(
-            model=self._model,
-            max_tokens=32000,
-            temperature=0.2,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_msg}],
-        ) as stream:
-            for text in stream.text_stream:
-                chunks.append(text)
-
-        raw = "".join(chunks)
+        raw = self._call_llm_with_retry(user_msg)
         return _parse_code_response(raw)
+
+    @staticmethod
+    def _extract_wireframe_styles(wireframe: dict) -> str:
+        """Extract all styles from wireframe elements for CSS reference."""
+        lines = []
+        for screen in wireframe.get("interfaces", []):
+            sid = screen.get("interface_id", "?")
+            for elem in screen.get("elements", []):
+                eid = elem.get("id", "?")
+                style = elem.get("style", {})
+                if style:
+                    props = "; ".join(f"{k}: {v}" for k, v in style.items() if v)
+                    if props:
+                        lines.append(f"#{eid} (in {sid}): {props}")
+        return "\n".join(lines) if lines else "No explicit styles in wireframe."
+
+    def _call_llm_with_retry(self, user_msg: str) -> str:
+        """Stream LLM call with retry on rate limit errors."""
+        for attempt in range(3):
+            try:
+                chunks: list[str] = []
+                with self._client.messages.stream(
+                    model=self._model,
+                    max_tokens=32000,
+                    temperature=0.2,
+                    system=_SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_msg}],
+                ) as stream:
+                    for text in stream.text_stream:
+                        chunks.append(text)
+                return "".join(chunks)
+            except anthropic.RateLimitError:
+                wait = (attempt + 1) * 10
+                time.sleep(wait)
+            except anthropic.APIStatusError as e:
+                if e.status_code in (403, 429, 529):
+                    wait = (attempt + 1) * 10
+                    time.sleep(wait)
+                else:
+                    raise
+        raise RuntimeError("Assembly LLM call failed after 3 retries")

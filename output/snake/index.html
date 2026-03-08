@@ -1,0 +1,45 @@
+index.html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main_menu" class="screen">
+        <div id="bg"></div>
+        <div id="title">贪吃蛇</div>
+        <div id="snake_preview"></div>
+        <div id="high_score">最高分: 0</div>
+        <button id="btn_start">开始游戏</button>
+    </div>
+
+    <div id="gameplay" class="screen" style="display:none;">
+        <div id="bg"></div>
+        <div id="score_display">分数: 0</div>
+        <div id="best_display">最高: 0</div>
+        <div id="game_grid">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+        </div>
+        <div id="dpad">
+            <button id="btn_up" class="dpad-btn">↑</button>
+            <button id="btn_left" class="dpad-btn">←</button>
+            <button id="btn_right" class="dpad-btn">→</button>
+            <button id="btn_down" class="dpad-btn">↓</button>
+        </div>
+    </div>
+
+    <div id="game_over" class="screen" style="display:none;">
+        <div id="bg"></div>
+        <div id="game_over_title">游戏结束</div>
+        <div id="final_score">最终分数: 0</div>
+        <div id="final_best">最高分: 0</div>
+        <button id="btn_retry">重试</button>
+        <button id="btn_menu">返回菜单</button>
+    </div>
+
+    <script src="core.js"></script>
+</body>
+</html>

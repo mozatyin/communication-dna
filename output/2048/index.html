@@ -1,0 +1,65 @@
+index.html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="main_menu" class="screen">
+        <div id="bg" class="bg-image"></div>
+        <div id="title">2048</div>
+        <div id="subtitle">合并数字，挑战2048！</div>
+        <button id="btn_play" onclick="showScreen('gameplay')">开始游戏</button>
+        <button id="btn_leaderboard" onclick="showScreen('leaderboard')">排行榜</button>
+    </div>
+
+    <!-- Gameplay Screen -->
+    <div id="gameplay" class="screen">
+        <div id="bg" class="bg-image"></div>
+        <div id="title_small">2048</div>
+        
+        <div id="score_box">
+            <div id="score_label">SCORE</div>
+            <div id="score_value">0</div>
+        </div>
+        
+        <div id="best_box">
+            <div id="best_label">BEST</div>
+            <div id="best_value">0</div>
+        </div>
+        
+        <button id="btn_new_game" onclick="startNewGame()">New Game</button>
+        
+        <div id="grid_bg">
+            <canvas id="game_canvas" width="1000" height="1000"></canvas>
+        </div>
+        
+        <div id="swipe_area"></div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game_over" class="screen">
+        <div id="bg" class="bg-image overlay-bg"></div>
+        <div id="overlay"></div>
+        <div id="gameover_text">Game Over!</div>
+        <div id="final_score">得分: 0</div>
+        <button id="btn_retry" onclick="retryGame()">再来一次</button>
+        <button id="btn_menu" onclick="showScreen('main_menu')">主菜单</button>
+        <button id="btn_leaderboard" onclick="showScreen('leaderboard')">排行榜</button>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard" class="screen">
+        <div id="panel_bg"></div>
+        <div id="title">排行榜</div>
+        <div id="score_list">1. 28560<br>2. 15240<br>3. 8830<br>4. 5832<br>5. 1240</div>
+        <button id="btn_close" onclick="showScreen('main_menu')">关闭</button>
+    </div>
+
+    <script src="core.js"></script>
+</body>
+</html>
