@@ -10,9 +10,6 @@ const EventBus = {
     }
 };
 
-// Make EventBus globally available
-window.eventBus = EventBus;
-
 // Global Constants
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
@@ -41,87 +38,37 @@ const GameState = {
     inputX: 0
 };
 
-// Make GameState globally available
-window.GameState = GameState;
-
-// Module: game_state
+// Game State Module
 const game_state = (function() {
-    let eventListeners = [];
-
+    let eventBus;
+    let highScores = [];
+    
     function init() {
-        // GameState is already initialized globally
-        setupEventListeners();
+        eventBus = EventBus;
+        
+        // Load high scores from localStorage
+        loadHighScores();
+        
+        // Set up event listeners
+        eventBus.on('GAME_START', handleGameStart);
+        eventBus.on('GAME_PAUSE', handleGamePause);
+        eventBus.on('GAME_RESUME', handleGameResume);
+        eventBus.on('RETRY', handleRetry);
+        eventBus.on('RETURN_MENU', handleReturnMenu);
+        eventBus.on('BRICK_DESTROYED', handleBrickDestroyed);
+        eventBus.on('BALL_LOST', handleBallLost);
     }
-
-    function setupEventListeners() {
-        EventBus.on('GAME_START', handleGameStart);
-        EventBus.on('GAME_PAUSE', handleGamePause);
-        EventBus.on('GAME_RESUME', handleGameResume);
-        EventBus.on('RETRY', handleRetry);
-        EventBus.on('RETURN_MENU', handleReturnMenu);
-        EventBus.on('BRICK_DESTROYED', handleBrickDestroyed);
-        EventBus.on('BALL_LOST', handleBallLost);
-    }
-
-    function handleGameStart() {
+    
+    function startGame() {
         if (GameState.gameStatus === 'menu') {
-            startGame();
-        }
-    }
-
-    function handleGamePause() {
-        if (GameState.gameStatus === 'playing') {
-            pauseGame();
-        }
-    }
-
-    function handleGameResume() {
-        if (GameState.gameStatus === 'paused') {
-            resumeGame();
-        }
-    }
-
-    function handleRetry() {
-        if (GameState.gameStatus === 'game_over') {
+            GameState.gameStatus = 'playing';
             GameState.score = 0;
             GameState.lives = 3;
             GameState.level = 1;
             GameState.bricksDestroyed = 0;
             GameState.totalBricks = 50;
-            startGame();
-        }
-    }
-
-    function handleReturnMenu() {
-        if (GameState.gameStatus === 'game_over') {
-            returnToMenu();
-        }
-    }
-
-    function handleBrickDestroyed(event) {
-        if (GameState.gameStatus === 'playing') {
-            addScore(event.points);
-            GameState.bricksDestroyed++;
             
-            if (GameState.bricksDestroyed >= GameState.totalBricks) {
-                nextLevel();
-            }
-        }
-    }
-
-    function handleBallLost() {
-        if (GameState.gameStatus === 'playing') {
-            loseLife();
-            
-            if (GameState.lives <= 0) {
-                endGame();
-            }
-        }
-    }
-
-    function startGame() {
-        if (GameState.gameStatus === 'menu') {
-            GameState.gameStatus = 'playing';
+            // Reset ball and paddle positions
             GameState.ballX = 540;
             GameState.ballY = 1500;
             GameState.ballVelX = 300;
@@ -131,56 +78,143 @@ const game_state = (function() {
             GameState.inputX = 0;
         }
     }
-
+    
     function pauseGame() {
         if (GameState.gameStatus === 'playing') {
             GameState.gameStatus = 'paused';
         }
     }
-
+    
     function resumeGame() {
         if (GameState.gameStatus === 'paused') {
             GameState.gameStatus = 'playing';
         }
     }
-
+    
     function endGame() {
         if (GameState.gameStatus === 'playing') {
             GameState.gameStatus = 'game_over';
-            EventBus.emit('GAME_OVER', {});
+            saveHighScore();
+            eventBus.emit('GAME_OVER', {});
         }
     }
-
+    
     function returnToMenu() {
         if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'menu';
         }
     }
-
+    
     function addScore(points) {
         if (GameState.gameStatus === 'playing') {
             GameState.score += points;
         }
     }
-
+    
     function loseLife() {
         if (GameState.gameStatus === 'playing' && GameState.lives > 0) {
-            GameState.lives--;
+            GameState.lives -= 1;
+            if (GameState.lives <= 0) {
+                endGame();
+            }
         }
     }
-
+    
     function nextLevel() {
         if (GameState.gameStatus === 'playing') {
-            GameState.level++;
+            GameState.level += 1;
             GameState.bricksDestroyed = 0;
-            EventBus.emit('LEVEL_COMPLETE', {});
+            GameState.totalBricks = 50;
+            
+            // Reset ball position and increase speed slightly
+            GameState.ballX = 540;
+            GameState.ballY = 1500;
+            const speedMultiplier = 1 + (GameState.level - 1) * 0.1;
+            GameState.ballVelX = 300 * speedMultiplier * (GameState.ballVelX > 0 ? 1 : -1);
+            GameState.ballVelY = -300 * speedMultiplier;
+            
+            eventBus.emit('LEVEL_COMPLETE', {});
         }
     }
-
+    
     function update(dt) {
-        // Game state module doesn't need frame-by-frame updates
+        if (GameState.gameStatus === 'playing') {
+            // Check for level completion
+            if (GameState.bricksDestroyed >= GameState.totalBricks) {
+                nextLevel();
+            }
+        }
     }
-
+    
+    function handleGameStart() {
+        startGame();
+    }
+    
+    function handleGamePause() {
+        pauseGame();
+    }
+    
+    function handleGameResume() {
+        resumeGame();
+    }
+    
+    function handleRetry() {
+        if (GameState.gameStatus === 'game_over') {
+            GameState.gameStatus = 'menu';
+            startGame();
+        }
+    }
+    
+    function handleReturnMenu() {
+        returnToMenu();
+    }
+    
+    function handleBrickDestroyed(payload) {
+        if (GameState.gameStatus === 'playing') {
+            addScore(payload.points);
+            GameState.bricksDestroyed += 1;
+        }
+    }
+    
+    function handleBallLost() {
+        if (GameState.gameStatus === 'playing') {
+            loseLife();
+        }
+    }
+    
+    function loadHighScores() {
+        try {
+            const saved = localStorage.getItem('breakout_highscores');
+            if (saved) {
+                highScores = JSON.parse(saved);
+            } else {
+                highScores = [];
+            }
+        } catch (e) {
+            highScores = [];
+        }
+    }
+    
+    function saveHighScore() {
+        try {
+            // Add current score to high scores
+            highScores.push({
+                score: GameState.score,
+                level: GameState.level,
+                date: new Date().toISOString()
+            });
+            
+            // Sort by score descending and keep top 10
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, 10);
+            
+            // Save to localStorage
+            localStorage.setItem('breakout_highscores', JSON.stringify(highScores));
+        } catch (e) {
+            // localStorage not available or full
+        }
+    }
+    
     return {
         init,
         startGame,
@@ -195,49 +229,72 @@ const game_state = (function() {
     };
 })();
 
-// Module: game_objects
+// Game Objects Module
 const game_objects = (function() {
     let bricks = [];
-
+    let eventBus = null;
+    
     function init() {
+        eventBus = EventBus;
+        
+        // Initialize bricks grid
         initializeBricks();
-        EventBus.on('LEVEL_COMPLETE', resetLevel);
-        EventBus.on('BRICK_DESTROYED', handleBrickDestroyed);
+        
+        // Listen for level complete events
+        eventBus.on('LEVEL_COMPLETE', function() {
+            resetLevel();
+        });
+        
+        eventBus.on('BRICK_DESTROYED', function(data) {
+            if (data && data.brickId) {
+                destroyBrick(data.brickId);
+            }
+        });
     }
-
+    
     function initializeBricks() {
         bricks = [];
-        const startX = (CANVAS_WIDTH - (BRICK_COLS * BRICK_WIDTH + (BRICK_COLS - 1) * 5)) / 2;
+        const startX = 100;
         const startY = 200;
+        const spacing = 5;
         
         for (let row = 0; row < BRICK_ROWS; row++) {
             for (let col = 0; col < BRICK_COLS; col++) {
                 const brickId = `brick_${row}_${col}`;
+                const x = startX + col * (BRICK_WIDTH + spacing);
+                const y = startY + row * (BRICK_HEIGHT + spacing);
+                
                 bricks.push({
                     id: brickId,
-                    x: startX + col * (BRICK_WIDTH + 5),
-                    y: startY + row * (BRICK_HEIGHT + 5),
+                    x: x,
+                    y: y,
                     width: BRICK_WIDTH,
                     height: BRICK_HEIGHT,
                     destroyed: false,
-                    points: (BRICK_ROWS - row) * 10
+                    points: (BRICK_ROWS - row) * 10 // Higher rows worth more points
                 });
             }
         }
         
+        // Update total bricks count
         GameState.totalBricks = bricks.length;
         GameState.bricksDestroyed = 0;
     }
-
+    
     function updatePaddle(inputX) {
         if (GameState.gameStatus !== 'playing') return;
         
         const paddleSpeed = 800;
-        const newX = GameState.paddleX + inputX * paddleSpeed * (1/60);
+        const deltaX = inputX * paddleSpeed * (1/60); // Assume 60fps
         
-        GameState.paddleX = Math.max(0, Math.min(CANVAS_WIDTH - PADDLE_WIDTH, newX));
+        GameState.paddleX += deltaX;
+        
+        // Clamp paddle to canvas bounds
+        const minX = 0;
+        const maxX = CANVAS_WIDTH - PADDLE_WIDTH;
+        GameState.paddleX = Math.max(minX, Math.min(maxX, GameState.paddleX));
     }
-
+    
     function getBallBounds() {
         return {
             x: GameState.ballX - BALL_RADIUS,
@@ -246,7 +303,7 @@ const game_objects = (function() {
             height: BALL_RADIUS * 2
         };
     }
-
+    
     function getPaddleBounds() {
         return {
             x: GameState.paddleX,
@@ -255,10 +312,12 @@ const game_objects = (function() {
             height: PADDLE_HEIGHT
         };
     }
-
+    
     function getBrickBounds(brickId) {
         const brick = bricks.find(b => b.id === brickId && !b.destroyed);
-        if (!brick) return null;
+        if (!brick) {
+            return { x: 0, y: 0, width: 0, height: 0 };
+        }
         
         return {
             x: brick.x,
@@ -267,7 +326,7 @@ const game_objects = (function() {
             height: brick.height
         };
     }
-
+    
     function destroyBrick(brickId) {
         const brick = bricks.find(b => b.id === brickId && !b.destroyed);
         if (!brick) return 0;
@@ -277,51 +336,58 @@ const game_objects = (function() {
         
         return brick.points;
     }
-
+    
     function resetLevel() {
-        initializeBricks();
-        GameState.ballX = 540;
-        GameState.ballY = 1500;
+        // Reset all bricks
+        bricks.forEach(brick => {
+            brick.destroyed = false;
+        });
+        
+        GameState.bricksDestroyed = 0;
+        GameState.totalBricks = bricks.length;
+        
+        // Reset paddle position
         GameState.paddleX = 490;
         GameState.paddleY = 1800;
     }
-
-    function handleBrickDestroyed(event) {
-        // Handled by physics engine
-    }
-
+    
     function update(dt) {
+        if (GameState.gameStatus !== 'playing') return;
+        
+        // Update paddle based on input
         updatePaddle(GameState.inputX);
     }
-
+    
     function render(ctx) {
-        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        if (!ctx) return;
         
-        // Draw ball
-        ctx.fillStyle = '#ffffff';
+        // Render ball
+        ctx.fillStyle = '#FFFFFF';
         ctx.beginPath();
         ctx.arc(GameState.ballX, GameState.ballY, BALL_RADIUS, 0, Math.PI * 2);
         ctx.fill();
         
-        // Draw paddle
+        // Render paddle
         ctx.fillStyle = '#00BCD4';
         ctx.fillRect(GameState.paddleX, GameState.paddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
         
-        // Draw bricks
-        for (let brick of bricks) {
+        // Render bricks
+        bricks.forEach(brick => {
             if (!brick.destroyed) {
-                const row = Math.floor((brick.y - 200) / (BRICK_HEIGHT + 5));
-                const colors = ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff'];
+                // Color bricks based on row for visual variety
+                const row = parseInt(brick.id.split('_')[1]);
+                const colors = ['#FF0000', '#FF8800', '#FFFF00', '#00FF00', '#0088FF'];
                 ctx.fillStyle = colors[row % colors.length];
                 ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
                 
-                ctx.strokeStyle = '#ffffff';
+                // Add border
+                ctx.strokeStyle = '#FFFFFF';
                 ctx.lineWidth = 1;
                 ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
             }
-        }
+        });
     }
-
+    
     return {
         init,
         updatePaddle,
@@ -335,15 +401,18 @@ const game_objects = (function() {
     };
 })();
 
-// Module: physics_engine
+// Physics Engine Module
 const physics_engine = (function() {
+    let eventBus;
+    
     function init() {
-        // Physics engine initialized
+        eventBus = EventBus;
     }
     
     function updateBallPosition(deltaTime) {
         if (GameState.gameStatus !== 'playing') return;
         
+        // Update ball position based on velocity and time
         GameState.ballX += GameState.ballVelX * deltaTime;
         GameState.ballY += GameState.ballVelY * deltaTime;
     }
@@ -351,29 +420,40 @@ const physics_engine = (function() {
     function checkCollisions() {
         if (GameState.gameStatus !== 'playing') return;
         
+        // Check wall collisions first
         checkWallCollisions();
+        
+        // Check bottom boundary (ball lost)
+        if (GameState.ballY + BALL_RADIUS > CANVAS_HEIGHT) {
+            eventBus.emit('BALL_LOST', {});
+            resetBall();
+            return;
+        }
+        
+        // Check paddle collision
         checkPaddleCollision();
+        
+        // Check brick collisions
         checkBrickCollisions();
-        checkBottomBoundary();
     }
     
     function checkWallCollisions() {
-        const ballRadius = BALL_RADIUS;
-        const canvasWidth = CANVAS_WIDTH;
-        
-        if (GameState.ballX - ballRadius <= 0) {
-            GameState.ballX = ballRadius;
-            GameState.ballVelX = Math.abs(GameState.ballVelX);
+        // Left wall
+        if (GameState.ballX - BALL_RADIUS <= 0) {
+            GameState.ballX = BALL_RADIUS;
+            GameState.ballVelX = -GameState.ballVelX;
         }
         
-        if (GameState.ballX + ballRadius >= canvasWidth) {
-            GameState.ballX = canvasWidth - ballRadius;
-            GameState.ballVelX = -Math.abs(GameState.ballVelX);
+        // Right wall
+        if (GameState.ballX + BALL_RADIUS >= CANVAS_WIDTH) {
+            GameState.ballX = CANVAS_WIDTH - BALL_RADIUS;
+            GameState.ballVelX = -GameState.ballVelX;
         }
         
-        if (GameState.ballY - ballRadius <= 0) {
-            GameState.ballY = ballRadius;
-            GameState.ballVelY = Math.abs(GameState.ballVelY);
+        // Top wall
+        if (GameState.ballY - BALL_RADIUS <= 0) {
+            GameState.ballY = BALL_RADIUS;
+            GameState.ballVelY = -GameState.ballVelY;
         }
     }
     
@@ -381,87 +461,95 @@ const physics_engine = (function() {
         const ballBounds = game_objects.getBallBounds();
         const paddleBounds = game_objects.getPaddleBounds();
         
+        // Check bounding box overlap with tolerance
         if (ballBounds.x < paddleBounds.x + paddleBounds.width + 2 &&
             ballBounds.x + ballBounds.width > paddleBounds.x - 2 &&
             ballBounds.y < paddleBounds.y + paddleBounds.height + 2 &&
             ballBounds.y + ballBounds.height > paddleBounds.y - 2) {
             
+            // Only bounce if ball is moving downward
             if (GameState.ballVelY > 0) {
+                // Calculate hit position relative to paddle center
                 const paddleCenterX = paddleBounds.x + paddleBounds.width / 2;
                 const ballCenterX = ballBounds.x + ballBounds.width / 2;
                 const hitOffset = (ballCenterX - paddleCenterX) / (paddleBounds.width / 2);
                 
-                const maxAngle = Math.PI / 3;
+                // Adjust ball velocity based on hit position
+                const maxAngle = Math.PI / 3; // 60 degrees max
                 const angle = hitOffset * maxAngle;
                 const speed = Math.sqrt(GameState.ballVelX * GameState.ballVelX + GameState.ballVelY * GameState.ballVelY);
                 
                 GameState.ballVelX = speed * Math.sin(angle);
-                GameState.ballVelY = -Math.abs(speed * Math.cos(angle));
+                GameState.ballVelY = -Math.abs(speed * Math.cos(angle)); // Always upward
                 
-                GameState.ballY = paddleBounds.y - ballBounds.height - 1;
+                // Move ball above paddle to prevent sticking
+                GameState.ballY = paddleBounds.y - BALL_RADIUS - 1;
             }
         }
     }
     
     function checkBrickCollisions() {
+        // Check collision with each brick
         for (let row = 0; row < BRICK_ROWS; row++) {
             for (let col = 0; col < BRICK_COLS; col++) {
                 const brickId = `brick_${row}_${col}`;
                 
                 try {
                     const brickBounds = game_objects.getBrickBounds(brickId);
-                    if (!brickBounds) continue;
+                    if (!brickBounds || brickBounds.width === 0) continue; // Brick already destroyed
                     
                     const ballBounds = game_objects.getBallBounds();
                     
-                    if (ballBounds.x < brickBounds.x + brickBounds.width + 1 &&
-                        ballBounds.x + ballBounds.width > brickBounds.x - 1 &&
-                        ballBounds.y < brickBounds.y + brickBounds.height + 1 &&
-                        ballBounds.y + ballBounds.height > brickBounds.y - 1) {
+                    // Check bounding box overlap
+                    if (ballBounds.x < brickBounds.x + brickBounds.width &&
+                        ballBounds.x + ballBounds.width > brickBounds.x &&
+                        ballBounds.y < brickBounds.y + brickBounds.height &&
+                        ballBounds.y + ballBounds.height > brickBounds.y) {
                         
+                        // Destroy brick and get points
                         const points = game_objects.destroyBrick(brickId);
                         
+                        // Emit brick destroyed event
+                        eventBus.emit('BRICK_DESTROYED', {
+                            brickId: brickId,
+                            points: points
+                        });
+                        
+                        // Determine collision side and reverse appropriate velocity
                         const ballCenterX = ballBounds.x + ballBounds.width / 2;
                         const ballCenterY = ballBounds.y + ballBounds.height / 2;
                         const brickCenterX = brickBounds.x + brickBounds.width / 2;
                         const brickCenterY = brickBounds.y + brickBounds.height / 2;
                         
-                        const deltaX = Math.abs(ballCenterX - brickCenterX);
-                        const deltaY = Math.abs(ballCenterY - brickCenterY);
+                        const deltaX = ballCenterX - brickCenterX;
+                        const deltaY = ballCenterY - brickCenterY;
                         
-                        if (deltaX / brickBounds.width > deltaY / brickBounds.height) {
+                        // Determine which side was hit based on the overlap
+                        const overlapX = (ballBounds.width + brickBounds.width) / 2 - Math.abs(deltaX);
+                        const overlapY = (ballBounds.height + brickBounds.height) / 2 - Math.abs(deltaY);
+                        
+                        if (overlapX < overlapY) {
+                            // Hit from left or right
                             GameState.ballVelX = -GameState.ballVelX;
                         } else {
+                            // Hit from top or bottom
                             GameState.ballVelY = -GameState.ballVelY;
                         }
                         
-                        EventBus.emit('BRICK_DESTROYED', {
-                            brickId: brickId,
-                            points: points
-                        });
-                        
+                        // Only handle one collision per frame
                         return;
                     }
                 } catch (e) {
+                    // Brick doesn't exist, continue
                     continue;
                 }
             }
         }
     }
     
-    function checkBottomBoundary() {
-        const ballRadius = BALL_RADIUS;
-        const canvasHeight = CANVAS_HEIGHT;
-        
-        if (GameState.ballY + ballRadius >= canvasHeight) {
-            EventBus.emit('BALL_LOST', {});
-            resetBall();
-        }
-    }
-    
     function resetBall() {
-        GameState.ballX = 540;
-        GameState.ballY = 1500;
+        GameState.ballX = 540; // Center X
+        GameState.ballY = 1500; // Above paddle
         GameState.ballVelX = 300;
         GameState.ballVelY = -300;
     }
@@ -482,185 +570,145 @@ const physics_engine = (function() {
     };
 })();
 
-// Module: ui_manager
+// UI Manager Module
 const ui_manager = (function() {
     let leaderboard = [];
-
+    let currentMenuSelection = 0;
+    let menuOptions = [];
+    let showingNameInput = false;
+    let playerNameInput = '';
+    let inputCursor = 0;
+    
     function init() {
+        // Load leaderboard from localStorage
         const savedLeaderboard = localStorage.getItem('breakout_leaderboard');
         if (savedLeaderboard) {
             leaderboard = JSON.parse(savedLeaderboard);
+        } else {
+            leaderboard = [
+                { name: 'AAA', score: 1000 },
+                { name: 'BBB', score: 800 },
+                { name: 'CCC', score: 600 },
+                { name: 'DDD', score: 400 },
+                { name: 'EEE', score: 200 }
+            ];
         }
-
-        setupEventListeners();
-        updateUI();
-    }
-
-    function setupEventListeners() {
-        EventBus.on('GAME_OVER', handleGameOver);
-        EventBus.on('LEVEL_COMPLETE', handleLevelComplete);
         
-        document.addEventListener('keydown', handleKeyInput);
-        document.addEventListener('keyup', handleKeyUp);
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('touchmove', handleTouchMove);
+        updateMenuOptions();
     }
-
-    function handleKeyInput(event) {
-        const key = event.key;
-        
-        if (GameState.gameStatus === 'playing') {
-            handleGameInput(key);
-        }
-    }
-
-    function handleKeyUp(event) {
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'a' || event.key === 'd') {
-            GameState.inputX = 0;
-        }
-    }
-
-    function handleGameInput(key) {
-        switch(key) {
-            case 'ArrowLeft':
-            case 'a':
-                GameState.inputX = -1;
+    
+    function updateMenuOptions() {
+        switch (GameState.gameStatus) {
+            case 'menu':
+                menuOptions = ['Start Game', 'Leaderboard'];
                 break;
-            case 'ArrowRight':
-            case 'd':
-                GameState.inputX = 1;
+            case 'paused':
+                menuOptions = ['Resume', 'Return to Menu'];
                 break;
+            case 'game_over':
+                menuOptions = ['Retry', 'Return to Menu', 'Leaderboard'];
+                break;
+            case 'leaderboard':
+                menuOptions = ['Back to Menu'];
+                break;
+            default:
+                menuOptions = [];
         }
+        currentMenuSelection = Math.min(currentMenuSelection, menuOptions.length - 1);
     }
-
-    function handleMouseMove(event) {
-        if (GameState.gameStatus === 'playing') {
-            const canvas = document.querySelector('#gameCanvas');
-            if (canvas) {
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = event.clientX - rect.left;
-                const normalizedX = (mouseX / rect.width) * CANVAS_WIDTH;
-                
-                const centerX = CANVAS_WIDTH / 2;
-                GameState.inputX = Math.max(-1, Math.min(1, (normalizedX - centerX) / centerX));
-            }
-        }
-    }
-
-    function handleTouchMove(event) {
-        event.preventDefault();
-        if (GameState.gameStatus === 'playing' && event.touches.length > 0) {
-            const canvas = document.querySelector('#gameCanvas');
-            if (canvas) {
-                const rect = canvas.getBoundingClientRect();
-                const touchX = event.touches[0].clientX - rect.left;
-                const normalizedX = (touchX / rect.width) * CANVAS_WIDTH;
-                
-                const centerX = CANVAS_WIDTH / 2;
-                GameState.inputX = Math.max(-1, Math.min(1, (normalizedX - centerX) / centerX));
-            }
-        }
-    }
-
+    
     function handleInput(inputType, inputValue) {
-        if (inputType === 'paddle') {
-            GameState.inputX = Math.max(-1, Math.min(1, inputValue));
+        if (inputType === 'mouse_x' && GameState.gameStatus === 'playing') {
+            GameState.inputX = inputValue - PADDLE_WIDTH / 2;
+        } else if (inputType === 'key_left' && GameState.gameStatus === 'playing') {
+            GameState.inputX = Math.max(0, GameState.inputX - 10);
+        } else if (inputType === 'key_right' && GameState.gameStatus === 'playing') {
+            GameState.inputX = Math.min(CANVAS_WIDTH - PADDLE_WIDTH, GameState.inputX + 10);
         }
     }
-
-    function handleGameOver() {
-        updateUI();
-    }
-
-    function handleLevelComplete() {
-        // Level complete handling
-    }
-
+    
     function showLeaderboard() {
         if (GameState.gameStatus === 'menu' || GameState.gameStatus === 'game_over') {
-            GameState.gameStatus = 'leaderboard';
             EventBus.emit('SHOW_LEADERBOARD', {});
-            updateUI();
+            updateMenuOptions();
         }
     }
-
+    
     function hideLeaderboard() {
         if (GameState.gameStatus === 'leaderboard') {
-            GameState.gameStatus = 'menu';
             EventBus.emit('CLOSE_LEADERBOARD', {});
-            updateUI();
+            updateMenuOptions();
         }
     }
-
+    
     function saveScore(playerName, score) {
         if (GameState.gameStatus === 'game_over') {
-            const newEntry = {
-                name: playerName,
-                score: score,
-                date: new Date().toLocaleDateString()
-            };
-            
+            const newEntry = { name: playerName, score: score };
             leaderboard.push(newEntry);
             leaderboard.sort((a, b) => b.score - a.score);
             leaderboard = leaderboard.slice(0, 10);
             
             localStorage.setItem('breakout_leaderboard', JSON.stringify(leaderboard));
-            updateLeaderboardDisplay();
         }
     }
-
-    function updateUI() {
-        // Update score display
+    
+    function update(dt) {
+        updateMenuOptions();
+        
+        // Handle continuous input for paddle movement
+        if (GameState.gameStatus === 'playing') {
+            // Clamp paddle input to canvas bounds
+            GameState.inputX = Math.max(0, Math.min(CANVAS_WIDTH - PADDLE_WIDTH, GameState.inputX));
+        }
+        
+        // Update UI elements
+        updateUIElements();
+    }
+    
+    function updateUIElements() {
         const scoreDisplay = document.getElementById('score_display');
+        const livesDisplay = document.getElementById('lives_display');
+        const finalScore = document.getElementById('final_score');
+        const bestScore = document.getElementById('best_score');
+        
         if (scoreDisplay) {
             scoreDisplay.textContent = `得分: ${GameState.score}`;
         }
-
-        // Update lives display
-        const livesDisplay = document.getElementById('lives_display');
+        
         if (livesDisplay) {
             livesDisplay.textContent = `生命: ${GameState.lives}`;
         }
-
-        // Update level display
-        const levelDisplay = document.getElementById('level_display');
-        if (levelDisplay) {
-            levelDisplay.textContent = `关卡: ${GameState.level}`;
-        }
-
-        // Update final score
-        const finalScore = document.getElementById('final_score');
+        
         if (finalScore) {
             finalScore.textContent = `最终得分: ${GameState.score}`;
         }
-
+        
+        if (bestScore && leaderboard.length > 0) {
+            bestScore.textContent = `最高得分: ${leaderboard[0].score}`;
+        }
+        
+        // Update leaderboard display
         updateLeaderboardDisplay();
     }
-
+    
     function updateLeaderboardDisplay() {
         const scoreList = document.getElementById('score_list');
         if (scoreList) {
-            if (leaderboard.length === 0) {
-                scoreList.textContent = '暂无记录';
-            } else {
-                let html = '';
-                for (let i = 0; i < Math.min(10, leaderboard.length); i++) {
-                    const entry = leaderboard[i];
-                    html += `<div>${i + 1}. ${entry.name} - ${entry.score}</div>`;
-                }
-                scoreList.innerHTML = html;
+            scoreList.innerHTML = '';
+            for (let i = 0; i < Math.min(5, leaderboard.length); i++) {
+                const entry = leaderboard[i];
+                const div = document.createElement('div');
+                div.className = 'score_entry';
+                div.textContent = `${i + 1}. ${entry.name} - ${entry.score}`;
+                scoreList.appendChild(div);
             }
         }
     }
-
-    function update(dt) {
-        updateUI();
-    }
-
+    
     function render(ctx) {
-        // UI rendering handled by HTML/CSS
+        // UI rendering is handled by HTML/CSS
     }
-
+    
     return {
         init,
         handleInput,
@@ -672,136 +720,173 @@ const ui_manager = (function() {
     };
 })();
 
-// Screen Management
-function showScreen(screenId) {
+// Show Screen Function
+function showScreen(id) {
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
         screen.style.display = 'none';
     });
     
-    const targetScreen = document.getElementById(screenId);
+    const targetScreen = document.getElementById(id);
     if (targetScreen) {
         targetScreen.style.display = 'block';
     }
 }
 
-// State Transitions
+// Game Loop
+let lastTime = 0;
+let canvas, ctx;
+
+function gameLoop(timestamp) {
+    const dt = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+    
+    // Call update functions in update_order
+    ui_manager.update(dt);
+    game_objects.update(dt);
+    physics_engine.update(dt);
+    game_state.update(dt);
+    
+    // Call render functions in render_order
+    if (canvas && ctx && GameState.gameStatus === 'playing') {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        game_objects.render(ctx);
+        ui_manager.render(ctx);
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+// State Transition Functions
 function startGame() {
     GameState.gameStatus = 'playing';
     EventBus.emit('GAME_START', {});
     showScreen('gameplay');
-    if (!gameLoopRunning) {
-        gameLoopRunning = true;
-        requestAnimationFrame(gameLoop);
-    }
 }
 
 function gameOver() {
     GameState.gameStatus = 'game_over';
     EventBus.emit('GAME_OVER', {});
     showScreen('game_over');
-    gameLoopRunning = false;
 }
 
 function retry() {
+    GameState.gameStatus = 'menu';
     EventBus.emit('RETRY', {});
     showScreen('gameplay');
-    if (!gameLoopRunning) {
-        gameLoopRunning = true;
-        requestAnimationFrame(gameLoop);
-    }
 }
 
 function returnToMenu() {
     GameState.gameStatus = 'menu';
     EventBus.emit('RETURN_MENU', {});
     showScreen('main_menu');
-    gameLoopRunning = false;
 }
 
 function showLeaderboardScreen() {
-    ui_manager.showLeaderboard();
+    GameState.gameStatus = 'leaderboard';
+    EventBus.emit('SHOW_LEADERBOARD', {});
     showScreen('leaderboard');
 }
 
 function hideLeaderboardScreen() {
-    ui_manager.hideLeaderboard();
+    GameState.gameStatus = 'menu';
+    EventBus.emit('CLOSE_LEADERBOARD', {});
     showScreen('main_menu');
 }
 
-// Game Loop
-let lastTime = 0;
-let gameLoopRunning = false;
-
-function gameLoop(timestamp) {
-    const dt = Math.min((timestamp - lastTime) / 1000, 1/30); // Cap at 30fps minimum
-    lastTime = timestamp;
+// Input Handlers
+function setupInputHandlers() {
+    // Keyboard input
+    document.addEventListener('keydown', (e) => {
+        if (GameState.gameStatus === 'playing') {
+            switch (e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    GameState.inputX = Math.max(0, GameState.inputX - 20);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    GameState.inputX = Math.min(CANVAS_WIDTH - PADDLE_WIDTH, GameState.inputX + 20);
+                    break;
+            }
+        }
+    });
     
-    // Update modules in order
-    ui_manager.update(dt);
-    game_objects.update(dt);
-    physics_engine.update(dt);
-    game_state.update(dt);
+    // Mouse input
+    document.addEventListener('mousemove', (e) => {
+        if (GameState.gameStatus === 'playing') {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CANVAS_WIDTH / rect.width;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            GameState.inputX = mouseX - PADDLE_WIDTH / 2;
+        }
+    });
     
-    // Render modules in order
-    const canvas = document.getElementById('gameCanvas');
-    if (canvas && GameState.gameStatus === 'playing') {
-        const ctx = canvas.getContext('2d');
-        game_objects.render(ctx);
-        ui_manager.render(ctx);
-    }
+    // Touch input
+    document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (GameState.gameStatus === 'playing' && e.touches.length > 0) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CANVAS_WIDTH / rect.width;
+            const touchX = (e.touches[0].clientX - rect.left) * scaleX;
+            GameState.inputX = touchX - PADDLE_WIDTH / 2;
+        }
+    });
     
-    if (GameState.gameStatus === 'playing') {
-        requestAnimationFrame(gameLoop);
-    } else {
-        gameLoopRunning = false;
-    }
+    // Button click handlers
+    document.getElementById('btn_play').addEventListener('click', startGame);
+    document.getElementById('btn_leaderboard').addEventListener('click', showLeaderboardScreen);
+    document.getElementById('btn_retry').addEventListener('click', retry);
+    document.getElementById('btn_menu').addEventListener('click', returnToMenu);
+    document.getElementById('btn_leaderboard_go').addEventListener('click', showLeaderboardScreen);
+    document.getElementById('btn_close').addEventListener('click', hideLeaderboardScreen);
 }
 
-// Event Listeners for State Transitions
+// Event Bus Listeners
 EventBus.on('GAME_OVER', () => {
-    gameOver();
+    showScreen('game_over');
 });
 
-// Input Handlers
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize modules in order
+// Initialize Game
+function initGame() {
+    // Get canvas and context
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
+    
+    // Scale canvas to fit screen while maintaining aspect ratio
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        const scaleX = containerWidth / CANVAS_WIDTH;
+        const scaleY = containerHeight / CANVAS_HEIGHT;
+        const scale = Math.min(scaleX, scaleY);
+        
+        canvas.style.width = (CANVAS_WIDTH * scale) + 'px';
+        canvas.style.height = (CANVAS_HEIGHT * scale) + 'px';
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // Initialize modules in init_order
     game_state.init();
     game_objects.init();
     physics_engine.init();
     ui_manager.init();
     
-    // Set up button event listeners
-    const btnPlay = document.getElementById('btn_play');
-    if (btnPlay) {
-        btnPlay.addEventListener('click', startGame);
-    }
-    
-    const btnLeaderboard = document.getElementById('btn_leaderboard');
-    if (btnLeaderboard) {
-        btnLeaderboard.addEventListener('click', showLeaderboardScreen);
-    }
-    
-    const btnRetry = document.getElementById('btn_retry');
-    if (btnRetry) {
-        btnRetry.addEventListener('click', retry);
-    }
-    
-    const btnMenu = document.getElementById('btn_menu');
-    if (btnMenu) {
-        btnMenu.addEventListener('click', returnToMenu);
-    }
-    
-    const btnLeaderboardGo = document.getElementById('btn_leaderboard_go');
-    if (btnLeaderboardGo) {
-        btnLeaderboardGo.addEventListener('click', showLeaderboardScreen);
-    }
-    
-    const btnClose = document.getElementById('btn_close');
-    if (btnClose) {
-        btnClose.addEventListener('click', hideLeaderboardScreen);
-    }
+    // Setup input handlers
+    setupInputHandlers();
     
     // Show initial screen
     showScreen('main_menu');
-});
+    
+    // Start game loop
+    requestAnimationFrame(gameLoop);
+}
+
+// Start the game when DOM is loaded
+document.addEventListener('DOMContentLoaded', initGame);

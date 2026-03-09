@@ -7,7 +7,7 @@ style.css
 
 body {
     font-family: Arial, sans-serif;
-    background: #000000;
+    background: #000;
     overflow: hidden;
     width: 100vw;
     height: 100vh;
@@ -15,6 +15,8 @@ body {
 
 .screen {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -23,13 +25,13 @@ body {
     justify-content: center;
 }
 
-#bg {
+.bg-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
+    background: #000;
     opacity: 1;
     z-index: 0;
 }
@@ -42,17 +44,17 @@ body {
     text-align: center;
     text-shadow: 0 0 20px #4CAF50;
     z-index: 1;
-    margin-bottom: 50px;
+    margin-bottom: 2rem;
 }
 
-#main_menu #snake_preview {
+#main_menu .snake-preview {
     width: 200px;
     height: 200px;
     background: #4CAF50;
     border-radius: 10px;
     opacity: 1;
     z-index: 1;
-    margin-bottom: 50px;
+    margin-bottom: 2rem;
 }
 
 #main_menu #high_score {
@@ -60,7 +62,7 @@ body {
     font-size: 32px;
     text-align: center;
     z-index: 1;
-    margin-bottom: 80px;
+    margin-bottom: 3rem;
 }
 
 #main_menu #btn_start {
@@ -71,7 +73,7 @@ body {
     border-radius: 16px;
     text-align: center;
     border: none;
-    padding: 30px 60px;
+    padding: 20px 60px;
     cursor: pointer;
     z-index: 2;
 }
@@ -82,7 +84,8 @@ body {
 
 /* Gameplay Styles */
 #gameplay {
-    position: relative;
+    justify-content: flex-start;
+    padding: 20px;
 }
 
 #gameplay #score_display {
@@ -105,119 +108,66 @@ body {
     z-index: 2;
 }
 
-#gameplay #game_grid {
+#gameCanvas {
     position: absolute;
-    top: 180px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    width: 1000px;
-    height: 1000px;
-    background-color: #1A1A1A;
+    transform: translate(-50%, -50%);
+    background: #1A1A1A;
     border: 2px solid #333333;
     border-radius: 8px;
     z-index: 1;
 }
 
-#gameCanvas {
-    width: 100%;
-    height: 100%;
-}
-
-#gameplay #snake {
+.controls {
     position: absolute;
-    width: 50px;
-    height: 50px;
-    background: #4CAF50;
-    opacity: 1;
-    z-index: 2;
-    display: none;
-}
-
-#gameplay #food_item {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    background: #FF0000;
-    border-radius: 50%;
-    opacity: 1;
-    z-index: 2;
-    display: none;
-}
-
-#gameplay #btn_up {
-    position: absolute;
-    bottom: 400px;
+    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
-    height: 120px;
-    background-color: rgba(255,255,255,0.1);
-    color: #FFFFFF;
-    font-size: 48px;
-    border-radius: 16px;
-    text-align: center;
-    border: none;
-    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     z-index: 2;
 }
 
-#gameplay #btn_left {
-    position: absolute;
-    bottom: 260px;
-    left: calc(50% - 220px);
-    width: 200px;
-    height: 120px;
-    background-color: rgba(255,255,255,0.1);
-    color: #FFFFFF;
-    font-size: 48px;
-    border-radius: 16px;
-    text-align: center;
-    border: none;
-    cursor: pointer;
-    z-index: 2;
+.control-row {
+    display: flex;
+    gap: 60px;
 }
 
-#gameplay #btn_right {
-    position: absolute;
-    bottom: 260px;
-    right: calc(50% - 220px);
-    width: 200px;
-    height: 120px;
+.control-btn {
     background-color: rgba(255,255,255,0.1);
     color: #FFFFFF;
     font-size: 48px;
     border-radius: 16px;
     text-align: center;
     border: none;
+    width: 80px;
+    height: 80px;
     cursor: pointer;
-    z-index: 2;
+    user-select: none;
 }
 
-#gameplay #btn_down {
-    position: absolute;
-    bottom: 120px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-    height: 120px;
-    background-color: rgba(255,255,255,0.1);
-    color: #FFFFFF;
-    font-size: 48px;
-    border-radius: 16px;
-    text-align: center;
-    border: none;
-    cursor: pointer;
-    z-index: 2;
+.control-btn:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.control-btn:active {
+    background-color: rgba(255,255,255,0.3);
 }
 
 /* Game Over Styles */
+#game_over {
+    gap: 2rem;
+}
+
 #game_over #gameover_text {
     color: #F44336;
     font-size: 80px;
     font-weight: bold;
     text-align: center;
     z-index: 1;
-    margin-bottom: 50px;
 }
 
 #game_over #final_score {
@@ -226,7 +176,6 @@ body {
     font-weight: bold;
     text-align: center;
     z-index: 1;
-    margin-bottom: 80px;
 }
 
 #game_over #btn_retry {
@@ -237,10 +186,13 @@ body {
     border-radius: 16px;
     text-align: center;
     border: none;
-    padding: 30px 60px;
+    padding: 15px 40px;
     cursor: pointer;
     z-index: 2;
-    margin-bottom: 30px;
+}
+
+#game_over #btn_retry:hover {
+    background-color: #45a049;
 }
 
 #game_over #btn_leaderboard {
@@ -250,10 +202,13 @@ body {
     border: 3px solid #4CAF50;
     border-radius: 16px;
     text-align: center;
-    padding: 20px 40px;
+    padding: 12px 30px;
     cursor: pointer;
     z-index: 2;
-    margin-bottom: 30px;
+}
+
+#game_over #btn_leaderboard:hover {
+    background-color: rgba(76, 175, 80, 0.1);
 }
 
 #game_over #btn_menu {
@@ -263,21 +218,31 @@ body {
     border: 3px solid #555555;
     border-radius: 16px;
     text-align: center;
-    padding: 20px 40px;
+    padding: 12px 30px;
     cursor: pointer;
     z-index: 2;
 }
 
+#game_over #btn_menu:hover {
+    background-color: rgba(136, 136, 136, 0.1);
+}
+
 /* Leaderboard Styles */
+#leaderboard {
+    justify-content: center;
+}
+
 #leaderboard #panel_bg {
     background-color: #1A1A1A;
     border-radius: 24px;
     border: 3px solid #4CAF50;
-    padding: 60px;
-    z-index: 1;
+    padding: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 2rem;
+    z-index: 1;
+    min-width: 400px;
 }
 
 #leaderboard #title {
@@ -285,7 +250,6 @@ body {
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 40px;
 }
 
 #leaderboard #score_list {
@@ -293,7 +257,7 @@ body {
     font-size: 40px;
     line-height: 1.8;
     text-align: left;
-    margin-bottom: 40px;
+    min-height: 200px;
 }
 
 #leaderboard #btn_close {
@@ -304,36 +268,23 @@ body {
     border-radius: 16px;
     text-align: center;
     border: none;
-    padding: 20px 40px;
+    padding: 15px 30px;
     cursor: pointer;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-    #main_menu #title {
-        font-size: 72px;
-    }
-    
-    #gameplay #game_grid {
-        width: 80vw;
-        height: 80vw;
-        max-width: 800px;
-        max-height: 800px;
-    }
-    
-    #game_over #gameover_text {
-        font-size: 60px;
-    }
+#leaderboard #btn_close:hover {
+    background-color: #45a049;
 }
 
+/* Mobile Responsive */
 @media (max-width: 768px) {
     #main_menu #title {
-        font-size: 48px;
+        font-size: 64px;
     }
     
     #main_menu #btn_start {
         font-size: 32px;
-        padding: 20px 40px;
+        padding: 15px 40px;
     }
     
     #gameplay #score_display,
@@ -341,31 +292,40 @@ body {
         font-size: 24px;
     }
     
-    #gameplay #btn_up,
-    #gameplay #btn_left,
-    #gameplay #btn_right,
-    #gameplay #btn_down {
-        width: 120px;
-        height: 80px;
-        font-size: 32px;
+    #gameCanvas {
+        width: 90vw;
+        height: 60vh;
+    }
+    
+    .control-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 36px;
     }
     
     #game_over #gameover_text {
-        font-size: 40px;
+        font-size: 48px;
     }
     
     #game_over #final_score {
         font-size: 32px;
     }
     
-    #game_over #btn_retry {
+    #game_over button {
         font-size: 28px;
-        padding: 20px 40px;
+        padding: 12px 25px;
     }
     
-    #game_over #btn_leaderboard,
-    #game_over #btn_menu {
-        font-size: 24px;
-        padding: 15px 30px;
+    #leaderboard #panel_bg {
+        min-width: 90vw;
+        padding: 20px;
+    }
+    
+    #leaderboard #title {
+        font-size: 36px;
+    }
+    
+    #leaderboard #score_list {
+        font-size: 28px;
     }
 }

@@ -8,31 +8,35 @@ index.html
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Main Menu Screen -->
     <div id="main_menu" class="screen">
-        <div id="bg"></div>
+        <div id="bg" class="bg-image"></div>
         <div id="title">贪吃蛇</div>
-        <div id="snake_preview"></div>
+        <div id="snake_preview" class="snake-preview"></div>
         <div id="high_score">最高分: 0</div>
         <button id="btn_start">开始游戏</button>
     </div>
 
-    <div id="gameplay" class="screen" style="display:none;">
-        <div id="bg"></div>
+    <!-- Gameplay Screen -->
+    <div id="gameplay" class="screen" style="display: none;">
+        <div id="bg" class="bg-image"></div>
         <div id="score_display">分数: 0</div>
         <div id="best_display">最高: 0</div>
-        <div id="game_grid">
-            <canvas id="gameCanvas" width="1000" height="1000"></canvas>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="game_grid"></div>
+        <div class="controls">
+            <button id="btn_up" class="control-btn">↑</button>
+            <div class="control-row">
+                <button id="btn_left" class="control-btn">←</button>
+                <button id="btn_right" class="control-btn">→</button>
+            </div>
+            <button id="btn_down" class="control-btn">↓</button>
         </div>
-        <div id="snake"></div>
-        <div id="food_item"></div>
-        <button id="btn_up">↑</button>
-        <button id="btn_left">←</button>
-        <button id="btn_right">→</button>
-        <button id="btn_down">↓</button>
     </div>
 
-    <div id="game_over" class="screen" style="display:none;">
-        <div id="bg"></div>
+    <!-- Game Over Screen -->
+    <div id="game_over" class="screen" style="display: none;">
+        <div id="bg" class="bg-image"></div>
         <div id="gameover_text">游戏结束</div>
         <div id="final_score">最终分数: 0</div>
         <button id="btn_retry">重新开始</button>
@@ -40,8 +44,9 @@ index.html
         <button id="btn_menu">返回菜单</button>
     </div>
 
-    <div id="leaderboard" class="screen" style="display:none;">
-        <div id="bg"></div>
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard" class="screen" style="display: none;">
+        <div id="bg" class="bg-image"></div>
         <div id="panel_bg">
             <div id="title">排行榜</div>
             <div id="score_list">

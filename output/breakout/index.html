@@ -19,8 +19,10 @@ index.html
         <div id="bg"></div>
         <div id="score_display">得分: 0</div>
         <div id="lives_display">生命: 3</div>
-        <div id="level_display">关卡: 1</div>
         <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+        <div id="paddle"></div>
+        <div id="ball"></div>
+        <div id="bricks_area"></div>
         <div id="tap_area"></div>
     </div>
 
@@ -28,15 +30,23 @@ index.html
         <div id="bg"></div>
         <div id="gameover_text">游戏结束</div>
         <div id="final_score">最终得分: 0</div>
-        <button id="btn_retry">重新开始</button>
+        <div id="best_score">最高得分: 0</div>
+        <button id="btn_retry">再试一次</button>
         <button id="btn_menu">返回菜单</button>
         <button id="btn_leaderboard_go">排行榜</button>
     </div>
 
     <div id="leaderboard" class="screen" style="display:none;">
+        <div id="bg"></div>
         <div id="panel_bg">
             <div id="title">排行榜</div>
-            <div id="score_list">暂无记录</div>
+            <div id="score_list">
+                <div class="score_entry">1. AAA - 1000</div>
+                <div class="score_entry">2. BBB - 800</div>
+                <div class="score_entry">3. CCC - 600</div>
+                <div class="score_entry">4. DDD - 400</div>
+                <div class="score_entry">5. EEE - 200</div>
+            </div>
             <button id="btn_close">关闭</button>
         </div>
     </div>

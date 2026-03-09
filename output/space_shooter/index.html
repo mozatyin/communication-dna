@@ -9,41 +9,42 @@ index.html
 </head>
 <body>
     <div id="main_menu" class="screen">
-        <div id="bg"></div>
+        <div id="bg" class="bg-image"></div>
         <div id="title">飞机大战</div>
         <button id="btn_play">开始游戏</button>
         <button id="btn_leaderboard">排行榜</button>
     </div>
 
     <div id="gameplay" class="screen" style="display:none;">
-        <div id="bg"></div>
+        <div id="bg" class="bg-image"></div>
+        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
         <div id="score_display">得分: 0</div>
         <div id="lives">❤❤❤</div>
-        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
         <div id="tap_area"></div>
     </div>
 
     <div id="game_over" class="screen" style="display:none;">
-        <div id="bg"></div>
+        <div id="bg" class="bg-image game-over-bg"></div>
         <div id="gameover_text">游戏结束</div>
         <div id="final_score">最终得分: 0</div>
-        <button id="btn_retry">重新开始</button>
+        <div id="best_score">最高得分: 0</div>
+        <button id="btn_retry">再来一局</button>
         <button id="btn_menu">返回菜单</button>
-        <button id="btn_leaderboard_go">排行榜</button>
+        <button id="btn_leaderboard_gameover">排行榜</button>
     </div>
 
     <div id="leaderboard" class="screen" style="display:none;">
-        <div id="bg"></div>
+        <div id="bg" class="bg-image game-over-bg"></div>
         <div id="panel_bg">
             <div id="title">排行榜</div>
             <div id="score_list">
-                1. 最高分: <span id="high_score">0</span><br>
-                2. 暂无记录<br>
-                3. 暂无记录<br>
-                4. 暂无记录<br>
-                5. 暂无记录
+                <div class="score-item">1. 0</div>
+                <div class="score-item">2. 0</div>
+                <div class="score-item">3. 0</div>
+                <div class="score-item">4. 0</div>
+                <div class="score-item">5. 0</div>
             </div>
-            <button id="btn_close">返回</button>
+            <button id="btn_close">关闭</button>
         </div>
     </div>
 

@@ -10,10 +10,7 @@ const EventBus = {
     }
 };
 
-// Make EventBus globally available
-window.eventBus = EventBus;
-
-// Global constants
+// Global Constants
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1920;
 const GRAVITY = 0.6;
@@ -23,11 +20,11 @@ const PIPE_GAP = 200;
 const BIRD_SIZE = 40;
 const PIPE_WIDTH = 80;
 
-// Shared state
+// Shared GameState
 const GameState = {
     gameStatus: 'start',
     score: 0,
-    highScore: 0,
+    highScore: parseInt(localStorage.getItem('flappyBirdHighScore') || '0'),
     birdX: 200,
     birdY: 960,
     birdVelocityY: 0,
@@ -36,37 +33,21 @@ const GameState = {
 };
 
 // Module: game_state
-const game_state = (function() {
+const GameStateModule = (function() {
     function init() {
-        GameState.gameStatus = 'start';
-        GameState.score = 0;
+        // Load high score from localStorage
         GameState.highScore = parseInt(localStorage.getItem('flappyBirdHighScore') || '0');
-        GameState.birdX = 200;
-        GameState.birdY = 960;
-        GameState.birdVelocityY = 0;
-        GameState.pipes = [];
-        GameState.previousScreen = 'start';
         
-        // Listen for collision events
-        EventBus.on('BIRD_COLLISION', () => {
-            if (GameState.gameStatus === 'playing') {
-                endGame();
-            }
-        });
-        
-        EventBus.on('BIRD_SCORED', (payload) => {
-            if (GameState.gameStatus === 'playing') {
-                addScore(payload.points);
-            }
-        });
+        // Listen for events from other modules
+        EventBus.on('BIRD_COLLISION', handleBirdCollision);
+        EventBus.on('BIRD_SCORED', handleBirdScored);
     }
     
     function startGame() {
         if (GameState.gameStatus === 'start') {
             GameState.gameStatus = 'playing';
             GameState.score = 0;
-            EventBus.emit('GAME_START');
-            showScreen('gameplay');
+            EventBus.emit('GAME_START', {});
         }
     }
     
@@ -74,16 +55,11 @@ const game_state = (function() {
         if (GameState.gameStatus === 'playing') {
             GameState.gameStatus = 'game_over';
             
+            // Update high score if current score is higher
             if (GameState.score > GameState.highScore) {
                 GameState.highScore = GameState.score;
                 localStorage.setItem('flappyBirdHighScore', GameState.highScore.toString());
             }
-            
-            // Update game over screen with current scores
-            document.getElementById('score_value').textContent = GameState.score;
-            document.getElementById('best_value').textContent = GameState.highScore;
-            
-            showScreen('game_over');
         }
     }
     
@@ -97,17 +73,14 @@ const game_state = (function() {
         if (GameState.gameStatus === 'start' || GameState.gameStatus === 'game_over') {
             GameState.previousScreen = GameState.gameStatus;
             GameState.gameStatus = 'leaderboard';
-            document.getElementById('score_list').textContent = 'Best Score: ' + GameState.highScore;
-            EventBus.emit('SHOW_LEADERBOARD');
-            showScreen('leaderboard');
+            EventBus.emit('SHOW_LEADERBOARD', {});
         }
     }
     
     function closeLeaderboard() {
         if (GameState.gameStatus === 'leaderboard') {
             GameState.gameStatus = GameState.previousScreen;
-            EventBus.emit('CLOSE_LEADERBOARD');
-            showScreen(GameState.previousScreen === 'start' ? 'start_screen' : 'game_over');
+            EventBus.emit('CLOSE_LEADERBOARD', {});
         }
     }
     
@@ -115,17 +88,24 @@ const game_state = (function() {
         if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'playing';
             GameState.score = 0;
-            EventBus.emit('RETRY');
-            showScreen('gameplay');
+            EventBus.emit('RETRY', {});
         }
     }
     
     function returnToMenu() {
         if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'start';
-            EventBus.emit('RETURN_MENU');
-            showScreen('start_screen');
+            EventBus.emit('RETURN_MENU', {});
         }
+    }
+    
+    // Event handlers for incoming events
+    function handleBirdCollision() {
+        endGame();
+    }
+    
+    function handleBirdScored(payload) {
+        addScore(payload.points);
     }
     
     return {
@@ -141,12 +121,14 @@ const game_state = (function() {
 })();
 
 // Module: bird_physics
-const bird_physics = (function() {
+const BirdPhysics = (function() {
     function init() {
+        // Initialize bird at starting position
         GameState.birdX = 200;
         GameState.birdY = 960;
         GameState.birdVelocityY = 0;
         
+        // Listen for game events
         EventBus.on('GAME_START', reset);
         EventBus.on('RETRY', reset);
     }
@@ -162,51 +144,61 @@ const bird_physics = (function() {
             return;
         }
         
+        // Apply gravity
         GameState.birdVelocityY += GRAVITY;
+        
+        // Update position
         GameState.birdY += GameState.birdVelocityY;
         
-        checkCollisions();
+        // Check collision with ground
+        if (GameState.birdY >= CANVAS_HEIGHT - 240) { // Ground level
+            EventBus.emit('BIRD_COLLISION', {});
+            return;
+        }
+        
+        // Check collision with ceiling
+        if (GameState.birdY <= 0) {
+            EventBus.emit('BIRD_COLLISION', {});
+            return;
+        }
+        
+        // Check collision with pipes
+        checkPipeCollisions();
+    }
+    
+    function checkPipeCollisions() {
+        const birdLeft = GameState.birdX - BIRD_SIZE / 2;
+        const birdRight = GameState.birdX + BIRD_SIZE / 2;
+        const birdTop = GameState.birdY - BIRD_SIZE / 2;
+        const birdBottom = GameState.birdY + BIRD_SIZE / 2;
+        
+        for (let i = 0; i < GameState.pipes.length; i++) {
+            const pipe = GameState.pipes[i];
+            const pipeLeft = pipe.x;
+            const pipeRight = pipe.x + PIPE_WIDTH;
+            
+            // Check if bird is horizontally aligned with pipe
+            if (birdRight > pipeLeft && birdLeft < pipeRight) {
+                // Check collision with top pipe
+                if (birdTop < pipe.topHeight) {
+                    EventBus.emit('BIRD_COLLISION', {});
+                    return;
+                }
+                
+                // Check collision with bottom pipe
+                const bottomPipeTop = pipe.topHeight + PIPE_GAP;
+                if (birdBottom > bottomPipeTop) {
+                    EventBus.emit('BIRD_COLLISION', {});
+                    return;
+                }
+            }
+        }
     }
     
     function reset() {
         GameState.birdX = 200;
         GameState.birdY = 960;
         GameState.birdVelocityY = 0;
-    }
-    
-    function checkCollisions() {
-        const birdLeft = GameState.birdX - BIRD_SIZE / 2;
-        const birdRight = GameState.birdX + BIRD_SIZE / 2;
-        const birdTop = GameState.birdY - BIRD_SIZE / 2;
-        const birdBottom = GameState.birdY + BIRD_SIZE / 2;
-        
-        if (birdBottom >= CANVAS_HEIGHT - 200) {
-            EventBus.emit('BIRD_COLLISION', {});
-            return;
-        }
-        
-        if (birdTop <= 0) {
-            EventBus.emit('BIRD_COLLISION', {});
-            return;
-        }
-        
-        for (let pipe of GameState.pipes) {
-            const pipeLeft = pipe.x;
-            const pipeRight = pipe.x + PIPE_WIDTH;
-            
-            if (birdLeft < pipeRight && birdRight > pipeLeft && 
-                birdTop < pipe.topHeight) {
-                EventBus.emit('BIRD_COLLISION', {});
-                return;
-            }
-            
-            const bottomPipeTop = pipe.topHeight + PIPE_GAP;
-            if (birdLeft < pipeRight && birdRight > pipeLeft && 
-                birdBottom > bottomPipeTop) {
-                EventBus.emit('BIRD_COLLISION', {});
-                return;
-            }
-        }
     }
     
     return {
@@ -218,69 +210,90 @@ const bird_physics = (function() {
 })();
 
 // Module: pipe_system
-const pipe_system = (function() {
+const PipeSystem = (function() {
     let pipes = [];
     let pipeSpawnTimer = 0;
-    const PIPE_SPAWN_INTERVAL = 120;
+    let pipeSpawnInterval = 180; // frames between pipe spawns
+    let scoredPipes = new Set(); // track which pipes have been scored
     
     function init() {
         pipes = [];
         pipeSpawnTimer = 0;
+        scoredPipes.clear();
         GameState.pipes = pipes;
         
+        // Listen for game events
         EventBus.on('GAME_START', reset);
         EventBus.on('RETRY', reset);
     }
     
     function update() {
-        if (GameState.gameStatus !== 'playing') return;
+        if (GameState.gameStatus !== 'playing') {
+            return;
+        }
         
+        // Move existing pipes
         for (let i = pipes.length - 1; i >= 0; i--) {
-            pipes[i].x -= PIPE_SPEED;
+            const pipe = pipes[i];
+            pipe.x -= PIPE_SPEED;
             
-            if (pipes[i].x + PIPE_WIDTH < 0) {
+            // Remove pipes that have moved off screen
+            if (pipe.x + PIPE_WIDTH < 0) {
                 pipes.splice(i, 1);
+                scoredPipes.delete(pipe.id);
             }
         }
         
+        // Spawn new pipes
         pipeSpawnTimer++;
-        if (pipeSpawnTimer >= PIPE_SPAWN_INTERVAL) {
+        if (pipeSpawnTimer >= pipeSpawnInterval) {
             spawnPipe();
             pipeSpawnTimer = 0;
         }
         
+        // Check for scoring
         checkScoring();
+        
+        // Update shared state
         GameState.pipes = pipes;
     }
     
     function spawnPipe() {
-        const minGapY = 150;
-        const maxGapY = CANVAS_HEIGHT - 350;
-        const gapCenterY = minGapY + Math.random() * (maxGapY - minGapY);
+        // Random gap position - keep gap away from top and bottom edges
+        const minGapY = 100;
+        const maxGapY = CANVAS_HEIGHT - 400 - PIPE_GAP;
+        const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
+        
+        const pipeId = Date.now() + Math.random(); // unique ID for scoring tracking
         
         const pipe = {
+            id: pipeId,
             x: CANVAS_WIDTH,
-            gapCenterY: gapCenterY,
-            topHeight: gapCenterY - PIPE_GAP / 2,
-            bottomY: gapCenterY + PIPE_GAP / 2,
-            bottomHeight: CANVAS_HEIGHT - (gapCenterY + PIPE_GAP / 2),
-            width: PIPE_WIDTH,
-            scored: false
+            gapY: gapY,
+            topHeight: gapY,
+            bottomY: gapY + PIPE_GAP,
+            bottomHeight: CANVAS_HEIGHT - (gapY + PIPE_GAP)
         };
         
         pipes.push(pipe);
     }
     
     function checkScoring() {
-        const birdX = GameState.birdX;
+        const birdCenterX = GameState.birdX;
         
-        for (let pipe of pipes) {
-            if (!pipe.scored && 
-                birdX > pipe.x + pipe.width / 2 && 
-                birdX - BIRD_SIZE / 2 < pipe.x + pipe.width) {
+        for (const pipe of pipes) {
+            // Check if bird has passed through pipe gap center
+            if (!scoredPipes.has(pipe.id)) {
+                const pipeCenterX = pipe.x + PIPE_WIDTH / 2;
                 
-                pipe.scored = true;
-                EventBus.emit('BIRD_SCORED', { points: 1 });
+                // Bird has passed the center of the pipe
+                if (birdCenterX > pipeCenterX) {
+                    // Mark this pipe as scored
+                    scoredPipes.add(pipe.id);
+                    
+                    // Emit scoring event
+                    EventBus.emit('BIRD_SCORED', { points: 1 });
+                }
             }
         }
     }
@@ -288,6 +301,7 @@ const pipe_system = (function() {
     function reset() {
         pipes = [];
         pipeSpawnTimer = 0;
+        scoredPipes.clear();
         GameState.pipes = pipes;
     }
     
@@ -304,68 +318,87 @@ const pipe_system = (function() {
 })();
 
 // Module: ui_screens
-const ui_screens = (function() {
+const UIScreens = (function() {
     let canvas;
     let ctx;
     
     function init() {
         canvas = document.getElementById('gameCanvas');
-        ctx = canvas.getContext('2d');
-        
-        canvas.addEventListener('click', function(e) {
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
-            const y = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
-            handleInput('click', x, y);
-        });
-        
-        canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = (touch.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
-            const y = (touch.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
-            handleInput('tap', x, y);
-        });
+        if (canvas) {
+            ctx = canvas.getContext('2d');
+            
+            // Set up input event listeners
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('touchstart', handleTouchStart);
+            
+            // Prevent default touch behaviors
+            canvas.addEventListener('touchmove', function(e) { e.preventDefault(); });
+            canvas.addEventListener('touchend', function(e) { e.preventDefault(); });
+        }
     }
     
     function render() {
-        if (GameState.gameStatus !== 'playing') return;
+        if (!canvas || !ctx) return;
         
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         
+        if (GameState.gameStatus === 'playing') {
+            renderGameplayScreen();
+        }
+    }
+    
+    function renderGameplayScreen() {
         // Sky background
         ctx.fillStyle = '#70C5CE';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         
-        // Draw pipes
-        ctx.fillStyle = '#228B22';
-        for (let pipe of GameState.pipes) {
-            ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
-            ctx.fillRect(pipe.x, pipe.topHeight + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.topHeight - PIPE_GAP - 200);
-        }
-        
         // Ground
         ctx.fillStyle = '#DED895';
-        ctx.fillRect(0, CANVAS_HEIGHT - 200, CANVAS_WIDTH, 200);
+        ctx.fillRect(0, CANVAS_HEIGHT - 240, CANVAS_WIDTH, 240);
         
-        // Bird
+        // Render pipes
+        ctx.fillStyle = '#228B22';
+        GameState.pipes.forEach(pipe => {
+            // Top pipe
+            ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
+            // Bottom pipe
+            ctx.fillRect(pipe.x, pipe.topHeight + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.topHeight - PIPE_GAP - 240);
+        });
+        
+        // Render bird
         ctx.fillStyle = '#FFD700';
         ctx.fillRect(GameState.birdX - BIRD_SIZE / 2, GameState.birdY - BIRD_SIZE / 2, BIRD_SIZE, BIRD_SIZE);
         
-        // Score
+        // Score display
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 96px Arial';
-        ctx.textAlign = 'center';
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 4;
+        ctx.font = 'bold 96px Arial';
+        ctx.textAlign = 'center';
         ctx.strokeText(GameState.score.toString(), CANVAS_WIDTH / 2, 150);
         ctx.fillText(GameState.score.toString(), CANVAS_WIDTH / 2, 150);
     }
     
+    function handleCanvasClick(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (event.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+        const y = (event.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+        handleInput('click', x, y);
+    }
+    
+    function handleTouchStart(event) {
+        event.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = event.touches[0];
+        const x = (touch.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+        const y = (touch.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+        handleInput('touch', x, y);
+    }
+    
     function handleInput(inputType, x, y) {
         if (GameState.gameStatus === 'playing') {
-            bird_physics.flap();
+            // Tap anywhere to flap
+            BirdPhysics.flap();
         }
     }
     
@@ -378,77 +411,163 @@ const ui_screens = (function() {
 
 // Screen management
 function showScreen(screenId) {
+    // Hide all screens
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
         screen.style.display = 'none';
     });
     
+    // Show target screen
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.style.display = 'block';
+    }
+    
+    // Update UI elements based on game state
+    updateUI();
+}
+
+function updateUI() {
+    // Update score displays
+    const scoreValue = document.getElementById('score_value');
+    const bestValue = document.getElementById('best_value');
+    
+    if (scoreValue) scoreValue.textContent = GameState.score;
+    if (bestValue) bestValue.textContent = GameState.highScore;
+    
+    // Update leaderboard
+    const scoreList = document.getElementById('score_list');
+    if (scoreList) {
+        const scores = getTopScores();
+        const listItems = scoreList.children;
+        for (let i = 0; i < Math.min(5, listItems.length); i++) {
+            listItems[i].textContent = `${i + 1}. ${scores[i] || 0}`;
+        }
+    }
+}
+
+function getTopScores() {
+    // Simple implementation - just return high score and some decreasing values
+    const scores = [GameState.highScore];
+    for (let i = 1; i < 5; i++) {
+        scores.push(Math.max(0, GameState.highScore - i * 10));
+    }
+    return scores;
+}
+
+// State transition functions
+function startGame() {
+    GameStateModule.startGame();
+    showScreen('gameplay');
+}
+
+function gameOver() {
+    showScreen('game_over');
+}
+
+function retry() {
+    GameStateModule.retry();
+    showScreen('gameplay');
+}
+
+function returnToMenu() {
+    GameStateModule.returnToMenu();
+    showScreen('start_screen');
+}
+
+function showLeaderboard() {
+    GameStateModule.showLeaderboard();
+    showScreen('leaderboard');
+}
+
+function closeLeaderboard() {
+    GameStateModule.closeLeaderboard();
+    if (GameState.previousScreen === 'start') {
+        showScreen('start_screen');
+    } else {
+        showScreen('game_over');
     }
 }
 
 // Game loop
 let lastTime = 0;
+let gameLoopRunning = false;
+
 function gameLoop(timestamp) {
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     
-    // Update modules
-    bird_physics.update();
-    pipe_system.update();
+    // Update modules in order
+    BirdPhysics.update();
+    PipeSystem.update();
     
     // Render
-    ui_screens.render();
+    UIScreens.render();
+    
+    // Check for state changes
+    if (GameState.gameStatus === 'game_over' && document.getElementById('gameplay').style.display === 'block') {
+        gameOver();
+    }
     
     if (GameState.gameStatus === 'playing') {
+        requestAnimationFrame(gameLoop);
+    } else {
+        gameLoopRunning = false;
+    }
+}
+
+function startGameLoop() {
+    if (!gameLoopRunning) {
+        gameLoopRunning = true;
+        lastTime = performance.now();
         requestAnimationFrame(gameLoop);
     }
 }
 
 // Input handlers
-document.addEventListener('keydown', function(e) {
-    if (e.code === 'Space' && GameState.gameStatus === 'playing') {
-        e.preventDefault();
-        bird_physics.flap();
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'Space' && GameState.gameStatus === 'playing') {
+        event.preventDefault();
+        BirdPhysics.flap();
     }
 });
 
-// Initialize game
-function initGame() {
-    // Initialize modules in order
-    game_state.init();
-    bird_physics.init();
-    pipe_system.init();
-    ui_screens.init();
-    
-    // Set up button event listeners
-    document.getElementById('btn_play').addEventListener('click', () => {
-        game_state.startGame();
-        requestAnimationFrame(gameLoop);
+// Button event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Start screen buttons
+    document.getElementById('btn_play').addEventListener('click', function() {
+        startGame();
+        startGameLoop();
     });
     
-    document.getElementById('btn_leaderboard').addEventListener('click', () => {
-        game_state.showLeaderboard();
+    document.getElementById('btn_leaderboard').addEventListener('click', showLeaderboard);
+    
+    // Game over screen buttons
+    document.getElementById('btn_restart').addEventListener('click', function() {
+        retry();
+        startGameLoop();
     });
     
-    document.getElementById('btn_restart').addEventListener('click', () => {
-        game_state.retry();
-        requestAnimationFrame(gameLoop);
+    document.getElementById('btn_leaderboard_go').addEventListener('click', showLeaderboard);
+    
+    // Leaderboard screen button
+    document.getElementById('btn_close').addEventListener('click', closeLeaderboard);
+    
+    // Touch support for buttons
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            this.click();
+        });
     });
     
-    document.getElementById('btn_leaderboard_go').addEventListener('click', () => {
-        game_state.showLeaderboard();
-    });
-    
-    document.getElementById('btn_close').addEventListener('click', () => {
-        game_state.closeLeaderboard();
-    });
+    // Initialize modules
+    GameStateModule.init();
+    BirdPhysics.init();
+    PipeSystem.init();
+    UIScreens.init();
     
     // Show initial screen
     showScreen('start_screen');
-}
-
-// Start the game when page loads
-window.addEventListener('load', initGame);
+});

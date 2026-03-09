@@ -10,6 +10,14 @@ const EventBus = {
     }
 };
 
+// Global constants
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+const GRID_SIZE = 4;
+const TILE_SIZE = 100;
+const TILE_MARGIN = 10;
+const WIN_TILE_VALUE = 2048;
+
 // Shared state objects
 const GameState = {
     gameStatus: 'menu',
@@ -25,24 +33,17 @@ const GridState = {
     animationQueue: []
 };
 
-// Global constants
-const CANVAS_WIDTH = 600;
-const CANVAS_HEIGHT = 800;
-const GRID_SIZE = 4;
-const TILE_SIZE = 100;
-const TILE_MARGIN = 10;
-
 // Module code
 const game_state = (function() {
     function init() {
         // Initialize GameState with default values
         GameState.gameStatus = 'menu';
         GameState.score = 0;
-        GameState.bestScore = parseInt(localStorage.getItem('2048-bestScore') || '0');
+        GameState.bestScore = parseInt(localStorage.getItem('2048_bestScore')) || 0;
         GameState.hasWon = false;
         GameState.moveCount = 0;
-
-        // Set up event listeners
+        
+        // Set up event listeners for events this module consumes
         EventBus.on('GAME_START', handleGameStart);
         EventBus.on('GAME_OVER', handleGameOver);
         EventBus.on('RETRY', handleRetry);
@@ -51,80 +52,95 @@ const game_state = (function() {
         EventBus.on('CLOSE_LEADERBOARD', handleCloseLeaderboard);
         EventBus.on('TILES_MERGED', handleTilesMerged);
     }
-
+    
     function startGame() {
         if (GameState.gameStatus === 'menu' || GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'playing';
             GameState.score = 0;
             GameState.hasWon = false;
             GameState.moveCount = 0;
+            grid_engine.resetGrid();
         }
     }
-
+    
     function endGame() {
         if (GameState.gameStatus === 'playing') {
             GameState.gameStatus = 'game_over';
+            
+            // Update best score if current score is higher
             if (GameState.score > GameState.bestScore) {
                 GameState.bestScore = GameState.score;
-                localStorage.setItem('2048-bestScore', GameState.bestScore.toString());
+                localStorage.setItem('2048_bestScore', GameState.bestScore.toString());
             }
+            
+            // Save score to leaderboard
+            saveScoreToLeaderboard(GameState.score);
         }
     }
-
+    
     function addScore(points) {
         if (GameState.gameStatus === 'playing') {
             GameState.score += points;
         }
     }
-
+    
     function showLeaderboard() {
         if (GameState.gameStatus === 'game_over') {
             GameState.gameStatus = 'leaderboard';
         }
     }
-
+    
     function returnToMenu() {
         GameState.gameStatus = 'menu';
     }
-
+    
+    function saveScoreToLeaderboard(score) {
+        let scores = JSON.parse(localStorage.getItem('2048_leaderboard')) || [];
+        scores.push(score);
+        scores.sort((a, b) => b - a);
+        scores = scores.slice(0, 5); // Keep top 5
+        localStorage.setItem('2048_leaderboard', JSON.stringify(scores));
+    }
+    
     // Event handlers
     function handleGameStart(event) {
         startGame();
     }
-
+    
     function handleGameOver(event) {
         endGame();
     }
-
+    
     function handleRetry(event) {
-        if (GameState.gameStatus === 'game_over') {
-            startGame();
-        }
+        startGame();
     }
-
+    
     function handleReturnMenu(event) {
         returnToMenu();
     }
-
+    
     function handleShowLeaderboard(event) {
         showLeaderboard();
     }
-
+    
     function handleCloseLeaderboard(event) {
         if (GameState.gameStatus === 'leaderboard') {
             GameState.gameStatus = 'game_over';
         }
     }
-
+    
     function handleTilesMerged(event) {
         if (GameState.gameStatus === 'playing') {
             addScore(event.points);
-            if (event.newValue === 2048 && !GameState.hasWon) {
+            GameState.moveCount++;
+            
+            // Check if player has won (reached 2048)
+            if (event.newTileValue >= WIN_TILE_VALUE && !GameState.hasWon) {
                 GameState.hasWon = true;
             }
         }
     }
-
+    
     return {
         init,
         startGame,
@@ -137,7 +153,7 @@ const game_state = (function() {
 
 const grid_engine = (function() {
     function init() {
-        // Initialize grid with empty tiles
+        // Initialize empty grid
         GridState.tiles = [
             [0, 0, 0, 0],
             [0, 0, 0, 0],
@@ -154,125 +170,93 @@ const grid_engine = (function() {
     }
 
     function resetGrid() {
-        // Clear grid
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        // Clear the grid
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
                 GridState.tiles[row][col] = 0;
-                GridState.previousTiles[row][col] = 0;
             }
         }
-        GridState.animationQueue = [];
         
         // Spawn two initial tiles
         spawnRandomTile();
         spawnRandomTile();
+        
+        // Clear animation queue
+        GridState.animationQueue = [];
     }
 
     function spawnRandomTile() {
         const emptyCells = [];
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        
+        // Find all empty cells
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
                 if (GridState.tiles[row][col] === 0) {
-                    emptyCells.push({row, col});
+                    emptyCells.push({ row, col });
                 }
             }
         }
         
-        if (emptyCells.length > 0) {
-            const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            const value = Math.random() < 0.9 ? 2 : 4;
-            GridState.tiles[randomCell.row][randomCell.col] = value;
-        }
+        if (emptyCells.length === 0) return false;
+        
+        // Pick random empty cell
+        const randomIndex = Math.floor(Math.random() * emptyCells.length);
+        const { row, col } = emptyCells[randomIndex];
+        
+        // 90% chance of 2, 10% chance of 4
+        GridState.tiles[row][col] = Math.random() < 0.9 ? 2 : 4;
+        
+        return true;
     }
 
     function copyGrid(source, destination) {
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
                 destination[row][col] = source[row][col];
             }
         }
     }
 
-    function gridsEqual(grid1, grid2) {
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
-                if (grid1[row][col] !== grid2[row][col]) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    function processLine(line) {
-        // Remove zeros
-        const filtered = line.filter(val => val !== 0);
-        const merged = [];
-        let totalPoints = 0;
-        
-        let i = 0;
-        while (i < filtered.length) {
-            if (i < filtered.length - 1 && filtered[i] === filtered[i + 1]) {
-                // Merge tiles
-                const mergedValue = filtered[i] * 2;
-                merged.push(mergedValue);
-                totalPoints += mergedValue;
-                
-                // Emit merge event
-                EventBus.emit('TILES_MERGED', {
-                    points: mergedValue,
-                    newValue: mergedValue
-                });
-                
-                i += 2; // Skip both merged tiles
-            } else {
-                merged.push(filtered[i]);
-                i++;
-            }
-        }
-        
-        // Pad with zeros
-        while (merged.length < 4) {
-            merged.push(0);
-        }
-        
-        return merged;
-    }
-
     function moveLeft() {
         if (GameState.gameStatus !== 'playing') return false;
         
+        // Save previous state
         copyGrid(GridState.tiles, GridState.previousTiles);
         
-        for (let row = 0; row < 4; row++) {
-            const line = [
-                GridState.tiles[row][0],
-                GridState.tiles[row][1],
-                GridState.tiles[row][2],
-                GridState.tiles[row][3]
-            ];
-            
-            const processedLine = processLine(line);
-            
-            for (let col = 0; col < 4; col++) {
-                GridState.tiles[row][col] = processedLine[col];
-            }
-        }
+        let moved = false;
+        let totalScore = 0;
+        let maxMergedValue = 0;
         
-        const moved = !gridsEqual(GridState.tiles, GridState.previousTiles);
+        for (let row = 0; row < GRID_SIZE; row++) {
+            const originalRow = [...GridState.tiles[row]];
+            const { newRow, scoreGained, maxValue } = processRowLeft(GridState.tiles[row]);
+            GridState.tiles[row] = newRow;
+            
+            if (!arraysEqual(originalRow, newRow)) {
+                moved = true;
+            }
+            
+            totalScore += scoreGained;
+            maxMergedValue = Math.max(maxMergedValue, maxValue);
+        }
         
         if (moved) {
             spawnRandomTile();
             
-            EventBus.emit('MOVE_COMPLETED', {
-                direction: 'left',
-                moved: true
+            if (totalScore > 0) {
+                EventBus.emit('TILES_MERGED', { 
+                    points: totalScore, 
+                    newTileValue: maxMergedValue 
+                });
+            }
+            
+            EventBus.emit('MOVE_COMPLETED', { 
+                direction: 'left', 
+                tilesChanged: true 
             });
             
             if (checkGameOver()) {
-                EventBus.emit('GAME_OVER', {
-                    finalScore: GameState.score
-                });
+                EventBus.emit('GAME_OVER', { finalScore: GameState.score });
             }
         }
         
@@ -284,35 +268,40 @@ const grid_engine = (function() {
         
         copyGrid(GridState.tiles, GridState.previousTiles);
         
-        for (let row = 0; row < 4; row++) {
-            const line = [
-                GridState.tiles[row][3],
-                GridState.tiles[row][2],
-                GridState.tiles[row][1],
-                GridState.tiles[row][0]
-            ];
-            
-            const processedLine = processLine(line);
-            
-            for (let col = 0; col < 4; col++) {
-                GridState.tiles[row][3 - col] = processedLine[col];
-            }
-        }
+        let moved = false;
+        let totalScore = 0;
+        let maxMergedValue = 0;
         
-        const moved = !gridsEqual(GridState.tiles, GridState.previousTiles);
+        for (let row = 0; row < GRID_SIZE; row++) {
+            const originalRow = [...GridState.tiles[row]];
+            const { newRow, scoreGained, maxValue } = processRowRight(GridState.tiles[row]);
+            GridState.tiles[row] = newRow;
+            
+            if (!arraysEqual(originalRow, newRow)) {
+                moved = true;
+            }
+            
+            totalScore += scoreGained;
+            maxMergedValue = Math.max(maxMergedValue, maxValue);
+        }
         
         if (moved) {
             spawnRandomTile();
             
-            EventBus.emit('MOVE_COMPLETED', {
-                direction: 'right',
-                moved: true
+            if (totalScore > 0) {
+                EventBus.emit('TILES_MERGED', { 
+                    points: totalScore, 
+                    newTileValue: maxMergedValue 
+                });
+            }
+            
+            EventBus.emit('MOVE_COMPLETED', { 
+                direction: 'right', 
+                tilesChanged: true 
             });
             
             if (checkGameOver()) {
-                EventBus.emit('GAME_OVER', {
-                    finalScore: GameState.score
-                });
+                EventBus.emit('GAME_OVER', { finalScore: GameState.score });
             }
         }
         
@@ -324,35 +313,47 @@ const grid_engine = (function() {
         
         copyGrid(GridState.tiles, GridState.previousTiles);
         
-        for (let col = 0; col < 4; col++) {
-            const line = [
-                GridState.tiles[0][col],
-                GridState.tiles[1][col],
-                GridState.tiles[2][col],
-                GridState.tiles[3][col]
-            ];
-            
-            const processedLine = processLine(line);
-            
-            for (let row = 0; row < 4; row++) {
-                GridState.tiles[row][col] = processedLine[row];
-            }
-        }
+        let moved = false;
+        let totalScore = 0;
+        let maxMergedValue = 0;
         
-        const moved = !gridsEqual(GridState.tiles, GridState.previousTiles);
+        for (let col = 0; col < GRID_SIZE; col++) {
+            const originalCol = [];
+            for (let row = 0; row < GRID_SIZE; row++) {
+                originalCol.push(GridState.tiles[row][col]);
+            }
+            
+            const { newRow, scoreGained, maxValue } = processRowLeft(originalCol);
+            
+            for (let row = 0; row < GRID_SIZE; row++) {
+                GridState.tiles[row][col] = newRow[row];
+            }
+            
+            if (!arraysEqual(originalCol, newRow)) {
+                moved = true;
+            }
+            
+            totalScore += scoreGained;
+            maxMergedValue = Math.max(maxMergedValue, maxValue);
+        }
         
         if (moved) {
             spawnRandomTile();
             
-            EventBus.emit('MOVE_COMPLETED', {
-                direction: 'up',
-                moved: true
+            if (totalScore > 0) {
+                EventBus.emit('TILES_MERGED', { 
+                    points: totalScore, 
+                    newTileValue: maxMergedValue 
+                });
+            }
+            
+            EventBus.emit('MOVE_COMPLETED', { 
+                direction: 'up', 
+                tilesChanged: true 
             });
             
             if (checkGameOver()) {
-                EventBus.emit('GAME_OVER', {
-                    finalScore: GameState.score
-                });
+                EventBus.emit('GAME_OVER', { finalScore: GameState.score });
             }
         }
         
@@ -364,63 +365,154 @@ const grid_engine = (function() {
         
         copyGrid(GridState.tiles, GridState.previousTiles);
         
-        for (let col = 0; col < 4; col++) {
-            const line = [
-                GridState.tiles[3][col],
-                GridState.tiles[2][col],
-                GridState.tiles[1][col],
-                GridState.tiles[0][col]
-            ];
-            
-            const processedLine = processLine(line);
-            
-            for (let row = 0; row < 4; row++) {
-                GridState.tiles[3 - row][col] = processedLine[row];
-            }
-        }
+        let moved = false;
+        let totalScore = 0;
+        let maxMergedValue = 0;
         
-        const moved = !gridsEqual(GridState.tiles, GridState.previousTiles);
+        for (let col = 0; col < GRID_SIZE; col++) {
+            const originalCol = [];
+            for (let row = 0; row < GRID_SIZE; row++) {
+                originalCol.push(GridState.tiles[row][col]);
+            }
+            
+            const { newRow, scoreGained, maxValue } = processRowRight(originalCol);
+            
+            for (let row = 0; row < GRID_SIZE; row++) {
+                GridState.tiles[row][col] = newRow[row];
+            }
+            
+            if (!arraysEqual(originalCol, newRow)) {
+                moved = true;
+            }
+            
+            totalScore += scoreGained;
+            maxMergedValue = Math.max(maxMergedValue, maxValue);
+        }
         
         if (moved) {
             spawnRandomTile();
             
-            EventBus.emit('MOVE_COMPLETED', {
-                direction: 'down',
-                moved: true
+            if (totalScore > 0) {
+                EventBus.emit('TILES_MERGED', { 
+                    points: totalScore, 
+                    newTileValue: maxMergedValue 
+                });
+            }
+            
+            EventBus.emit('MOVE_COMPLETED', { 
+                direction: 'down', 
+                tilesChanged: true 
             });
             
             if (checkGameOver()) {
-                EventBus.emit('GAME_OVER', {
-                    finalScore: GameState.score
-                });
+                EventBus.emit('GAME_OVER', { finalScore: GameState.score });
             }
         }
         
         return moved;
     }
 
+    function processRowLeft(row) {
+        const newRow = [0, 0, 0, 0];
+        let scoreGained = 0;
+        let maxValue = 0;
+        let writeIndex = 0;
+        
+        // First pass: compact non-zero values
+        const compacted = [];
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (row[i] !== 0) {
+                compacted.push(row[i]);
+            }
+        }
+        
+        // Second pass: merge adjacent equal values
+        let i = 0;
+        while (i < compacted.length) {
+            if (i < compacted.length - 1 && compacted[i] === compacted[i + 1]) {
+                // Merge tiles
+                const mergedValue = compacted[i] * 2;
+                newRow[writeIndex] = mergedValue;
+                scoreGained += mergedValue;
+                maxValue = Math.max(maxValue, mergedValue);
+                i += 2; // Skip both merged tiles
+            } else {
+                // No merge, just move tile
+                newRow[writeIndex] = compacted[i];
+                i += 1;
+            }
+            writeIndex++;
+        }
+        
+        return { newRow, scoreGained, maxValue };
+    }
+
+    function processRowRight(row) {
+        const newRow = [0, 0, 0, 0];
+        let scoreGained = 0;
+        let maxValue = 0;
+        
+        // First pass: compact non-zero values to the right
+        const compacted = [];
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (row[i] !== 0) {
+                compacted.push(row[i]);
+            }
+        }
+        
+        // Second pass: merge adjacent equal values from right
+        let writeIndex = GRID_SIZE - 1;
+        let i = compacted.length - 1;
+        
+        while (i >= 0) {
+            if (i > 0 && compacted[i] === compacted[i - 1]) {
+                // Merge tiles
+                const mergedValue = compacted[i] * 2;
+                newRow[writeIndex] = mergedValue;
+                scoreGained += mergedValue;
+                maxValue = Math.max(maxValue, mergedValue);
+                i -= 2; // Skip both merged tiles
+            } else {
+                // No merge, just move tile
+                newRow[writeIndex] = compacted[i];
+                i -= 1;
+            }
+            writeIndex--;
+        }
+        
+        return { newRow, scoreGained, maxValue };
+    }
+
+    function arraysEqual(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false;
+        for (let i = 0; i < arr1.length; i++) {
+            if (arr1[i] !== arr2[i]) return false;
+        }
+        return true;
+    }
+
     function checkGameOver() {
-        // Check for empty cells
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        // Check if there are any empty cells
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
                 if (GridState.tiles[row][col] === 0) {
                     return false;
                 }
             }
         }
         
-        // Check for possible merges horizontally
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 3; col++) {
+        // Check if any horizontal merges are possible
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE - 1; col++) {
                 if (GridState.tiles[row][col] === GridState.tiles[row][col + 1]) {
                     return false;
                 }
             }
         }
         
-        // Check for possible merges vertically
-        for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 4; col++) {
+        // Check if any vertical merges are possible
+        for (let row = 0; row < GRID_SIZE - 1; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
                 if (GridState.tiles[row][col] === GridState.tiles[row + 1][col]) {
                     return false;
                 }
@@ -431,9 +523,9 @@ const grid_engine = (function() {
     }
 
     function hasWon() {
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
-                if (GridState.tiles[row][col] === 2048) {
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                if (GridState.tiles[row][col] >= WIN_TILE_VALUE) {
                     return true;
                 }
             }
@@ -445,7 +537,7 @@ const grid_engine = (function() {
         if (GameState.gameStatus === 'playing') {
             // Check for win condition
             if (hasWon() && !GameState.hasWon) {
-                game_state.addScore(0); // Trigger win state update
+                GameState.hasWon = true;
             }
         }
     }
@@ -464,166 +556,181 @@ const grid_engine = (function() {
 })();
 
 const input_controller = (function() {
-    let keyPressed = {};
+    let keyPressQueue = [];
     let touchStartX = 0;
     let touchStartY = 0;
-    let isTouch = false;
+    let isProcessingInput = false;
 
     function init() {
         // Register keyboard event listeners
         document.addEventListener('keydown', function(event) {
-            if (!keyPressed[event.key]) {
-                keyPressed[event.key] = true;
-                handleKeyPress(event.key);
-            }
             event.preventDefault();
-        });
-
-        document.addEventListener('keyup', function(event) {
-            keyPressed[event.key] = false;
+            keyPressQueue.push(event.key);
         });
 
         // Register touch event listeners
         document.addEventListener('touchstart', function(event) {
-            if (event.touches.length === 1) {
-                touchStartX = event.touches[0].clientX;
-                touchStartY = event.touches[0].clientY;
-                isTouch = true;
-            }
             event.preventDefault();
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
         });
 
         document.addEventListener('touchend', function(event) {
-            if (isTouch && event.changedTouches.length === 1) {
-                const touchEndX = event.changedTouches[0].clientX;
-                const touchEndY = event.changedTouches[0].clientY;
-                handleTouch(touchStartX, touchStartY, touchEndX, touchEndY);
-                isTouch = false;
-            }
             event.preventDefault();
+            if (event.changedTouches.length > 0) {
+                const touch = event.changedTouches[0];
+                handleTouch(touchStartX, touchStartY, touch.clientX, touch.clientY);
+            }
         });
 
-        // Register mouse event listeners for click-based navigation
+        // Register mouse event listeners for desktop
+        let mouseStartX = 0;
+        let mouseStartY = 0;
+        let isMouseDown = false;
+
         document.addEventListener('mousedown', function(event) {
-            touchStartX = event.clientX;
-            touchStartY = event.clientY;
+            event.preventDefault();
+            mouseStartX = event.clientX;
+            mouseStartY = event.clientY;
+            isMouseDown = true;
         });
 
         document.addEventListener('mouseup', function(event) {
-            const mouseEndX = event.clientX;
-            const mouseEndY = event.clientY;
-            const deltaX = mouseEndX - touchStartX;
-            const deltaY = mouseEndY - touchStartY;
-            
-            // If it's a small movement, treat as click, otherwise as swipe
-            if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
-                // Handle click for menu navigation
-                if (GameState.gameStatus === 'menu') {
-                    EventBus.emit('GAME_START');
-                } else if (GameState.gameStatus === 'game_over') {
-                    // Simple click handling - could be enhanced with button detection
-                    EventBus.emit('RETRY');
-                }
-            } else {
-                handleTouch(touchStartX, touchStartY, mouseEndX, mouseEndY);
+            event.preventDefault();
+            if (isMouseDown) {
+                handleTouch(mouseStartX, mouseStartY, event.clientX, event.clientY);
+                isMouseDown = false;
             }
-        });
-
-        // Listen for events that this module should respond to
-        EventBus.on('GAME_START', function() {
-            game_state.startGame();
-            grid_engine.resetGrid();
-        });
-
-        EventBus.on('RETRY', function() {
-            game_state.startGame();
-            grid_engine.resetGrid();
-        });
-
-        EventBus.on('RETURN_MENU', function() {
-            game_state.returnToMenu();
-        });
-
-        EventBus.on('SHOW_LEADERBOARD', function() {
-            game_state.showLeaderboard();
-        });
-
-        EventBus.on('CLOSE_LEADERBOARD', function() {
-            game_state.returnToMenu();
         });
     }
 
-    function handleKeyPress(key) {
-        if (GameState.gameStatus === 'menu') {
-            if (key === 'Enter' || key === ' ') {
-                EventBus.emit('GAME_START');
-            }
-        } else if (GameState.gameStatus === 'playing') {
-            let moved = false;
-            
-            switch (key) {
-                case 'ArrowLeft':
-                case 'a':
-                case 'A':
-                    moved = grid_engine.moveLeft();
-                    break;
-                case 'ArrowRight':
-                case 'd':
-                case 'D':
-                    moved = grid_engine.moveRight();
-                    break;
-                case 'ArrowUp':
-                case 'w':
-                case 'W':
-                    moved = grid_engine.moveUp();
-                    break;
-                case 'ArrowDown':
-                case 's':
-                case 'S':
-                    moved = grid_engine.moveDown();
-                    break;
-            }
+    function update(dt) {
+        if (isProcessingInput) return;
 
-            if (moved && grid_engine.checkGameOver()) {
-                EventBus.emit('GAME_OVER', {
-                    finalScore: GameState.score
-                });
-            }
-        } else if (GameState.gameStatus === 'game_over') {
-            if (key === 'r' || key === 'R' || key === 'Enter') {
-                EventBus.emit('RETRY');
-            } else if (key === 'Escape' || key === 'm' || key === 'M') {
-                EventBus.emit('RETURN_MENU');
-            } else if (key === 'l' || key === 'L') {
-                EventBus.emit('SHOW_LEADERBOARD');
-            }
-        } else if (GameState.gameStatus === 'leaderboard') {
-            if (key === 'Escape' || key === 'Enter') {
-                EventBus.emit('CLOSE_LEADERBOARD');
-            } else if (key === 'm' || key === 'M') {
-                EventBus.emit('RETURN_MENU');
-            }
+        // Process queued key presses
+        while (keyPressQueue.length > 0) {
+            const key = keyPressQueue.shift();
+            handleKeyPress(key);
+        }
+    }
+
+    function handleKeyPress(key) {
+        if (isProcessingInput) return;
+        
+        const currentState = GameState.gameStatus;
+        
+        switch (currentState) {
+            case 'menu':
+                if (key === 'Enter' || key === ' ') {
+                    isProcessingInput = true;
+                    EventBus.emit('GAME_START', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                }
+                break;
+
+            case 'playing':
+                let moved = false;
+                isProcessingInput = true;
+                
+                switch (key) {
+                    case 'ArrowLeft':
+                    case 'a':
+                    case 'A':
+                        moved = grid_engine.moveLeft();
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                    case 'D':
+                        moved = grid_engine.moveRight();
+                        break;
+                    case 'ArrowUp':
+                    case 'w':
+                    case 'W':
+                        moved = grid_engine.moveUp();
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                    case 'S':
+                        moved = grid_engine.moveDown();
+                        break;
+                    case 'Escape':
+                        EventBus.emit('RETURN_MENU', {});
+                        break;
+                }
+                
+                setTimeout(() => { isProcessingInput = false; }, moved ? 200 : 50);
+                break;
+
+            case 'game_over':
+                if (key === 'Enter' || key === ' ') {
+                    isProcessingInput = true;
+                    EventBus.emit('RETRY', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                } else if (key === 'l' || key === 'L') {
+                    isProcessingInput = true;
+                    EventBus.emit('SHOW_LEADERBOARD', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                } else if (key === 'Escape') {
+                    isProcessingInput = true;
+                    EventBus.emit('RETURN_MENU', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                }
+                break;
+
+            case 'leaderboard':
+                if (key === 'Escape' || key === 'Enter' || key === ' ') {
+                    isProcessingInput = true;
+                    EventBus.emit('CLOSE_LEADERBOARD', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                } else if (key === 'm' || key === 'M') {
+                    isProcessingInput = true;
+                    EventBus.emit('RETURN_MENU', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                }
+                break;
         }
     }
 
     function handleTouch(startX, startY, endX, endY) {
+        if (isProcessingInput) return;
+        
         const deltaX = endX - startX;
         const deltaY = endY - startY;
         const minSwipeDistance = 30;
-
-        // Only process swipes during gameplay
-        if (GameState.gameStatus !== 'playing') {
-            return;
-        }
-
+        
         // Check if swipe distance is significant enough
         if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+            // Treat as tap
+            const currentState = GameState.gameStatus;
+            
+            switch (currentState) {
+                case 'menu':
+                    isProcessingInput = true;
+                    EventBus.emit('GAME_START', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                    break;
+                case 'game_over':
+                    isProcessingInput = true;
+                    EventBus.emit('RETRY', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                    break;
+                case 'leaderboard':
+                    isProcessingInput = true;
+                    EventBus.emit('CLOSE_LEADERBOARD', {});
+                    setTimeout(() => { isProcessingInput = false; }, 100);
+                    break;
+            }
             return;
         }
 
-        let moved = false;
+        // Only process swipes during gameplay
+        if (GameState.gameStatus !== 'playing') return;
 
-        // Determine swipe direction based on larger delta
+        // Determine swipe direction
+        let moved = false;
+        isProcessingInput = true;
+        
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
             // Horizontal swipe
             if (deltaX > 0) {
@@ -643,17 +750,8 @@ const input_controller = (function() {
                 moved = grid_engine.moveUp();
             }
         }
-
-        if (moved && grid_engine.checkGameOver()) {
-            EventBus.emit('GAME_OVER', {
-                finalScore: GameState.score
-            });
-        }
-    }
-
-    function update(dt) {
-        // Input controller doesn't need continuous updates
-        // All input is handled via event listeners
+        
+        setTimeout(() => { isProcessingInput = false; }, moved ? 200 : 50);
     }
 
     return {
@@ -666,71 +764,26 @@ const input_controller = (function() {
 
 const ui_system = (function() {
     function init() {
-        // Initialize UI elements
-        updateUI();
+        // Initialize grid display
+        initializeGrid();
     }
     
-    function renderMenu() {
-        if (GameState.gameStatus !== 'menu') return;
-        updateUI();
-    }
-    
-    function renderGame() {
-        if (GameState.gameStatus !== 'playing') return;
-        updateUI();
-        updateGrid();
-    }
-    
-    function renderGameOver() {
-        if (GameState.gameStatus !== 'game_over') return;
-        updateUI();
-        document.getElementById('final_score').textContent = `最终得分: ${GameState.score}`;
-    }
-    
-    function renderLeaderboard() {
-        if (GameState.gameStatus !== 'leaderboard') return;
-        updateUI();
-        document.getElementById('best_score_display').textContent = GameState.bestScore;
-    }
-    
-    function animateTileMovement(fromRow, fromCol, toRow, toCol) {
-        // Animation handling could be added here
-    }
-    
-    function updateUI() {
-        // Update score displays
-        const scoreValue = document.getElementById('score_value');
-        const bestValue = document.getElementById('best_value');
-        
-        if (scoreValue) scoreValue.textContent = GameState.score;
-        if (bestValue) bestValue.textContent = GameState.bestScore;
-    }
-    
-    function updateGrid() {
+    function initializeGrid() {
         const gameGrid = document.getElementById('game_grid');
-        if (!gameGrid) return;
-        
-        // Clear existing tiles
         gameGrid.innerHTML = '';
         
-        // Create tiles
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                
-                const value = GridState.tiles[row][col];
-                if (value > 0) {
-                    tile.textContent = value;
-                    tile.classList.add(`tile-${value}`);
-                }
-                
-                gameGrid.appendChild(tile);
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid_cell';
+                cell.id = `cell_${row}_${col}`;
+                gameGrid.appendChild(cell);
             }
         }
     }
     
     function render() {
+        // Update UI based on current game state
         switch (GameState.gameStatus) {
             case 'menu':
                 renderMenu();
@@ -745,6 +798,53 @@ const ui_system = (function() {
                 renderLeaderboard();
                 break;
         }
+    }
+    
+    function renderMenu() {
+        // Menu is handled by CSS and HTML
+    }
+    
+    function renderGame() {
+        // Update score displays
+        document.getElementById('score_value').textContent = GameState.score;
+        document.getElementById('best_value').textContent = GameState.bestScore;
+        
+        // Update grid
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                const cell = document.getElementById(`cell_${row}_${col}`);
+                const value = GridState.tiles[row][col];
+                
+                if (value === 0) {
+                    cell.textContent = '';
+                    cell.className = 'grid_cell';
+                } else {
+                    cell.textContent = value;
+                    cell.className = `grid_cell tile tile-${value}`;
+                }
+            }
+        }
+    }
+    
+    function renderGameOver() {
+        document.getElementById('final_score_value').textContent = GameState.score;
+    }
+    
+    function renderLeaderboard() {
+        const scores = JSON.parse(localStorage.getItem('2048_leaderboard')) || [];
+        const scoreEntries = document.querySelectorAll('.score_entry');
+        
+        for (let i = 0; i < scoreEntries.length; i++) {
+            if (i < scores.length) {
+                scoreEntries[i].textContent = `${i + 1}. ${scores[i]}`;
+            } else {
+                scoreEntries[i].textContent = `${i + 1}. 暂无记录`;
+            }
+        }
+    }
+    
+    function animateTileMovement(fromRow, fromCol, toRow, toCol) {
+        // Simple animation implementation
     }
     
     return {
@@ -771,26 +871,10 @@ function showScreen(id) {
     }
 }
 
-// Game loop
-let lastTime = 0;
-function gameLoop(timestamp) {
-    const dt = (timestamp - lastTime) / 1000;
-    lastTime = timestamp;
-    
-    // Call update functions in update_order
-    input_controller.update(dt);
-    grid_engine.update(dt);
-    
-    // Call render functions in render_order
-    ui_system.render();
-    
-    requestAnimationFrame(gameLoop);
-}
-
-// State transitions
+// State transition functions
 function startGame() {
     GameState.gameStatus = 'playing';
-    EventBus.emit('GAME_START');
+    EventBus.emit('GAME_START', {});
     showScreen('gameplay');
 }
 
@@ -801,32 +885,46 @@ function gameOver() {
 }
 
 function retry() {
-    GameState.gameStatus = 'playing';
-    EventBus.emit('RETRY');
+    EventBus.emit('RETRY', {});
     showScreen('gameplay');
 }
 
 function returnToMenu() {
-    GameState.gameStatus = 'menu';
-    EventBus.emit('RETURN_MENU');
+    EventBus.emit('RETURN_MENU', {});
     showScreen('main_menu');
 }
 
 function showLeaderboard() {
-    GameState.gameStatus = 'leaderboard';
-    EventBus.emit('SHOW_LEADERBOARD');
+    EventBus.emit('SHOW_LEADERBOARD', {});
     showScreen('leaderboard');
 }
 
 function closeLeaderboard() {
-    GameState.gameStatus = 'game_over';
-    EventBus.emit('CLOSE_LEADERBOARD');
+    EventBus.emit('CLOSE_LEADERBOARD', {});
     showScreen('game_over');
 }
 
-// Module initialization
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize modules in init_order
+// Game loop
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+    const dt = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+    
+    // Update modules in order
+    input_controller.update(dt);
+    grid_engine.update(dt);
+    
+    // Render
+    ui_system.render();
+    
+    // Continue loop
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialize game
+window.addEventListener('DOMContentLoaded', function() {
+    // Initialize modules in order
     game_state.init();
     grid_engine.init();
     input_controller.init();
@@ -839,34 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btn_retry').addEventListener('click', retry);
     document.getElementById('btn_menu').addEventListener('click', returnToMenu);
     document.getElementById('btn_leaderboard_gameover').addEventListener('click', showLeaderboard);
-    document.getElementById('btn_close').addEventListener('click', function() {
-        returnToMenu();
-    });
-    
-    // Set up EventBus listeners for state transitions
-    EventBus.on('GAME_START', function() {
-        showScreen('gameplay');
-    });
-    
-    EventBus.on('GAME_OVER', function() {
-        showScreen('game_over');
-    });
-    
-    EventBus.on('RETRY', function() {
-        showScreen('gameplay');
-    });
-    
-    EventBus.on('RETURN_MENU', function() {
-        showScreen('main_menu');
-    });
-    
-    EventBus.on('SHOW_LEADERBOARD', function() {
-        showScreen('leaderboard');
-    });
-    
-    EventBus.on('CLOSE_LEADERBOARD', function() {
-        showScreen('game_over');
-    });
+    document.getElementById('btn_close').addEventListener('click', closeLeaderboard);
     
     // Start game loop
     requestAnimationFrame(gameLoop);

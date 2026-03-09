@@ -8,6 +8,8 @@ style.css
 body {
     font-family: Arial, sans-serif;
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
     background: #000;
 }
 
@@ -23,217 +25,253 @@ body {
     justify-content: center;
 }
 
-#bg {
+.bg-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(180deg, #001122 0%, #003366 100%);
+    background: linear-gradient(180deg, #001122 0%, #003366 50%, #001122 100%);
     z-index: 0;
-}
-
-/* Main Menu Styles */
-#main_menu #bg {
     opacity: 1;
 }
 
+.game-over-bg {
+    opacity: 0.4;
+}
+
+/* Main Menu Styles */
 #main_menu #title {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
     color: #03A9F4;
     font-size: 72px;
     font-weight: bold;
     text-align: center;
+    position: absolute;
+    top: 400px;
+    width: 700px;
+    height: 160px;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #main_menu #btn_play {
-    position: absolute;
-    top: 47%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 500px;
-    height: 120px;
     background-color: #03A9F4;
     color: #FFFFFF;
     font-size: 42px;
     font-weight: bold;
-    border: none;
     border-radius: 16px;
     text-align: center;
+    position: absolute;
+    top: 900px;
+    width: 500px;
+    height: 120px;
+    border: none;
     cursor: pointer;
     z-index: 2;
 }
 
+#main_menu #btn_play:hover {
+    background-color: #0288D1;
+}
+
 #main_menu #btn_leaderboard {
-    position: absolute;
-    top: 56%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 400px;
-    height: 100px;
     background-color: transparent;
     color: #03A9F4;
     font-size: 36px;
     border: 3px solid #03A9F4;
     border-radius: 12px;
     text-align: center;
+    position: absolute;
+    top: 1070px;
+    width: 400px;
+    height: 100px;
     cursor: pointer;
     z-index: 2;
 }
 
+#main_menu #btn_leaderboard:hover {
+    background-color: rgba(3, 169, 244, 0.1);
+}
+
 /* Gameplay Styles */
-#gameplay #bg {
-    opacity: 1;
-}
-
-#gameplay #score_display {
-    position: absolute;
-    top: 3%;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #03A9F4;
-    font-size: 40px;
-    font-weight: bold;
-    text-align: center;
-    z-index: 1;
-}
-
-#gameplay #lives {
-    position: absolute;
-    top: 3%;
-    right: 5%;
-    color: #F44336;
-    font-size: 36px;
-    text-align: right;
-    z-index: 1;
+#gameplay {
+    position: relative;
 }
 
 #gameCanvas {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: 1;
 }
 
-#tap_area {
+#gameplay #score_display {
+    color: #03A9F4;
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 60px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#gameplay #lives {
+    color: #F44336;
+    font-size: 36px;
+    text-align: right;
+    position: absolute;
+    top: 60px;
+    right: 40px;
+    width: 200px;
+    height: 60px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+#gameplay #tap_area {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     opacity: 0;
-    background: transparent;
-    border: none;
-    cursor: pointer;
     z-index: 5;
+    cursor: pointer;
 }
 
 /* Game Over Styles */
-#game_over #bg {
-    opacity: 0.4;
+#game_over {
+    position: relative;
 }
 
 #game_over #gameover_text {
-    position: absolute;
-    top: 25%;
-    left: 50%;
-    transform: translateX(-50%);
     color: #03A9F4;
     font-size: 64px;
     font-weight: bold;
     text-align: center;
+    position: absolute;
+    top: 400px;
+    width: 100%;
     z-index: 1;
 }
 
 #game_over #final_score {
-    position: absolute;
-    top: 35%;
-    left: 50%;
-    transform: translateX(-50%);
     color: #FF5722;
     font-size: 40px;
     text-align: center;
+    position: absolute;
+    top: 500px;
+    width: 100%;
+    z-index: 1;
+}
+
+#game_over #best_score {
+    color: #03A9F4;
+    font-size: 32px;
+    text-align: center;
+    position: absolute;
+    top: 560px;
+    width: 100%;
     z-index: 1;
 }
 
 #game_over #btn_retry {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 500px;
-    height: 120px;
     background-color: #03A9F4;
     color: #FFFFFF;
     font-size: 42px;
     font-weight: bold;
-    border: none;
     border-radius: 16px;
     text-align: center;
-    cursor: pointer;
-    z-index: 2;
-}
-
-#game_over #btn_menu {
     position: absolute;
-    top: 65%;
+    top: 700px;
     left: 50%;
     transform: translateX(-50%);
     width: 400px;
-    height: 100px;
-    background-color: #FF5722;
-    color: #FFFFFF;
-    font-size: 36px;
+    height: 80px;
     border: none;
-    border-radius: 12px;
-    text-align: center;
     cursor: pointer;
     z-index: 2;
 }
 
-#game_over #btn_leaderboard_go {
+#game_over #btn_retry:hover {
+    background-color: #0288D1;
+}
+
+#game_over #btn_menu {
+    background-color: #FF5722;
+    color: #FFFFFF;
+    font-size: 36px;
+    border-radius: 12px;
+    text-align: center;
     position: absolute;
-    top: 75%;
+    top: 800px;
     left: 50%;
     transform: translateX(-50%);
-    width: 350px;
+    width: 400px;
     height: 80px;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#game_over #btn_menu:hover {
+    background-color: #E64A19;
+}
+
+#game_over #btn_leaderboard_gameover {
     background-color: transparent;
     color: #03A9F4;
     font-size: 32px;
     border: 2px solid #03A9F4;
     border-radius: 12px;
     text-align: center;
+    position: absolute;
+    top: 900px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 80px;
     cursor: pointer;
     z-index: 2;
 }
 
+#game_over #btn_leaderboard_gameover:hover {
+    background-color: rgba(3, 169, 244, 0.1);
+}
+
 /* Leaderboard Styles */
-#leaderboard #bg {
-    opacity: 1;
+#leaderboard {
+    position: relative;
 }
 
 #leaderboard #panel_bg {
+    background-color: #FFFFFF;
+    border-radius: 20px;
+    border: 4px solid #03A9F4;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 800px;
-    height: 1000px;
-    background-color: #FFFFFF;
-    border-radius: 20px;
-    border: 4px solid #03A9F4;
+    width: 600px;
+    height: 800px;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px;
-    z-index: 1;
 }
 
 #leaderboard #title {
@@ -241,7 +279,7 @@ body {
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: 40px;
 }
 
 #leaderboard #score_list {
@@ -249,8 +287,16 @@ body {
     font-size: 40px;
     line-height: 1.8;
     text-align: left;
-    margin-bottom: 80px;
+    width: 100%;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 20px 0;
+}
+
+.score-item {
+    margin-bottom: 20px;
 }
 
 #leaderboard #btn_close {
@@ -258,39 +304,54 @@ body {
     color: #FFFFFF;
     font-size: 36px;
     font-weight: bold;
-    border: none;
     border-radius: 12px;
     text-align: center;
     width: 300px;
     height: 80px;
+    border: none;
     cursor: pointer;
+    margin-top: 20px;
 }
 
-/* Responsive adjustments */
+#leaderboard #btn_close:hover {
+    background-color: #0288D1;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-    .screen {
-        width: 100vw;
-        height: 100vh;
-    }
-    
     #main_menu #title {
         font-size: 48px;
+        top: 200px;
+        width: 90%;
     }
     
     #main_menu #btn_play {
+        font-size: 32px;
+        top: 400px;
         width: 80%;
         height: 80px;
-        font-size: 28px;
     }
     
     #main_menu #btn_leaderboard {
+        font-size: 28px;
+        top: 500px;
         width: 70%;
-        height: 60px;
+        height: 70px;
+    }
+    
+    #gameplay #score_display {
+        font-size: 28px;
+        top: 20px;
+    }
+    
+    #gameplay #lives {
         font-size: 24px;
+        top: 20px;
+        right: 20px;
     }
     
     #leaderboard #panel_bg {
         width: 90%;
-        height: 80%;
+        height: 70%;
     }
 }

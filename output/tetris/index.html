@@ -8,46 +8,60 @@ index.html
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Main Menu Screen -->
     <div id="main_menu" class="screen">
-        <div id="bg"></div>
-        <div id="title">TETRIS</div>
-        <div id="block_preview"></div>
+        <div id="bg" class="bg-image"></div>
+        <h1 id="title">TETRIS</h1>
+        <div id="block_preview" class="block-preview"></div>
         <div id="high_score">最高分: 0</div>
-        <button id="btn_start">开始游戏</button>
-        <button id="btn_leaderboard">排行榜</button>
+        <button id="btn_start" class="btn-primary">开始游戏</button>
+        <button id="btn_leaderboard" class="btn-secondary">排行榜</button>
     </div>
 
-    <div id="gameplay" class="screen" style="display:none;">
-        <div id="bg"></div>
-        <div id="grid_border">
+    <!-- Gameplay Screen -->
+    <div id="gameplay" class="screen">
+        <div id="bg" class="bg-image"></div>
+        <div id="grid_border" class="grid-container">
             <canvas id="gameCanvas"></canvas>
         </div>
-        <div id="current_block"></div>
-        <div id="next_label">NEXT</div>
-        <div id="next_block"></div>
-        <div id="score_label">得分</div>
-        <div id="score_value">0</div>
-        <div id="level_label">等级</div>
-        <div id="level_value">1</div>
-        <div id="lines_label">行数</div>
-        <div id="lines_value">0</div>
+        <div class="ui-panel left-panel">
+            <div id="score_label" class="label">分数</div>
+            <div id="score_value" class="value">0</div>
+            <div id="level_label" class="label">等级</div>
+            <div id="level_value" class="value">1</div>
+            <div id="lines_label" class="label">行数</div>
+            <div id="lines_value" class="value">0</div>
+        </div>
+        <div class="ui-panel right-panel">
+            <div id="next_label" class="label">NEXT</div>
+            <div id="next_block" class="next-preview"></div>
+        </div>
     </div>
 
-    <div id="game_over" class="screen" style="display:none;">
-        <div id="bg"></div>
-        <div id="gameover_text">GAME OVER</div>
-        <div id="final_score">得分: 0</div>
-        <div id="final_lines">消除行数: 0</div>
-        <button id="btn_retry">重试</button>
-        <button id="btn_leaderboard">排行榜</button>
-        <button id="btn_menu">主菜单</button>
+    <!-- Game Over Screen -->
+    <div id="game_over" class="screen">
+        <div id="bg" class="bg-image"></div>
+        <div class="game-over-content">
+            <h1 id="gameover_text">GAME OVER</h1>
+            <div id="final_score" class="final-stat">最终得分: 0</div>
+            <div id="final_lines" class="final-stat">消除行数: 0</div>
+            <div class="button-group">
+                <button id="btn_retry" class="btn-primary">重新开始</button>
+                <button id="btn_leaderboard_go" class="btn-secondary">排行榜</button>
+                <button id="btn_menu" class="btn-tertiary">返回菜单</button>
+            </div>
+        </div>
     </div>
 
-    <div id="leaderboard" class="screen" style="display:none;">
-        <div id="panel_bg">
-            <div id="title">排行榜</div>
-            <div id="score_list">暂无记录</div>
-            <button id="btn_close">关闭</button>
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard" class="screen">
+        <div id="bg" class="bg-image"></div>
+        <div id="panel_bg" class="leaderboard-panel">
+            <h1 id="title">排行榜</h1>
+            <div id="score_list" class="score-list">
+                <div class="score-entry">暂无记录</div>
+            </div>
+            <button id="btn_close" class="btn-primary">关闭</button>
         </div>
     </div>
 

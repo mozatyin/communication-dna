@@ -15,99 +15,133 @@ body {
 
 .screen {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: none;
+    overflow: hidden;
 }
 
-/* Main Menu Styles */
-#main_menu #bg {
+.screen#main_menu {
+    display: block;
+}
+
+.bg-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #000011, #001122);
+    background: linear-gradient(135deg, #000011 0%, #001122 50%, #000033 100%);
     opacity: 1;
     z-index: 0;
 }
 
+/* Main Menu Styles */
 #main_menu #title {
+    position: absolute;
+    left: 50%;
+    top: 300px;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 200px;
     color: #00E5FF;
     font-size: 120px;
     font-weight: bold;
     text-align: center;
     text-shadow: 0 0 20px #00E5FF;
-    margin-top: -200px;
     z-index: 1;
+    line-height: 200px;
 }
 
 #main_menu #block_preview {
+    position: absolute;
+    left: 50%;
+    top: 600px;
+    transform: translateX(-50%);
     width: 300px;
     height: 300px;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="30" width="20" height="20" fill="%23800080"/><rect x="30" y="30" width="20" height="20" fill="%23800080"/><rect x="50" y="30" width="20" height="20" fill="%23800080"/><rect x="30" y="10" width="20" height="20" fill="%23800080"/></svg>') center/contain no-repeat;
+    background: linear-gradient(45deg, #00E5FF 0%, #0099CC 100%);
     opacity: 0.8;
-    margin: 50px 0;
     z-index: 1;
+    border-radius: 20px;
 }
 
 #main_menu #high_score {
+    position: absolute;
+    left: 50%;
+    top: 960px;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 60px;
     color: #FFD700;
     font-size: 32px;
     text-align: center;
-    margin: 20px 0;
     z-index: 1;
+    line-height: 60px;
 }
 
 #main_menu #btn_start {
+    position: absolute;
+    left: 50%;
+    top: 1100px;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 120px;
     background-color: #00E5FF;
     color: #000000;
     font-size: 42px;
     font-weight: bold;
     border-radius: 16px;
     text-align: center;
-    width: 500px;
-    height: 120px;
     border: none;
-    margin: 20px 0;
     cursor: pointer;
     z-index: 2;
 }
 
+#main_menu #btn_start:hover {
+    background-color: #00CCDD;
+}
+
 #main_menu #btn_leaderboard {
+    position: absolute;
+    left: 50%;
+    top: 1280px;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 100px;
     background-color: transparent;
     color: #00E5FF;
     font-size: 36px;
     border: 3px solid #00E5FF;
     border-radius: 16px;
     text-align: center;
-    width: 400px;
-    height: 100px;
     cursor: pointer;
     z-index: 2;
 }
 
+#main_menu #btn_leaderboard:hover {
+    background-color: rgba(0, 229, 255, 0.1);
+}
+
 /* Gameplay Styles */
-#gameplay #bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #000011, #001122);
-    opacity: 1;
-    z-index: 0;
+#gameplay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
 
 #gameplay #grid_border {
-    border: 3px solid #333333;
-    background-color: rgba(0,0,0,0.8);
+    position: absolute;
+    left: 50%;
+    top: 200px;
+    transform: translateX(-50%);
     width: 600px;
     height: 1200px;
-    position: relative;
+    border: 3px solid #333333;
+    background-color: rgba(0,0,0,0.8);
     z-index: 1;
 }
 
@@ -117,106 +151,71 @@ body {
     display: block;
 }
 
-#gameplay #current_block {
+.ui-panel {
     position: absolute;
-    opacity: 1;
     z-index: 2;
 }
 
-#gameplay #next_label {
-    position: absolute;
-    top: 220px;
-    right: 80px;
-    color: #888888;
-    font-size: 28px;
-    text-align: center;
-    z-index: 1;
+.left-panel {
+    left: 50px;
+    top: 300px;
+    width: 200px;
 }
 
-#gameplay #next_block {
-    position: absolute;
-    top: 260px;
+.right-panel {
     right: 50px;
-    width: 120px;
-    height: 120px;
-    border: 2px solid #333333;
-    opacity: 1;
-    z-index: 1;
+    top: 300px;
+    width: 200px;
 }
 
-#gameplay #score_label {
-    position: absolute;
-    top: 420px;
-    right: 80px;
+#gameplay .label {
     color: #888888;
     font-size: 24px;
     text-align: center;
-    z-index: 1;
+    margin-bottom: 10px;
 }
 
-#gameplay #score_value {
-    position: absolute;
-    top: 460px;
-    right: 80px;
+#gameplay .value {
     color: #FFFFFF;
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    z-index: 1;
+    margin-bottom: 40px;
 }
 
-#gameplay #level_label {
-    position: absolute;
-    top: 540px;
-    right: 80px;
+#gameplay #next_label {
     color: #888888;
-    font-size: 24px;
+    font-size: 28px;
     text-align: center;
-    z-index: 1;
+    margin-bottom: 20px;
 }
 
 #gameplay #level_value {
-    position: absolute;
-    top: 580px;
-    right: 80px;
     color: #00E5FF;
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    z-index: 1;
 }
 
-#gameplay #lines_label {
-    position: absolute;
-    top: 660px;
-    right: 80px;
-    color: #888888;
-    font-size: 24px;
-    text-align: center;
-    z-index: 1;
-}
-
-#gameplay #lines_value {
-    position: absolute;
-    top: 700px;
-    right: 80px;
-    color: #FFFFFF;
-    font-size: 48px;
-    font-weight: bold;
-    text-align: center;
-    z-index: 1;
+.next-preview {
+    width: 120px;
+    height: 120px;
+    border: 2px solid #333333;
+    background: rgba(0,0,0,0.5);
+    margin: 0 auto;
+    border-radius: 8px;
 }
 
 /* Game Over Styles */
-#game_over #bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #000011, #001122);
-    opacity: 1;
-    z-index: 0;
+#game_over {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-over-content {
+    text-align: center;
+    z-index: 2;
 }
 
 #game_over #gameover_text {
@@ -225,83 +224,84 @@ body {
     font-weight: bold;
     text-align: center;
     text-shadow: 0 0 20px #FF1744;
-    margin-bottom: 50px;
-    z-index: 1;
+    margin-bottom: 60px;
 }
 
-#game_over #final_score {
+#game_over .final-stat {
     color: #FFFFFF;
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    margin: 20px 0;
-    z-index: 1;
+    margin-bottom: 30px;
 }
 
 #game_over #final_lines {
     color: #888888;
     font-size: 32px;
     text-align: center;
-    margin: 20px 0 50px 0;
-    z-index: 1;
+}
+
+.button-group {
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
 }
 
 #game_over #btn_retry {
+    width: 400px;
+    height: 80px;
     background-color: #00E5FF;
     color: #000000;
     font-size: 42px;
     font-weight: bold;
     border-radius: 16px;
     text-align: center;
-    width: 500px;
-    height: 120px;
     border: none;
-    margin: 10px 0;
     cursor: pointer;
-    z-index: 2;
 }
 
-#game_over #btn_leaderboard {
+#game_over #btn_leaderboard_go {
+    width: 400px;
+    height: 80px;
     background-color: transparent;
     color: #00E5FF;
     font-size: 36px;
     border: 3px solid #00E5FF;
     border-radius: 16px;
     text-align: center;
-    width: 400px;
-    height: 100px;
-    margin: 10px 0;
     cursor: pointer;
-    z-index: 2;
 }
 
 #game_over #btn_menu {
+    width: 400px;
+    height: 80px;
     background-color: transparent;
     color: #888888;
     font-size: 36px;
     border: 3px solid #555555;
     border-radius: 16px;
     text-align: center;
-    width: 400px;
-    height: 100px;
-    margin: 10px 0;
     cursor: pointer;
-    z-index: 2;
 }
 
 /* Leaderboard Styles */
 #leaderboard {
-    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-#leaderboard #panel_bg {
+.leaderboard-panel {
+    width: 800px;
+    height: 1000px;
     background-color: #1A1A2E;
     border-radius: 24px;
     border: 3px solid #00E5FF;
-    padding: 40px;
-    width: 80%;
-    max-width: 600px;
+    padding: 60px;
     text-align: center;
+    z-index: 2;
 }
 
 #leaderboard #title {
@@ -309,69 +309,114 @@ body {
     font-size: 48px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 80px;
 }
 
-#leaderboard #score_list {
+.score-list {
     color: #FFFFFF;
     font-size: 40px;
     line-height: 1.8;
     text-align: left;
-    margin: 30px 0;
-    min-height: 200px;
+    margin-bottom: 80px;
+    min-height: 400px;
+}
+
+.score-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #333;
+}
+
+.score-entry:last-child {
+    border-bottom: none;
 }
 
 #leaderboard #btn_close {
+    width: 300px;
+    height: 80px;
     background-color: #00E5FF;
     color: #000000;
     font-size: 36px;
     font-weight: bold;
     border-radius: 16px;
     text-align: center;
-    width: 200px;
-    height: 80px;
     border: none;
     cursor: pointer;
-    margin-top: 20px;
 }
 
-/* Responsive Design */
+/* Button Hover Effects */
+button:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
     #main_menu #title {
         font-size: 80px;
+        width: 90%;
+        top: 200px;
     }
     
-    #main_menu #btn_start {
-        width: 80%;
-        font-size: 36px;
-        height: 100px;
-    }
-    
+    #main_menu #btn_start,
     #main_menu #btn_leaderboard {
-        width: 70%;
-        font-size: 30px;
-        height: 80px;
+        width: 80%;
+        font-size: 32px;
     }
     
     #gameplay #grid_border {
         width: 80%;
-        height: 60%;
+        height: 60vh;
     }
     
-    #game_over #gameover_text {
-        font-size: 60px;
+    .left-panel,
+    .right-panel {
+        position: relative;
+        width: 100%;
+        text-align: center;
     }
     
-    #game_over #btn_retry {
-        width: 80%;
-        font-size: 36px;
-        height: 100px;
+    .leaderboard-panel {
+        width: 90%;
+        height: 80vh;
+        padding: 40px 20px;
+    }
+}
+
+/* Touch Controls for Mobile */
+@media (max-width: 768px) {
+    .touch-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 20px;
+        z-index: 10;
     }
     
-    #game_over #btn_leaderboard,
-    #game_over #btn_menu {
-        width: 70%;
-        font-size: 30px;
-        height: 80px;
+    .touch-btn {
+        width: 60px;
+        height: 60px;
+        background: rgba(0, 229, 255, 0.8);
+        border: 2px solid #00E5FF;
+        border-radius: 50%;
+        color: white;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .touch-btn:active {
+        background: rgba(0, 229, 255, 1);
     }
 }
