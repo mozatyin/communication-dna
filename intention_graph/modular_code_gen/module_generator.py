@@ -56,22 +56,22 @@ Ensure your implementation satisfies the postcondition when the precondition hol
 - **Interactions**: If your module owns an interaction rule, implement the collision \
 detection described in the `condition` field and the `effect` when triggered.
 
-## Input Handling
+## Implementation Completeness (CRITICAL)
 
-If your module handles player input:
-- Support BOTH keyboard AND touch input
-- For keyboard: use keydown/keyup with key tracking flags, apply in update()
-- For touch: track touchstart position, handle touchmove for continuous input, \
-touchend for taps/swipes
-- Only process input when GameState.gameStatus === 'playing'
+Every exported function MUST contain real, working implementation:
+- **No empty functions**: Every function body must have meaningful logic
+- **No placeholder comments**: Replace "// TODO" or "// implement later" with actual code
+- **Complete algorithms**: If your function does collision detection, implement the \
+full bounding-box check. If it does flood fill, implement the full BFS queue.
+- **All code paths**: Handle normal case, edge cases, and boundary conditions
+- **Test mentally**: For each function, walk through a typical game frame — does the \
+function actually DO what its name/description says?
 
-## Score & Persistence
-
-If your module manages scoring:
-- Save high scores to localStorage on game over: \
-`localStorage.setItem(key, JSON.stringify(scores))`
-- Load high scores on init: `JSON.parse(localStorage.getItem(key) || '[]')`
-- Track best score separately for display
+Common failures to avoid:
+- update() that only updates position but forgets collision detection
+- render() that draws player but forgets enemies/obstacles
+- init() that sets up state but forgets to register event listeners
+- Game state module that tracks score but forgets to persist high scores
 
 ## Output
 
@@ -107,10 +107,6 @@ Your module likely deals with moving objects. Implementation requirements:
 - Draw each object with distinct `ctx.fillStyle` color
 - Draw score/HUD with `ctx.fillText()`
 
-### Touch Input (for physics games)
-- Tap anywhere on canvas = jump/flap/launch
-- For paddle games: track touchmove X position, move paddle to follow touch
-- `canvas.addEventListener('touchstart', (e) => { e.preventDefault(); /* action */ })`
 """
 
 _DOMAIN_GRID = """\
@@ -145,11 +141,6 @@ Your module likely manages a grid/board. Implementation requirements:
 - Compact non-zero values, merge adjacent equals, compact again
 - Track if any tile moved to determine valid move
 
-### Touch Input (for grid games)
-- Swipe detection: track touchstart→touchend delta, determine direction
-- `dx = endX - startX; dy = endY - startY`
-- Direction = largest absolute component: horizontal if `|dx| > |dy|`
-- For minesweeper: tap = reveal, long press (300ms+) = flag
 """
 
 _DOMAIN_PIECE = """\
@@ -178,10 +169,6 @@ Your module likely handles falling pieces. Implementation requirements:
 - Full row = all cells filled → remove row, shift above rows down
 - Award points per lines cleared (1=100, 2=300, 3=500, 4=800)
 
-### Touch Input (for piece games)
-- Swipe left/right = move piece, swipe down = hard drop
-- Tap = rotate piece
-- Track touch start/end positions for swipe detection
 """
 
 _DOMAIN_ACTION = """\
@@ -211,10 +198,6 @@ Your module likely handles player, enemies, or projectiles. Implementation requi
 - Use distinct colors for player (green), enemies (red), bullets (yellow)
 - Draw health/lives as icons or text
 
-### Touch Input (for action games)
-- Touch left/right half of screen to move player left/right
-- Tap = fire/shoot
-- Use `touchstart`/`touchend` for movement, separate handler for firing
 """
 
 _DOMAIN_PUZZLE = """\
@@ -249,10 +232,6 @@ Your module likely handles board state and logic. Implementation requirements:
   localStorage.setItem('scores', JSON.stringify(scores.slice(0, 10)));
   ```
 
-### Touch Input (for puzzle games)
-- Canvas click → grid coordinate: `col = Math.floor((e.offsetX - gridOffsetX) / cellSize)`
-- Swipe: track touchstart→touchend delta for direction
-- Tap = select/toggle cell
 """
 
 # Map game keywords to domain prompts
